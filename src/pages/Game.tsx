@@ -68,6 +68,7 @@ const Game: React.FC = () => {
   const timerRef = useRef<any | null>(null);
   const sprintTimerRef = useRef<any | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isAdvancingRef = useRef(false);
 
   // Load words from Firebase or generate from themes
   useEffect(() => {
@@ -237,6 +238,31 @@ const Game: React.FC = () => {
     }
   }, [state.isHost, state.roomCode, wordIndex, words.length, players]);
 
+  const checkAllAnswered = useCallback(async () => {
+    if (!state.isMultiplayer || !state.isHost || isAdvancingRef.current) return;
+
+    const activePlayers = Object.values(players).filter((p) => p.connected !== false);
+    if (activePlayers.length === 0) return;
+
+    const allAnswered = activePlayers.every((p) => p.answered);
+    if (!allAnswered) return;
+
+    isAdvancingRef.current = true;
+    try {
+      await advanceToNextWord();
+    } finally {
+      // Small lock window prevents duplicate host advances from rapid RTDB updates.
+      setTimeout(() => {
+        isAdvancingRef.current = false;
+      }, 250);
+    }
+  }, [state.isMultiplayer, state.isHost, players, advanceToNextWord]);
+
+  useEffect(() => {
+    if (!state.isMultiplayer || !state.isHost) return;
+    checkAllAnswered();
+  }, [players, state.isMultiplayer, state.isHost, checkAllAnswered]);
+
   const handleCorrect = useCallback(
     async (word: Word, isAutoAdvance: boolean) => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -273,9 +299,7 @@ const Game: React.FC = () => {
       setTimeout(() => {
         setShowLBFlash(false);
         if (!isAutoAdvance) {
-          if (state.isMultiplayer && state.isHost) {
-            advanceToNextWord();
-          } else if (!state.isMultiplayer) {
+          if (!state.isMultiplayer) {
             const nextIndex = wordIndex + 1;
             if (nextIndex >= words.length) {
               endGame();
@@ -337,9 +361,7 @@ const Game: React.FC = () => {
 
       setTimeout(() => {
         setShowLBFlash(false);
-        if (state.isMultiplayer && state.isHost) {
-          advanceToNextWord();
-        } else if (!state.isMultiplayer) {
+        if (!state.isMultiplayer) {
           const nextIndex = wordIndex + 1;
           if (nextIndex >= words.length) {
             endGame();
@@ -395,9 +417,7 @@ const Game: React.FC = () => {
 
     setTimeout(() => {
       setShowLBFlash(false);
-      if (state.isMultiplayer && state.isHost) {
-        advanceToNextWord();
-      } else if (!state.isMultiplayer) {
+      if (!state.isMultiplayer) {
         const nextIndex = wordIndex + 1;
         if (nextIndex >= words.length) {
           endGame();
@@ -448,9 +468,7 @@ const Game: React.FC = () => {
 
       setTimeout(() => {
         setShowLBFlash(false);
-        if (state.isMultiplayer && state.isHost) {
-          advanceToNextWord();
-        } else if (!state.isMultiplayer) {
+        if (!state.isMultiplayer) {
           const nextIndex = wordIndex + 1;
           if (nextIndex >= words.length) {
             endGame();
