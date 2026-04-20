@@ -8,7 +8,7 @@ import { ref, set } from "firebase/database";
 
 const MPCreate: React.FC = () => {
   const navigate = useNavigate();
-  const { themes, wordBank } = useGame();
+  const { themes, wordBank, loading } = useGame();
   const [playerName, setPlayerName] = useState("");
   const [mode, setMode] = useState<"round" | "sprint">("round");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
@@ -33,6 +33,11 @@ const MPCreate: React.FC = () => {
   };
 
   const createRoom = async () => {
+    if (loading) {
+      setError("Still loading word bank, please wait a moment...");
+      return;
+    }
+
     if (!playerName.trim()) {
       setError("Please enter your name");
       return;
@@ -241,9 +246,10 @@ const MPCreate: React.FC = () => {
 
         <button
           onClick={createRoom}
+          disabled={loading}
           className="w-full py-4 rounded-2xl bg-[#ff4d00] text-white font-barlow font-bold text-xl tracking-[1px] uppercase transition-all hover:bg-[#e04400] active:scale-97"
         >
-          Create Room
+          {loading ? "Loading words..." : "Create Room"}
         </button>
       </div>
     </div>
