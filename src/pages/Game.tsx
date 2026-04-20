@@ -392,6 +392,58 @@ const Game: React.FC = () => {
     ],
   );
 
+  const handleWrong = useCallback(
+    async (word: Word, outcome: "wrong" | "skipped") => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setWordState("SUBMITTED_WRONG");
+      setStreak(0);
+
+      const newLog = [...wordLog, { word: word.word, outcome, pts: 0 }];
+      setWordLog(newLog);
+      setFeedback({
+        type: "wrong",
+        message:
+          outcome === "skipped"
+            ? `↷ Skipped (answer: ${word.word})`
+            : `✗ Wrong (answer: ${word.word})`,
+      });
+
+      if (state.isMultiplayer) {
+        await updateMPRecord(0, outcome, score, 0);
+      }
+
+      setLastResult({ word: word.word, pts: 0, outcome });
+      setShowLBFlash(true);
+
+      setTimeout(() => {
+        setShowLBFlash(false);
+        if (!state.isMultiplayer) {
+          const nextIndex = wordIndex + 1;
+          if (nextIndex >= words.length) {
+            endGame();
+          } else {
+            setWordIndex(nextIndex);
+            setCurrentWord(words[nextIndex]);
+            setWordState("IDLE");
+            setGuess("");
+            setShowHint("");
+            setHintUsed(false);
+            setFeedback(null);
+            if (inputRef.current) inputRef.current.focus();
+          }
+        }
+      }, 1800);
+    },
+    [
+      wordLog,
+      state.isMultiplayer,
+      score,
+      wordIndex,
+      words,
+      updateMPRecord,
+    ],
+  );
+
   const handleTimeout = useCallback(async () => {
     if (!currentWord) return;
     setWordState("TIMED_OUT");
@@ -417,7 +469,9 @@ const Game: React.FC = () => {
 
     setTimeout(() => {
       setShowLBFlash(false);
-      if (!state.isMultiplayer) {
+      if (state.isMultiplayer && state.isHost) {
+        advanceToNextWord();
+      } else if (!state.isMultiplayer) {
         const nextIndex = wordIndex + 1;
         if (nextIndex >= words.length) {
           endGame();
@@ -448,55 +502,10 @@ const Game: React.FC = () => {
   const handleSkip = useCallback(() => {
     if (wordState === "SUBMITTED_CORRECT" || wordState === "SUBMITTED_ALMOST")
       return;
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (!currentWord) return;
     setWordState("SKIPPED");
-    setStreak(0);
-
-    if (currentWord) {
-      const newLog = [
-        ...wordLog,
-        { word: currentWord.word, outcome: "skipped", pts: 0 },
-      ];
-      setWordLog(newLog);
-
-      if (state.isMultiplayer) {
-        updateMPRecord(0, "skipped", score, 0);
-      }
-
-      setLastResult({ word: currentWord.word, pts: 0, outcome: "skipped" });
-      setShowLBFlash(true);
-
-      setTimeout(() => {
-        setShowLBFlash(false);
-        if (!state.isMultiplayer) {
-          const nextIndex = wordIndex + 1;
-          if (nextIndex >= words.length) {
-            endGame();
-          } else {
-            setWordIndex(nextIndex);
-            setCurrentWord(words[nextIndex]);
-            setWordState("IDLE");
-            setGuess("");
-            setShowHint("");
-            setHintUsed(false);
-            setFeedback(null);
-            if (inputRef.current) inputRef.current.focus();
-          }
-        }
-      }, 1800);
-    }
-  }, [
-    wordState,
-    currentWord,
-    wordLog,
-    score,
-    state.isMultiplayer,
-    state.isHost,
-    words,
-    wordIndex,
-    advanceToNextWord,
-    updateMPRecord,
-  ]);
+    handleWrong(currentWord, "skipped");
+  }, [wordState, currentWord, handleWrong]);
 
   const handleSubmit = useCallback(() => {
     if (wordState === "SUBMITTED_CORRECT" || wordState === "SUBMITTED_ALMOST")
@@ -511,19 +520,9 @@ const Game: React.FC = () => {
     } else if (dist === 1 || dist === 2) {
       handleAlmost(currentWord, dist);
     } else {
-      setWordState("SUBMITTED_WRONG");
-      setFeedback({ type: "wrong", message: "✗ Wrong answer! Try again." });
-      setTimeout(() => {
-        setWordState("TYPING");
-        setFeedback(null);
-        setGuess("");
-        if (inputRef.current) {
-          inputRef.current.value = "";
-          inputRef.current.focus();
-        }
-      }, 1000);
+      handleWrong(currentWord, "wrong");
     }
-  }, [guess, currentWord, wordState, handleCorrect, handleAlmost]);
+  }, [guess, currentWord, wordState, handleCorrect, handleAlmost, handleWrong]);
 
   const handleUseHint = () => {
     if (hintsLeft <= 0 || hintUsed || !currentWord) return;
