@@ -217,16 +217,6 @@ const Game: React.FC = () => {
     [state.isMultiplayer, state.roomCode, state.playerId],
   );
 
-  const checkAllAnswered = useCallback(async () => {
-    if (!state.isMultiplayer || !state.isHost) return;
-    const playerList = Object.values(players);
-    if (playerList.length === 0) return;
-    const allAnswered = playerList.every((p) => p.answered);
-    if (allAnswered) {
-      await advanceToNextWord();
-    }
-  }, [state.isMultiplayer, state.isHost, players]);
-
   const advanceToNextWord = useCallback(async () => {
     if (!state.isHost) return;
     const nextIndex = wordIndex + 1;

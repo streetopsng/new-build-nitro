@@ -22,8 +22,8 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export const GameProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [wordBank, setWordBank] = useState<Word[]>([]);
-  const [themes, setThemes] = useState<Theme[]>([]);
+  const [wordBank] = useState<Word[]>([]);
+  const [themes] = useState<Theme[]>([]);
   const [loading, setLoading] = useState(true);
   const [gameState, setGameState] = useState<GameState | null>(null);
 
