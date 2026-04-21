@@ -107,6 +107,8 @@ const Results: React.FC = () => {
             {/* Podium for top 3 */}
             <div className="flex items-end justify-center gap-3 mb-4">
               {sortedPlayers.slice(0, 3).map((player: any, index: number) => {
+                console.log(player);
+
                 const podiumOrder = [1, 0, 2]; // 2nd, 1st, 3rd
                 const heights = ["h-32", "h-40", "h-28"];
                 const displayIndex = podiumOrder[index];

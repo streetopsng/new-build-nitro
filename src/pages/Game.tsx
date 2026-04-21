@@ -331,6 +331,8 @@ const Game: React.FC = () => {
 
   const handleCorrect = useCallback(
     async (word: Word, isAutoAdvance: boolean) => {
+      console.log(isAutoAdvance);
+
       if (timerRef.current) clearInterval(timerRef.current);
       setWordState("SUBMITTED_CORRECT");
 
