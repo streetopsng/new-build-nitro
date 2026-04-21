@@ -133,6 +133,7 @@ const Game: React.FC = () => {
       const totalTime = durations[state.difficulty];
       setTimeLeft(totalTime);
 
+      if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 0.1) {
@@ -143,27 +144,47 @@ const Game: React.FC = () => {
           return prev - 0.1;
         });
       }, 100);
-    } else if (state.mode === "sprint") {
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [currentWord, state.mode, state.difficulty, state.isMultiplayer]);
+
+  // Separate effect for sprint timer - only runs once when component mounts
+  useEffect(() => {
+    if (!state.isMultiplayer && state.mode === "sprint") {
       const sprintDurations = { easy: 180, medium: 120, hard: 60 };
-      setSprintTimeLeft(sprintDurations[state.difficulty]);
+      const initialTime = sprintDurations[state.difficulty];
+      setSprintTimeLeft(initialTime);
+
+      // Clear any existing sprint timer
+      if (sprintTimerRef.current) {
+        clearInterval(sprintTimerRef.current);
+      }
 
       sprintTimerRef.current = setInterval(() => {
         setSprintTimeLeft((prev) => {
           if (prev <= 0.1) {
-            if (sprintTimerRef.current) clearInterval(sprintTimerRef.current);
+            if (sprintTimerRef.current) {
+              clearInterval(sprintTimerRef.current);
+              sprintTimerRef.current = null;
+            }
             endGame();
             return 0;
           }
           return prev - 0.1;
         });
       }, 100);
-    }
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (sprintTimerRef.current) clearInterval(sprintTimerRef.current);
-    };
-  }, [currentWord, state.mode, state.difficulty, state.isMultiplayer]);
+      return () => {
+        if (sprintTimerRef.current) {
+          clearInterval(sprintTimerRef.current);
+          sprintTimerRef.current = null;
+        }
+      };
+    }
+  }, [state.mode, state.difficulty, state.isMultiplayer]);
 
   // Setup multiplayer round timer
   useEffect(() => {
@@ -333,7 +354,11 @@ const Game: React.FC = () => {
     async (word: Word, isAutoAdvance: boolean) => {
       console.log(isAutoAdvance);
 
-      if (timerRef.current) clearInterval(timerRef.current);
+      // Only clear round timer, not sprint timer
+      if (state.mode === "round" && timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+
       setWordState("SUBMITTED_CORRECT");
 
       let pts = 50;
@@ -368,19 +393,27 @@ const Game: React.FC = () => {
         setTimeout(() => {
           setShowLBFlash(false);
           const nextIndex = wordIndex + 1;
-          if (nextIndex >= words.length) {
+          if (nextIndex >= words.length && state.mode === "round") {
             endGame();
+          } else if (nextIndex >= words.length && state.mode === "sprint") {
+            // For sprint mode, loop back to first word
+            if (words.length > 0) {
+              setWordIndex(0);
+              setCurrentWord(words[0]);
+            }
           } else {
             setWordIndex(nextIndex);
             setCurrentWord(words[nextIndex]);
-            setWordState("IDLE");
-            setGuess("");
-            setShowHint("");
-            setHintUsed(false);
-            setFeedback(null);
-            setTimeLeft(30);
-            if (inputRef.current) inputRef.current.focus();
           }
+          setWordState("IDLE");
+          setGuess("");
+          setShowHint("");
+          setHintUsed(false);
+          setFeedback(null);
+          if (state.mode === "round") {
+            setTimeLeft(30);
+          }
+          if (inputRef.current) inputRef.current.focus();
         }, 1800);
       }
     },
@@ -390,6 +423,7 @@ const Game: React.FC = () => {
       score,
       wordLog,
       state.isMultiplayer,
+      state.mode,
       words,
       wordIndex,
       updateMPRecord,
@@ -398,7 +432,11 @@ const Game: React.FC = () => {
 
   const handleAlmost = useCallback(
     async (word: Word, dist: number) => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      // Only clear round timer, not sprint timer
+      if (state.mode === "round" && timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+
       setWordState("SUBMITTED_ALMOST");
       setStreak(0);
 
@@ -427,19 +465,27 @@ const Game: React.FC = () => {
         setTimeout(() => {
           setShowLBFlash(false);
           const nextIndex = wordIndex + 1;
-          if (nextIndex >= words.length) {
+          if (nextIndex >= words.length && state.mode === "round") {
             endGame();
+          } else if (nextIndex >= words.length && state.mode === "sprint") {
+            // For sprint mode, loop back to first word
+            if (words.length > 0) {
+              setWordIndex(0);
+              setCurrentWord(words[0]);
+            }
           } else {
             setWordIndex(nextIndex);
             setCurrentWord(words[nextIndex]);
-            setWordState("IDLE");
-            setGuess("");
-            setShowHint("");
-            setHintUsed(false);
-            setFeedback(null);
-            setTimeLeft(30);
-            if (inputRef.current) inputRef.current.focus();
           }
+          setWordState("IDLE");
+          setGuess("");
+          setShowHint("");
+          setHintUsed(false);
+          setFeedback(null);
+          if (state.mode === "round") {
+            setTimeLeft(30);
+          }
+          if (inputRef.current) inputRef.current.focus();
         }, 1800);
       }
     },
@@ -448,6 +494,7 @@ const Game: React.FC = () => {
       score,
       wordLog,
       state.isMultiplayer,
+      state.mode,
       words,
       wordIndex,
       updateMPRecord,
@@ -456,7 +503,11 @@ const Game: React.FC = () => {
 
   const handleWrong = useCallback(
     async (word: Word, outcome: "wrong" | "skipped") => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      // Only clear round timer, not sprint timer
+      if (state.mode === "round" && timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+
       setWordState("SUBMITTED_WRONG");
       setStreak(0);
 
@@ -486,18 +537,24 @@ const Game: React.FC = () => {
           setShowLBFlash(false);
           if (!state.isMultiplayer) {
             const nextIndex = wordIndex + 1;
-            if (nextIndex >= words.length) {
+            if (nextIndex >= words.length && state.mode === "round") {
               endGame();
+            } else if (nextIndex >= words.length && state.mode === "sprint") {
+              // For sprint mode, loop back to first word
+              if (words.length > 0) {
+                setWordIndex(0);
+                setCurrentWord(words[0]);
+              }
             } else {
               setWordIndex(nextIndex);
               setCurrentWord(words[nextIndex]);
-              setWordState("IDLE");
-              setGuess("");
-              setShowHint("");
-              setHintUsed(false);
-              setFeedback(null);
-              if (inputRef.current) inputRef.current.focus();
             }
+            setWordState("IDLE");
+            setGuess("");
+            setShowHint("");
+            setHintUsed(false);
+            setFeedback(null);
+            if (inputRef.current) inputRef.current.focus();
           }
         }, 1800);
       } else {
@@ -510,11 +567,25 @@ const Game: React.FC = () => {
         }, 1500);
       }
     },
-    [wordLog, state.isMultiplayer, score, wordIndex, words, updateMPRecord],
+    [
+      wordLog,
+      state.isMultiplayer,
+      state.mode,
+      score,
+      wordIndex,
+      words,
+      updateMPRecord,
+    ],
   );
 
   const handleTimeout = useCallback(async () => {
     if (!currentWord) return;
+
+    // Only clear round timer, not sprint timer
+    if (state.mode === "round" && timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
     setWordState("TIMED_OUT");
     setStreak(0);
 
@@ -542,18 +613,24 @@ const Game: React.FC = () => {
         advanceToNextWord();
       } else if (!state.isMultiplayer) {
         const nextIndex = wordIndex + 1;
-        if (nextIndex >= words.length) {
+        if (nextIndex >= words.length && state.mode === "round") {
           endGame();
+        } else if (nextIndex >= words.length && state.mode === "sprint") {
+          // For sprint mode, loop back to first word
+          if (words.length > 0) {
+            setWordIndex(0);
+            setCurrentWord(words[0]);
+          }
         } else {
           setWordIndex(nextIndex);
           setCurrentWord(words[nextIndex]);
-          setWordState("IDLE");
-          setGuess("");
-          setShowHint("");
-          setHintUsed(false);
-          setFeedback(null);
-          if (inputRef.current) inputRef.current.focus();
         }
+        setWordState("IDLE");
+        setGuess("");
+        setShowHint("");
+        setHintUsed(false);
+        setFeedback(null);
+        if (inputRef.current) inputRef.current.focus();
       }
     }, 1800);
   }, [
@@ -562,6 +639,7 @@ const Game: React.FC = () => {
     score,
     state.isMultiplayer,
     state.isHost,
+    state.mode,
     words,
     wordIndex,
     advanceToNextWord,
@@ -610,7 +688,10 @@ const Game: React.FC = () => {
 
   const endGame = () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (sprintTimerRef.current) clearInterval(sprintTimerRef.current);
+    if (sprintTimerRef.current) {
+      clearInterval(sprintTimerRef.current);
+      sprintTimerRef.current = null;
+    }
     if (mpTimerRef.current) clearInterval(mpTimerRef.current);
 
     // Only navigate directly in solo mode
