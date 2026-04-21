@@ -45,6 +45,7 @@ const Game: React.FC = () => {
   const [wordLog, setWordLog] = useState<any[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
   const [sprintTimeLeft, setSprintTimeLeft] = useState(180);
+  const [mpRoundTimeLeft, setMpRoundTimeLeft] = useState(30);
   const [wordState, setWordState] = useState<
     | "IDLE"
     | "TYPING"
@@ -67,6 +68,7 @@ const Game: React.FC = () => {
 
   const timerRef = useRef<any | null>(null);
   const sprintTimerRef = useRef<any | null>(null);
+  const mpTimerRef = useRef<any | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isAdvancingRef = useRef(false);
 
@@ -102,7 +104,10 @@ const Game: React.FC = () => {
             const bank = Object.values(snapshot.val()) as Word[];
             const filtered = bank.filter((w) => state.themes.includes(w.theme));
             const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-            const selected = shuffled.slice(0, state.mode === "round" ? 10 : 50);
+            const selected = shuffled.slice(
+              0,
+              state.mode === "round" ? 10 : 50,
+            );
             setWords(selected);
             if (selected.length > 0) setCurrentWord(selected[0]);
           } else {
@@ -119,9 +124,9 @@ const Game: React.FC = () => {
     loadWords();
   }, [state]);
 
-  // Setup timers
+  // Setup timers for solo mode
   useEffect(() => {
-    if (!currentWord) return;
+    if (!currentWord || state.isMultiplayer) return;
 
     if (state.mode === "round") {
       const durations = { easy: 30, medium: 20, hard: 10 };
@@ -138,7 +143,7 @@ const Game: React.FC = () => {
           return prev - 0.1;
         });
       }, 100);
-    } else if (state.mode === "sprint" && !state.isMultiplayer) {
+    } else if (state.mode === "sprint") {
       const sprintDurations = { easy: 180, medium: 120, hard: 60 };
       setSprintTimeLeft(sprintDurations[state.difficulty]);
 
@@ -158,7 +163,34 @@ const Game: React.FC = () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (sprintTimerRef.current) clearInterval(sprintTimerRef.current);
     };
-  }, [currentWord, state.mode, state.difficulty]);
+  }, [currentWord, state.mode, state.difficulty, state.isMultiplayer]);
+
+  // Setup multiplayer round timer
+  useEffect(() => {
+    if (!state.isMultiplayer || !currentWord) return;
+
+    const durations = { easy: 30, medium: 20, hard: 10 };
+    const totalTime = durations[state.difficulty];
+    setMpRoundTimeLeft(totalTime);
+
+    mpTimerRef.current = setInterval(() => {
+      setMpRoundTimeLeft((prev) => {
+        if (prev <= 0.1) {
+          if (mpTimerRef.current) clearInterval(mpTimerRef.current);
+          // Time's up - host advances to next word
+          if (state.isHost) {
+            advanceToNextWord();
+          }
+          return 0;
+        }
+        return prev - 0.1;
+      });
+    }, 100);
+
+    return () => {
+      if (mpTimerRef.current) clearInterval(mpTimerRef.current);
+    };
+  }, [currentWord, state.isMultiplayer, state.difficulty, state.isHost]);
 
   // Listen to multiplayer updates
   useEffect(() => {
@@ -182,8 +214,10 @@ const Game: React.FC = () => {
           setShowHint("");
           setHintUsed(false);
           setFeedback(null);
+          // Reset round timer for new word
+          const durations = { easy: 30, medium: 20, hard: 10 };
+          setMpRoundTimeLeft(durations[state.difficulty]);
           if (inputRef.current) {
-            inputRef.current.value = "";
             inputRef.current.focus();
           }
         }
@@ -194,7 +228,35 @@ const Game: React.FC = () => {
         indexUnsubscribe();
       };
     }
-  }, [state.isMultiplayer, state.roomCode, wordIndex, words]);
+  }, [state.isMultiplayer, state.roomCode, wordIndex, words, state.difficulty]);
+
+  // Listen for game status changes (results)
+  useEffect(() => {
+    if (!state.isMultiplayer || !state.roomCode) return;
+
+    const statusRef = ref(db, `rooms/${state.roomCode}/status`);
+    const unsubscribe = onValue(statusRef, (snapshot) => {
+      const status = snapshot.val();
+      if (status === "results") {
+        // Game is over, navigate to results
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (sprintTimerRef.current) clearInterval(sprintTimerRef.current);
+        if (mpTimerRef.current) clearInterval(mpTimerRef.current);
+
+        navigate("/results", {
+          state: {
+            score,
+            wordLog,
+            isMultiplayer: true,
+            players,
+            roomCode: state.roomCode,
+          },
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [state.isMultiplayer, state.roomCode, score, wordLog, players, navigate]);
 
   const updateMPRecord = useCallback(
     async (
@@ -222,8 +284,11 @@ const Game: React.FC = () => {
     if (!state.isHost) return;
     const nextIndex = wordIndex + 1;
     if (nextIndex >= words.length) {
-      await update(ref(db, `rooms/${state.roomCode}`), { status: "results" });
-      endGame();
+      // Game is complete - set status to results
+      await update(ref(db, `rooms/${state.roomCode}`), {
+        status: "results",
+        gameEndedAt: Date.now(),
+      });
     } else {
       const resetObj: any = {
         currentWordIndex: nextIndex,
@@ -241,7 +306,9 @@ const Game: React.FC = () => {
   const checkAllAnswered = useCallback(async () => {
     if (!state.isMultiplayer || !state.isHost || isAdvancingRef.current) return;
 
-    const activePlayers = Object.values(players).filter((p) => p.connected !== false);
+    const activePlayers = Object.values(players).filter(
+      (p) => p.connected !== false,
+    );
     if (activePlayers.length === 0) return;
 
     const allAnswered = activePlayers.every((p) => p.answered);
@@ -251,7 +318,6 @@ const Game: React.FC = () => {
     try {
       await advanceToNextWord();
     } finally {
-      // Small lock window prevents duplicate host advances from rapid RTDB updates.
       setTimeout(() => {
         isAdvancingRef.current = false;
       }, 250);
@@ -291,32 +357,30 @@ const Game: React.FC = () => {
 
       if (state.isMultiplayer) {
         await updateMPRecord(finalPts, "correct", newScore, newStreak);
-      }
+        // In multiplayer, don't auto-advance - wait for timer or all players
+      } else {
+        // Solo mode - advance after delay
+        setLastResult({ word: word.word, pts: finalPts, outcome: "correct" });
+        setShowLBFlash(true);
 
-      setLastResult({ word: word.word, pts: finalPts, outcome: "correct" });
-      setShowLBFlash(true);
-
-      setTimeout(() => {
-        setShowLBFlash(false);
-        if (!isAutoAdvance) {
-          if (!state.isMultiplayer) {
-            const nextIndex = wordIndex + 1;
-            if (nextIndex >= words.length) {
-              endGame();
-            } else {
-              setWordIndex(nextIndex);
-              setCurrentWord(words[nextIndex]);
-              setWordState("IDLE");
-              setGuess("");
-              setShowHint("");
-              setHintUsed(false);
-              setFeedback(null);
-              setTimeLeft(30);
-              if (inputRef.current) inputRef.current.focus();
-            }
+        setTimeout(() => {
+          setShowLBFlash(false);
+          const nextIndex = wordIndex + 1;
+          if (nextIndex >= words.length) {
+            endGame();
+          } else {
+            setWordIndex(nextIndex);
+            setCurrentWord(words[nextIndex]);
+            setWordState("IDLE");
+            setGuess("");
+            setShowHint("");
+            setHintUsed(false);
+            setFeedback(null);
+            setTimeLeft(30);
+            if (inputRef.current) inputRef.current.focus();
           }
-        }
-      }, 1800);
+        }, 1800);
+      }
     },
     [
       hintUsed,
@@ -324,10 +388,8 @@ const Game: React.FC = () => {
       score,
       wordLog,
       state.isMultiplayer,
-      state.isHost,
       words,
       wordIndex,
-      advanceToNextWord,
       updateMPRecord,
     ],
   );
@@ -354,14 +416,14 @@ const Game: React.FC = () => {
 
       if (state.isMultiplayer) {
         await updateMPRecord(pts, "almost", newScore, 0);
-      }
+        // In multiplayer, don't auto-advance - wait for timer or all players
+      } else {
+        // Solo mode - advance after delay
+        setLastResult({ word: word.word, pts, outcome: "almost" });
+        setShowLBFlash(true);
 
-      setLastResult({ word: word.word, pts, outcome: "almost" });
-      setShowLBFlash(true);
-
-      setTimeout(() => {
-        setShowLBFlash(false);
-        if (!state.isMultiplayer) {
+        setTimeout(() => {
+          setShowLBFlash(false);
           const nextIndex = wordIndex + 1;
           if (nextIndex >= words.length) {
             endGame();
@@ -376,18 +438,16 @@ const Game: React.FC = () => {
             setTimeLeft(30);
             if (inputRef.current) inputRef.current.focus();
           }
-        }
-      }, 1800);
+        }, 1800);
+      }
     },
     [
       hintUsed,
       score,
       wordLog,
       state.isMultiplayer,
-      state.isHost,
       words,
       wordIndex,
-      advanceToNextWord,
       updateMPRecord,
     ],
   );
@@ -405,43 +465,50 @@ const Game: React.FC = () => {
         message:
           outcome === "skipped"
             ? `↷ Skipped (answer: ${word.word})`
-            : `✗ Wrong (answer: ${word.word})`,
+            : `✗ Wrong - try again!`,
       });
 
       if (state.isMultiplayer) {
-        await updateMPRecord(0, outcome, score, 0);
+        // Only mark as answered for skipped, not for wrong answers
+        if (outcome === "skipped") {
+          await updateMPRecord(0, outcome, score, 0);
+        }
       }
 
-      setLastResult({ word: word.word, pts: 0, outcome });
-      setShowLBFlash(true);
+      // Only show flash for skipped, not for wrong answers
+      if (outcome === "skipped") {
+        setLastResult({ word: word.word, pts: 0, outcome });
+        setShowLBFlash(true);
 
-      setTimeout(() => {
-        setShowLBFlash(false);
-        if (!state.isMultiplayer) {
-          const nextIndex = wordIndex + 1;
-          if (nextIndex >= words.length) {
-            endGame();
-          } else {
-            setWordIndex(nextIndex);
-            setCurrentWord(words[nextIndex]);
-            setWordState("IDLE");
-            setGuess("");
-            setShowHint("");
-            setHintUsed(false);
-            setFeedback(null);
-            if (inputRef.current) inputRef.current.focus();
+        setTimeout(() => {
+          setShowLBFlash(false);
+          if (!state.isMultiplayer) {
+            const nextIndex = wordIndex + 1;
+            if (nextIndex >= words.length) {
+              endGame();
+            } else {
+              setWordIndex(nextIndex);
+              setCurrentWord(words[nextIndex]);
+              setWordState("IDLE");
+              setGuess("");
+              setShowHint("");
+              setHintUsed(false);
+              setFeedback(null);
+              if (inputRef.current) inputRef.current.focus();
+            }
           }
-        }
-      }, 1800);
+        }, 1800);
+      } else {
+        // For wrong answers, just reset state but stay on same word
+        setTimeout(() => {
+          setWordState("IDLE");
+          setFeedback(null);
+          // Don't clear guess - let user modify their answer
+          if (inputRef.current) inputRef.current.focus();
+        }, 1500);
+      }
     },
-    [
-      wordLog,
-      state.isMultiplayer,
-      score,
-      wordIndex,
-      words,
-      updateMPRecord,
-    ],
+    [wordLog, state.isMultiplayer, score, wordIndex, words, updateMPRecord],
   );
 
   const handleTimeout = useCallback(async () => {
@@ -500,7 +567,11 @@ const Game: React.FC = () => {
   ]);
 
   const handleSkip = useCallback(() => {
-    if (wordState === "SUBMITTED_CORRECT" || wordState === "SUBMITTED_ALMOST")
+    if (
+      wordState === "SUBMITTED_CORRECT" ||
+      wordState === "SUBMITTED_ALMOST" ||
+      wordState === "SUBMITTED_WRONG"
+    )
       return;
     if (!currentWord) return;
     setWordState("SKIPPED");
@@ -508,7 +579,11 @@ const Game: React.FC = () => {
   }, [wordState, currentWord, handleWrong]);
 
   const handleSubmit = useCallback(() => {
-    if (wordState === "SUBMITTED_CORRECT" || wordState === "SUBMITTED_ALMOST")
+    if (
+      wordState === "SUBMITTED_CORRECT" ||
+      wordState === "SUBMITTED_ALMOST" ||
+      wordState === "SUBMITTED_WRONG"
+    )
       return;
     if (!guess.trim() || !currentWord) return;
 
@@ -534,9 +609,15 @@ const Game: React.FC = () => {
   const endGame = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     if (sprintTimerRef.current) clearInterval(sprintTimerRef.current);
-    navigate("/results", {
-      state: { score, wordLog, isMultiplayer: state.isMultiplayer, players },
-    });
+    if (mpTimerRef.current) clearInterval(mpTimerRef.current);
+
+    // Only navigate directly in solo mode
+    if (!state.isMultiplayer) {
+      navigate("/results", {
+        state: { score, wordLog, isMultiplayer: false, players },
+      });
+    }
+    // In multiplayer, the status listener will handle navigation
   };
 
   if (isLoading) {
@@ -589,11 +670,26 @@ const Game: React.FC = () => {
         ? { easy: 30, medium: 20, hard: 10 }[state.difficulty]
         : 1)) *
     100;
+  const mpTimerPercentage =
+    (mpRoundTimeLeft /
+      (state.difficulty === "easy"
+        ? 30
+        : state.difficulty === "medium"
+          ? 20
+          : 10)) *
+    100;
   const sprintMinutes = Math.floor(sprintTimeLeft / 60);
   const sprintSeconds = Math.floor(sprintTimeLeft % 60);
   const isDanger =
-    (state.mode === "round" && timerPercentage <= 15) ||
+    (state.mode === "round" && !state.isMultiplayer && timerPercentage <= 15) ||
     (state.mode === "sprint" && sprintTimeLeft <= 10);
+  const isMpDanger = state.isMultiplayer && mpRoundTimeLeft <= 5;
+
+  // Check if current player has answered
+  const hasPlayerAnswered =
+    state.isMultiplayer && state.playerId
+      ? players[state.playerId]?.answered
+      : false;
 
   return (
     <div className="min-h-screen bg-[#1a120d] p-4 flex flex-col gap-3 text-[#ffe9dc]">
@@ -636,8 +732,8 @@ const Game: React.FC = () => {
         </div>
       </div>
 
-      {/* Round Timer */}
-      {state.mode === "round" && (
+      {/* Solo Round Timer */}
+      {state.mode === "round" && !state.isMultiplayer && (
         <>
           <div className="flex items-center justify-between mb-1">
             <div
@@ -653,6 +749,28 @@ const Game: React.FC = () => {
             <div
               className={`h-full rounded-full transition-all duration-100 ${isDanger ? "bg-[#d64545]" : "bg-[#ff4d00]"}`}
               style={{ width: `${Math.max(0, timerPercentage)}%` }}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Multiplayer Round Timer */}
+      {state.isMultiplayer && state.mode === "round" && (
+        <>
+          <div className="flex items-center justify-between mb-1">
+            <div
+              className={`font-barlow text-[28px] font-black transition-colors ${isMpDanger ? "text-[#d64545]" : "text-white"}`}
+            >
+              {Math.ceil(mpRoundTimeLeft)}
+            </div>
+            <div className="text-[10px] tracking-[2px] uppercase text-[rgba(255,255,255,0.4)]">
+              seconds
+            </div>
+          </div>
+          <div className="relative w-full h-2 bg-[rgba(255,255,255,0.1)] rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-100 ${isMpDanger ? "bg-[#d64545]" : "bg-[#ff4d00]"}`}
+              style={{ width: `${Math.max(0, mpTimerPercentage)}%` }}
             />
           </div>
         </>
@@ -724,24 +842,33 @@ const Game: React.FC = () => {
         <input
           ref={inputRef}
           type="text"
+          value={guess}
           onChange={(e) => setGuess(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           className="w-full p-4 px-[18px] bg-[#2e1b14] border-2 border-[rgba(255,255,255,0.12)] rounded-lg text-white font-dm-sans text-lg font-medium outline-none focus:border-[#ff4d00] transition-colors"
-          placeholder="Type your answer..."
+          placeholder={
+            hasPlayerAnswered
+              ? "Waiting for other players..."
+              : "Type your answer..."
+          }
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}
           disabled={
             wordState === "SUBMITTED_CORRECT" ||
-            wordState === "SUBMITTED_ALMOST"
+            wordState === "SUBMITTED_ALMOST" ||
+            wordState === "SUBMITTED_WRONG" ||
+            hasPlayerAnswered
           }
         />
         <button
           onClick={handleSubmit}
           disabled={
             wordState === "SUBMITTED_CORRECT" ||
-            wordState === "SUBMITTED_ALMOST"
+            wordState === "SUBMITTED_ALMOST" ||
+            wordState === "SUBMITTED_WRONG" ||
+            hasPlayerAnswered
           }
           className="w-full py-4 rounded-lg bg-[#ff4d00] text-white font-barlow text-[22px] font-black uppercase tracking-[1px] transition-all hover:bg-[#e04400] active:scale-98 disabled:opacity-35 disabled:cursor-not-allowed"
         >
@@ -750,14 +877,15 @@ const Game: React.FC = () => {
         <div className="flex gap-2">
           <button
             onClick={handleUseHint}
-            disabled={hintsLeft <= 0 || hintUsed}
+            disabled={hintsLeft <= 0 || hintUsed || hasPlayerAnswered}
             className="flex items-center gap-1.5 px-4 py-3 bg-[rgba(255,154,0,0.12)] border border-[rgba(255,154,0,0.25)] rounded-lg text-[#ff9a00] font-barlow text-base font-bold uppercase tracking-wide transition-all hover:bg-[rgba(255,154,0,0.2)] disabled:opacity-35 disabled:cursor-not-allowed"
           >
             💡 Hint (<span>{hintsLeft}</span>)
           </button>
           <button
             onClick={handleSkip}
-            className="flex-1 px-4 py-3 bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg text-[rgba(255,255,255,0.4)] font-barlow text-base font-bold uppercase tracking-wide transition-all hover:bg-[rgba(255,255,255,0.1)] hover:text-white"
+            disabled={hasPlayerAnswered}
+            className="flex-1 px-4 py-3 bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.1)] rounded-lg text-[rgba(255,255,255,0.4)] font-barlow text-base font-bold uppercase tracking-wide transition-all hover:bg-[rgba(255,255,255,0.1)] hover:text-white disabled:opacity-35 disabled:cursor-not-allowed"
           >
             Skip →
           </button>
