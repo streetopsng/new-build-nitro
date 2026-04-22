@@ -26,9 +26,21 @@ const Results: React.FC = () => {
     return null;
   }
 
-  const { score, wordLog, isMultiplayer, players } = state;
-  const correct = wordLog.filter((w) => w.outcome === "correct").length;
-  const total = wordLog.length;
+  const { score: rawScore, wordLog, isMultiplayer, players } = state;
+  const wordLogValue = wordLog || [];
+  const currentPlayerId = state.playerId || localStorage.getItem("playerId");
+  const sortedPlayers = players
+    ? Object.values(players).sort((a: any, b: any) => b.score - a.score)
+    : [];
+  const currentPlayer = sortedPlayers.find(
+    (p: any) => p.id === currentPlayerId,
+  );
+  const scoreValue =
+    rawScore ??
+    currentPlayer?.score ??
+    wordLogValue.reduce((sum, item) => sum + (item.pts || 0), 0);
+  const correct = wordLogValue.filter((w) => w.outcome === "correct").length;
+  const total = wordLogValue.length;
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
 
   const dotColors: Record<string, string> = {
@@ -39,13 +51,9 @@ const Results: React.FC = () => {
     wrong: "#d64545",
   };
 
-  const sortedPlayers = players
-    ? Object.values(players).sort((a: any, b: any) => b.score - a.score)
-    : [];
   const medals = ["🥇", "🥈", "🥉"];
 
   // Find current player's rank
-  const currentPlayerId = state.playerId || localStorage.getItem("playerId");
   let playerRank =
     sortedPlayers.findIndex((p: any) => p.id === currentPlayerId) + 1;
 
@@ -59,6 +67,14 @@ const Results: React.FC = () => {
     }
   }
 
+  const placementLabel = isMultiplayer
+    ? playerRank > 0
+      ? `You placed #${playerRank} of ${sortedPlayers.length}`
+      : sortedPlayers.length > 0
+        ? `Final standings`
+        : `Here's how you did`
+    : "Here's how you did";
+
   return (
     <div className="min-h-screen bg-[#1a120d] p-6 flex flex-col items-center overflow-y-auto text-[#ffe9dc]">
       <div className="max-w-md w-full">
@@ -67,9 +83,7 @@ const Results: React.FC = () => {
             {isMultiplayer ? "Game Over!" : "Game Over!"}
           </div>
           <div className="text-[13px] text-[rgba(255,255,255,0.4)] mt-1.5">
-            {isMultiplayer
-              ? `You placed #${playerRank} of ${sortedPlayers.length}`
-              : "Here's how you did"}
+            {placementLabel}
           </div>
         </div>
 
@@ -77,7 +91,7 @@ const Results: React.FC = () => {
         <div className="grid grid-cols-2 gap-2.5 w-full mb-5">
           <div className="bg-[#2e1b14] rounded-2xl p-4 text-center border border-[rgba(255,255,255,0.06)]">
             <div className="font-barlow text-[40px] font-black text-white leading-none">
-              {score}
+              {scoreValue}
             </div>
             <div className="text-[11px] tracking-[2px] uppercase text-[rgba(255,255,255,0.4)] mt-1">
               Total Score
