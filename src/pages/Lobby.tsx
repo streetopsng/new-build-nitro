@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { db } from "../lib/firebase";
-import { ref, onValue, update } from "firebase/database";
+import { ref, onValue, update, get } from "firebase/database";
 
 interface LocationState {
   roomCode: string;
@@ -51,17 +51,24 @@ const Lobby: React.FC = () => {
     const statusRef = ref(db, `rooms/${state.roomCode}/status`);
     const statusUnsubscribe = onValue(statusRef, (snapshot) => {
       if (snapshot.val() === "playing") {
-        navigate("/game", {
-          state: {
-            roomCode: state.roomCode,
-            playerId: state.playerId,
-            isHost: state.isHost,
-            playerName: state.playerName,
-            isMultiplayer: true,
-            mode: "round",
-            difficulty: "easy",
-            themes: [],
-          },
+        // Fetch room settings
+        const roomRef = ref(db, `rooms/${state.roomCode}`);
+        get(roomRef).then((roomSnap) => {
+          if (roomSnap.exists()) {
+            const room = roomSnap.val();
+            navigate("/game", {
+              state: {
+                roomCode: state.roomCode,
+                playerId: state.playerId,
+                isHost: state.isHost,
+                playerName: state.playerName,
+                isMultiplayer: true,
+                mode: room.settings.mode,
+                difficulty: room.settings.difficulty,
+                themes: room.settings.themes,
+              },
+            });
+          }
         });
       }
     });
@@ -115,6 +122,10 @@ const Lobby: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#1a120d] p-6 text-[#ffe9dc]">
+      {/* Audio */}
+      <audio autoPlay loop>
+        <source src="/sounds/game-lobby.mp3" type="audio/mpeg" />
+      </audio>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-7">
           <button

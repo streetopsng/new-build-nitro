@@ -12,6 +12,8 @@ interface LocationState {
   isMultiplayer?: boolean;
   players?: Record<string, any>;
   roomCode?: string;
+  playerId?: string;
+  playerName?: string;
 }
 
 const Results: React.FC = () => {
@@ -43,9 +45,19 @@ const Results: React.FC = () => {
   const medals = ["🥇", "🥈", "🥉"];
 
   // Find current player's rank
-  const currentPlayerId = localStorage.getItem("playerId");
-  const playerRank =
+  const currentPlayerId = state.playerId || localStorage.getItem("playerId");
+  let playerRank =
     sortedPlayers.findIndex((p: any) => p.id === currentPlayerId) + 1;
+
+  // Fallback: if not found by id, try by name
+  if (playerRank === 0 && state.playerName) {
+    const playerByName = sortedPlayers.find(
+      (p: any) => p.name === state.playerName,
+    );
+    if (playerByName) {
+      playerRank = sortedPlayers.indexOf(playerByName) + 1;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#1a120d] p-6 flex flex-col items-center overflow-y-auto text-[#ffe9dc]">
