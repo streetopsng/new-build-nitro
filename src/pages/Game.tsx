@@ -71,6 +71,7 @@ const Game: React.FC = () => {
   const mpTimerRef = useRef<any | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isAdvancingRef = useRef(false);
+  const hasEndedRef = useRef(false);
 
   // Load words from Firebase or generate from themes
   useEffect(() => {
@@ -128,8 +129,13 @@ const Game: React.FC = () => {
       const sprintDurations = { easy: 180, medium: 120, hard: 60 };
       const initialTime = sprintDurations[state.difficulty];
 
-      // Set initial time
+      // Set initial time locally for display
       setSprintTimeLeft(initialTime);
+
+      // Only the host should own the live multiplayer timer
+      if (state.isMultiplayer && !state.isHost) {
+        return;
+      }
 
       // For multiplayer, sync to Firebase if host
       if (state.isMultiplayer && state.isHost && state.roomCode) {
@@ -341,6 +347,8 @@ const Game: React.FC = () => {
             isMultiplayer: true,
             players,
             roomCode: state.roomCode,
+            playerId: state.playerId,
+            playerName: state.playerName,
           },
         });
       }
@@ -729,13 +737,23 @@ const Game: React.FC = () => {
     setShowHint(formatHint(currentWord.word));
   };
 
-  const endGame = () => {
+  const endGame = async () => {
+    if (hasEndedRef.current) return;
+    hasEndedRef.current = true;
+
     if (timerRef.current) clearInterval(timerRef.current);
     if (sprintTimerRef.current) {
       clearInterval(sprintTimerRef.current);
       sprintTimerRef.current = null;
     }
     if (mpTimerRef.current) clearInterval(mpTimerRef.current);
+
+    if (state.isMultiplayer && state.isHost && state.roomCode) {
+      await update(ref(db, `rooms/${state.roomCode}`), {
+        status: "results",
+        gameEndedAt: Date.now(),
+      });
+    }
 
     navigate("/results", {
       state: {
@@ -836,9 +854,9 @@ const Game: React.FC = () => {
       {/* Sprint Header - Shows for BOTH solo and multiplayer sprint */}
       {state.mode === "sprint" && (
         <>
-          <audio autoPlay loop>
+          {/* <audio autoPlay loop>
             <source src="/sounds/game-lobby.mp3" type="audio/mpeg" />
-          </audio>
+          </audio> */}
           <div
             className={`text-center font-barlow text-[48px] font-black leading-none transition-colors ${isDanger ? "text-[#d64545]" : "text-white"}`}
           >
