@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { db } from "../lib/firebase";
 import { ref, onValue, update, get } from "firebase/database";
 import { useAudio } from "../contexts/AudioContext";
+import SoundToggle from "../components/SoundToggle";
 
 interface LocationState {
   roomCode: string;
@@ -30,7 +31,7 @@ const Lobby: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as LocationState;
-  const { soundOn, toggleSound } = useAudio();
+  const { soundOn } = useAudio();
 
   const [players, setPlayers] = useState<Record<string, Player>>({});
   const [isStarting, setIsStarting] = useState(false);
@@ -139,12 +140,7 @@ const Lobby: React.FC = () => {
           <div className="font-barlow font-black text-[28px] uppercase tracking-wide text-[#ffe9dc]">
             Lobby
           </div>
-          <button
-            onClick={toggleSound}
-            className="px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]"
-          >
-            {soundOn ? "Sound On" : "Sound Off"}
-          </button>
+          <SoundToggle />
         </div>
 
         <div className="bg-[#2e1b14] rounded-2xl p-5 text-center mb-5 border border-[rgba(255,77,0,0.2)]">

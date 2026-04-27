@@ -1,6 +1,7 @@
 // src/pages/Splash.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import SoundToggle from "../components/SoundToggle";
 
 const Splash: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,9 @@ const Splash: React.FC = () => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_10%,rgba(255,77,0,0.12)_0%,transparent_60%),radial-gradient(ellipse_at_80%_90%,rgba(255,154,0,0.08)_0%,transparent_50%)] pointer-events-none" />
 
       <div className="relative z-10">
+        <div className="mb-2 flex items-center justify-center gap-4">
+          <SoundToggle className="px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
+        </div>
         <div className="mb-2">
           <svg
             className="w-[72px] h-20 mx-auto animate-[flicker_1.4s_ease-in-out_infinite_alternate]"

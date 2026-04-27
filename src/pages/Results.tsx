@@ -1,6 +1,7 @@
 // src/pages/Results.tsx
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import SoundToggle from "../components/SoundToggle";
 
 interface LocationState {
   score: number;
@@ -77,6 +78,9 @@ const Results: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#1a120d] p-6 flex flex-col items-center overflow-y-auto text-[#ffe9dc]">
+      <div className="absolute top-4 right-4">
+        <SoundToggle className="px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
+      </div>
       <div className="max-w-md w-full">
         <div className="text-center mb-6">
           <div className="font-barlow text-[56px] font-black uppercase bg-gradient-to-br from-white via-[#ff9a00] to-[#ff4d00] bg-clip-text text-transparent leading-[0.9]">
