@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { db } from "../lib/firebase";
 import { ref, onValue, update, get, remove } from "firebase/database";
 import { levenshtein, formatHint } from "../utils/helpers";
+import { useAudio } from "../contexts/AudioContext";
 import type { Word } from "../types";
 
 interface LocationState {
@@ -33,6 +34,7 @@ const Game: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as LocationState;
+  const { soundOn, toggleSound } = useAudio();
 
   // Game state
   const [words, setWords] = useState<Word[]>([]);
@@ -313,22 +315,6 @@ const Game: React.FC = () => {
     state.difficulty,
   ]);
 
-  // For MULTIPLAYER SPRINT MODE - listen to game status only (no word index sync)
-  useEffect(() => {
-    if (state.isMultiplayer && state.mode === "sprint" && state.roomCode) {
-      // Only listen for game end, not word index
-      const statusRef = ref(db, `rooms/${state.roomCode}/status`);
-      const statusUnsubscribe = onValue(statusRef, (snapshot) => {
-        const status = snapshot.val();
-        if (status === "results") {
-          endGame();
-        }
-      });
-      return () => statusUnsubscribe();
-    }
-  }, [state.isMultiplayer, state.mode, state.roomCode]);
-
-  // Listen for game status changes (results)
   useEffect(() => {
     if (!state.isMultiplayer || !state.roomCode) return;
 
@@ -748,11 +734,14 @@ const Game: React.FC = () => {
     }
     if (mpTimerRef.current) clearInterval(mpTimerRef.current);
 
-    if (state.isMultiplayer && state.isHost && state.roomCode) {
-      await update(ref(db, `rooms/${state.roomCode}`), {
-        status: "results",
-        gameEndedAt: Date.now(),
-      });
+    if (state.isMultiplayer) {
+      if (state.isHost && state.roomCode) {
+        await update(ref(db, `rooms/${state.roomCode}`), {
+          status: "results",
+          gameEndedAt: Date.now(),
+        });
+      }
+      return;
     }
 
     navigate("/results", {
@@ -854,9 +843,16 @@ const Game: React.FC = () => {
       {/* Sprint Header - Shows for BOTH solo and multiplayer sprint */}
       {state.mode === "sprint" && (
         <>
-          {/* <audio autoPlay loop>
-            <source src="/sounds/game-lobby.mp3" type="audio/mpeg" />
-          </audio> */}
+          <audio autoPlay loop muted={!soundOn}>
+            <source
+              src={
+                state.isMultiplayer
+                  ? "/sounds/multi-player.mp3"
+                  : "/sounds/solo.mp3"
+              }
+              type="audio/mpeg"
+            />
+          </audio>
           <div
             className={`text-center font-barlow text-[48px] font-black leading-none transition-colors ${isDanger ? "text-[#d64545]" : "text-white"}`}
           >
@@ -878,10 +874,18 @@ const Game: React.FC = () => {
             {score}
           </div>
         </div>
-        <div
-          className={`flex items-center gap-1.5 bg-[rgba(255,154,0,0.15)] border border-[rgba(255,154,0,0.3)] rounded-full px-3 py-1.5 font-barlow font-bold text-base text-[#ff9a00] transition-opacity ${streak >= 2 ? "opacity-100" : "opacity-0"}`}
-        >
-          🔥 <span>{streak}</span>
+        <div className="flex items-center gap-2">
+          <div
+            className={`flex items-center gap-1.5 bg-[rgba(255,154,0,0.15)] border border-[rgba(255,154,0,0.3)] rounded-full px-3 py-1.5 font-barlow font-bold text-base text-[#ff9a00] transition-opacity ${streak >= 2 ? "opacity-100" : "opacity-0"}`}
+          >
+            🔥 <span>{streak}</span>
+          </div>
+          <button
+            onClick={toggleSound}
+            className="px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]"
+          >
+            {soundOn ? "Sound On" : "Sound Off"}
+          </button>
         </div>
         <div className="text-right">
           {state.isMultiplayer ? (
@@ -909,7 +913,7 @@ const Game: React.FC = () => {
       {/* Solo Round Timer */}
       {state.mode === "round" && !state.isMultiplayer && (
         <>
-          <audio autoPlay loop>
+          <audio autoPlay loop muted={!soundOn}>
             <source src="/sounds/solo.mp3" type="audio/mpeg" />
           </audio>
           <div className="flex items-center justify-between mb-1">
@@ -934,7 +938,7 @@ const Game: React.FC = () => {
       {/* Multiplayer Round Timer */}
       {state.isMultiplayer && state.mode === "round" && (
         <>
-          <audio autoPlay loop>
+          <audio autoPlay loop muted={!soundOn}>
             <source src="/sounds/multi-player.mp3" type="audio/mpeg" />
           </audio>
           <div className="flex items-center justify-between mb-1">
@@ -970,8 +974,14 @@ const Game: React.FC = () => {
                   key={player.id}
                   className={`flex flex-col items-center min-w-[64px] p-2 bg-[#2e1b14] rounded-lg border ${player.answered && state.mode === "round" ? "border-[rgba(47,179,109,0.4)]" : "border-[rgba(255,255,255,0.06)]"}`}
                 >
-                  <div className="text-[11px] text-[rgba(255,255,255,0.4)] text-center max-w-[58px] truncate">
-                    {player.name}
+                  <div className="flex items-center gap-1">
+                    <div className="text-[11px] text-[rgba(255,255,255,0.4)] text-center max-w-[58px] truncate">
+                      {player.name}
+                    </div>
+                    <span
+                      className={`w-2 h-2 rounded-full ${player.connected ? "bg-[#2fb36d]" : "bg-[rgba(255,255,255,0.2)]"}`}
+                      title={player.connected ? "Online" : "Offline"}
+                    />
                   </div>
                   <div
                     className="font-barlow text-xl font-black leading-none mt-0.5"

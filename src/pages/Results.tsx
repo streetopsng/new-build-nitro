@@ -132,42 +132,47 @@ const Results: React.FC = () => {
 
             {/* Podium for top 3 */}
             <div className="flex items-end justify-center gap-3 mb-4">
-              {sortedPlayers.slice(0, 3).map((player: any, index: number) => {
-                console.log(player);
+              {[sortedPlayers[1], sortedPlayers[0], sortedPlayers[2]]
+                .filter(Boolean)
+                .map((displayPlayer: any) => {
+                  const playerRank =
+                    sortedPlayers.findIndex(
+                      (p: any) => p.id === displayPlayer.id,
+                    ) + 1;
+                  const heights =
+                    playerRank === 1
+                      ? "h-40"
+                      : playerRank === 2
+                        ? "h-32"
+                        : "h-28";
+                  const medal = medals[playerRank - 1] || "";
 
-                const podiumOrder = [1, 0, 2]; // 2nd, 1st, 3rd
-                const heights = ["h-32", "h-40", "h-28"];
-                const displayIndex = podiumOrder[index];
-                if (!sortedPlayers[displayIndex]) return null;
-                const displayPlayer = sortedPlayers[displayIndex];
-                const actualRank = displayIndex;
-
-                return (
-                  <div
-                    key={displayPlayer.id}
-                    className={`flex flex-col items-center justify-end`}
-                  >
-                    <div className="text-2xl mb-2">{medals[actualRank]}</div>
+                  return (
                     <div
-                      className="w-3 h-3 rounded-full mb-2"
-                      style={{ background: displayPlayer.color }}
-                    ></div>
-                    <div className="text-xs font-medium text-center mb-1">
-                      {displayPlayer.name}
-                      {displayPlayer.id === currentPlayerId && " (you)"}
-                    </div>
-                    <div
-                      className={`${heights[displayIndex]} w-20 bg-[#2e1b14] rounded-t-xl flex items-center justify-center border border-[rgba(255,255,255,0.06)] ${
-                        actualRank === 0 ? "border-[rgba(255,215,0,0.3)]" : ""
-                      }`}
+                      key={displayPlayer.id}
+                      className="flex flex-col items-center justify-end"
                     >
-                      <div className="font-barlow text-2xl font-black text-white">
-                        {displayPlayer.score}
+                      <div className="text-2xl mb-2">{medal}</div>
+                      <div
+                        className="w-3 h-3 rounded-full mb-2"
+                        style={{ background: displayPlayer.color }}
+                      ></div>
+                      <div className="text-xs font-medium text-center mb-1">
+                        {displayPlayer.name}
+                        {displayPlayer.id === currentPlayerId && " (you)"}
+                      </div>
+                      <div
+                        className={`${heights} w-20 bg-[#2e1b14] rounded-t-xl flex items-center justify-center border border-[rgba(255,255,255,0.06)] ${
+                          playerRank === 1 ? "border-[rgba(255,215,0,0.3)]" : ""
+                        }`}
+                      >
+                        <div className="font-barlow text-2xl font-black text-white">
+                          {displayPlayer.score}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
 
             {/* Rest of players list */}
