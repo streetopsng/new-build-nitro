@@ -5,6 +5,7 @@ import { useGame } from "../contexts/GameContext";
 import { genRoomCode, genPlayerId, PLAYER_COLORS } from "../utils/helpers";
 import { db } from "../lib/firebase";
 import { ref, set } from "firebase/database";
+import SoundToggle from "../components/SoundToggle";
 
 const MPCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -71,6 +72,7 @@ const MPCreate: React.FC = () => {
       host: playerId,
       hostPlays,
       status: "lobby",
+      createdAt: Date.now(),
       settings: {
         mode,
         difficulty,
@@ -148,6 +150,7 @@ const MPCreate: React.FC = () => {
           <div className="font-barlow font-black text-[28px] uppercase tracking-wide text-[#ffe9dc]">
             Create Room
           </div>
+          <SoundToggle className="ml-auto px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
         </div>
 
         <div className="mb-6">

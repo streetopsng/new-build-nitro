@@ -5,6 +5,7 @@ import { db } from "../lib/firebase";
 import { ref, onValue, update, get, remove } from "firebase/database";
 import { levenshtein, formatHint } from "../utils/helpers";
 import { useAudio } from "../contexts/AudioContext";
+import SoundToggle from "../components/SoundToggle";
 import type { Word } from "../types";
 
 interface LocationState {
@@ -34,7 +35,7 @@ const Game: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as LocationState;
-  const { soundOn, toggleSound } = useAudio();
+  const { soundOn } = useAudio();
 
   // Game state
   const [words, setWords] = useState<Word[]>([]);
@@ -74,6 +75,7 @@ const Game: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const isAdvancingRef = useRef(false);
   const hasEndedRef = useRef(false);
+  const endGameRef = useRef<(() => Promise<void>) | null>(null);
 
   // Load words from Firebase or generate from themes
   useEffect(() => {
@@ -159,7 +161,9 @@ const Game: React.FC = () => {
               clearInterval(sprintTimerRef.current);
               sprintTimerRef.current = null;
             }
-            endGame();
+            if (endGameRef.current) {
+              endGameRef.current();
+            }
             return 0;
           }
           const newTime = prev - 0.1;
@@ -723,7 +727,7 @@ const Game: React.FC = () => {
     setShowHint(formatHint(currentWord.word));
   };
 
-  const endGame = async () => {
+  const endGame = useCallback(async () => {
     if (hasEndedRef.current) return;
     hasEndedRef.current = true;
 
@@ -733,6 +737,50 @@ const Game: React.FC = () => {
       sprintTimerRef.current = null;
     }
     if (mpTimerRef.current) clearInterval(mpTimerRef.current);
+
+    // For solo sprint mode, handle any pending guess
+    let finalScore = score;
+    let finalWordLog = wordLog;
+
+    if (
+      !state.isMultiplayer &&
+      state.mode === "sprint" &&
+      guess.trim() &&
+      currentWord &&
+      wordState === "TYPING"
+    ) {
+      const target = currentWord.word.toLowerCase();
+      const dist = levenshtein(guess, target);
+
+      // Calculate points based on submission
+      let pts = 0;
+      if (dist === 0) {
+        pts = 50;
+        if (hintUsed) pts = Math.round(pts * 0.6);
+        const newStreak = streak + 1;
+        if (newStreak >= 3) {
+          pts += 30;
+        }
+        finalScore = score + pts;
+        finalWordLog = [
+          ...wordLog,
+          { word: currentWord.word, outcome: "correct", pts },
+        ];
+      } else if (dist === 1 || dist === 2) {
+        pts = dist === 1 ? 35 : 15;
+        if (hintUsed) pts = Math.round(pts * 0.6);
+        finalScore = score + pts;
+        finalWordLog = [
+          ...wordLog,
+          { word: currentWord.word, outcome: "almost", pts },
+        ];
+      } else {
+        finalWordLog = [
+          ...wordLog,
+          { word: currentWord.word, outcome: "wrong", pts: 0 },
+        ];
+      }
+    }
 
     if (state.isMultiplayer) {
       if (state.isHost && state.roomCode) {
@@ -746,8 +794,8 @@ const Game: React.FC = () => {
 
     navigate("/results", {
       state: {
-        score,
-        wordLog,
+        score: finalScore,
+        wordLog: finalWordLog,
         isMultiplayer: state.isMultiplayer,
         players,
         roomCode: state.roomCode,
@@ -755,7 +803,23 @@ const Game: React.FC = () => {
         playerName: state.playerName,
       },
     });
-  };
+  }, [
+    state,
+    score,
+    wordLog,
+    guess,
+    currentWord,
+    wordState,
+    streak,
+    hintUsed,
+    players,
+    navigate,
+  ]);
+
+  // Update endGameRef whenever endGame changes
+  useEffect(() => {
+    endGameRef.current = endGame;
+  }, [endGame]);
 
   const leaveGame = async () => {
     if (state.isMultiplayer && state.roomCode && state.playerId) {
@@ -880,12 +944,7 @@ const Game: React.FC = () => {
           >
             🔥 <span>{streak}</span>
           </div>
-          <button
-            onClick={toggleSound}
-            className="px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]"
-          >
-            {soundOn ? "Sound On" : "Sound Off"}
-          </button>
+          <SoundToggle />
         </div>
         <div className="text-right">
           {state.isMultiplayer ? (

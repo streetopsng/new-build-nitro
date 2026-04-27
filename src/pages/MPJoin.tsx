@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { db } from "../lib/firebase";
 import { ref, get } from "firebase/database";
 import { genPlayerId, PLAYER_COLORS } from "../utils/helpers";
+import SoundToggle from "../components/SoundToggle";
 
 const MPJoin: React.FC = () => {
   const navigate = useNavigate();
@@ -36,6 +37,21 @@ const MPJoin: React.FC = () => {
       }
 
       const room = snapshot.val();
+
+      // Check if game has already started or ended
+      if (room.status === "playing" || room.status === "results") {
+        setError("Game has already started. You cannot join.");
+        setLoading(false);
+        return;
+      }
+
+      // Check if room has expired (older than 1 hour)
+      if (room.createdAt && Date.now() - room.createdAt > 3600000) {
+        setError("Room has expired. Please create a new room.");
+        setLoading(false);
+        return;
+      }
+
       const playerCount = Object.keys(room.players || {}).length;
       const color = PLAYER_COLORS[playerCount % PLAYER_COLORS.length];
       const playerId = genPlayerId();
@@ -84,6 +100,7 @@ const MPJoin: React.FC = () => {
           <div className="font-barlow font-black text-[28px] uppercase tracking-wide text-[#ffe9dc]">
             Join Room
           </div>
+          <SoundToggle className="ml-auto px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
         </div>
 
         <div className="mb-6">

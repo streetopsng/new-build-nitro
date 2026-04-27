@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGame } from "../contexts/GameContext";
+import SoundToggle from "../components/SoundToggle";
 
 const SoloSetup: React.FC = () => {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ const SoloSetup: React.FC = () => {
           <div className="font-barlow font-black text-[28px] uppercase tracking-wide text-[#ffe9dc]">
             Solo Game
           </div>
+          <SoundToggle className="ml-auto px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
         </div>
 
         {/* Mode Selection */}

@@ -1,6 +1,7 @@
 // src/pages/Rules.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import SoundToggle from "../components/SoundToggle";
 
 const Rules: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const Rules: React.FC = () => {
           <div className="font-barlow font-black text-[28px] uppercase tracking-wide text-[#ffe9dc]">
             How to Play
           </div>
+          <SoundToggle className="ml-auto px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
         </div>
 
         <div className="space-y-3">
