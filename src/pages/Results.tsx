@@ -1,6 +1,7 @@
 // src/pages/Results.tsx
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 
 interface LocationState {
@@ -254,6 +255,7 @@ const Results: React.FC = () => {
           </button>
         </div>
       </div>
+      <BackgroundAudio />
     </div>
   );
 };

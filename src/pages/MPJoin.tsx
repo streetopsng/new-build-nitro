@@ -1,9 +1,10 @@
 // src/pages/MPJoin.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../lib/firebase";
 import { ref, get } from "firebase/database";
 import { genPlayerId, PLAYER_COLORS } from "../utils/helpers";
+import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 
 const MPJoin: React.FC = () => {
@@ -12,6 +13,13 @@ const MPJoin: React.FC = () => {
   const [roomCode, setRoomCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const savedName = localStorage.getItem("playerName");
+    if (savedName) {
+      setPlayerName(savedName);
+    }
+  }, []);
 
   const joinRoom = async () => {
     if (!playerName.trim()) {
@@ -110,7 +118,10 @@ const MPJoin: React.FC = () => {
           <input
             type="text"
             value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
+            onChange={(e) => {
+              setPlayerName(e.target.value);
+              localStorage.setItem("playerName", e.target.value);
+            }}
             className="w-full p-3.5 px-4 bg-[#2e1b14] border border-[rgba(255,255,255,0.12)] rounded-lg text-white text-base outline-none focus:border-[#ff4d00] transition-colors"
             placeholder="Enter your name"
             maxLength={20}
@@ -143,6 +154,7 @@ const MPJoin: React.FC = () => {
           {loading ? "Joining..." : "Join Game"}
         </button>
       </div>
+      <BackgroundAudio />
     </div>
   );
 };

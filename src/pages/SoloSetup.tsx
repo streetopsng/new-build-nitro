@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGame } from "../contexts/GameContext";
+import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 
 const SoloSetup: React.FC = () => {
@@ -135,6 +136,7 @@ const SoloSetup: React.FC = () => {
           Start Game
         </button>
       </div>
+      <BackgroundAudio />
     </div>
   );
 };

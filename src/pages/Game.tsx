@@ -499,24 +499,23 @@ const Game: React.FC = () => {
       if (state.isMultiplayer) {
         await updateMPRecord(finalPts, "correct", newScore, newStreak);
 
-        // In SPRINT mode, move to next word immediately
         if (state.mode === "sprint") {
           setLastResult({ word: word.word, pts: finalPts, outcome: "correct" });
+          moveToNextWord();
+        }
+        // In ROUND mode, wait for all players
+      } else {
+        // Solo mode
+        setLastResult({ word: word.word, pts: finalPts, outcome: "correct" });
+        if (state.mode === "sprint") {
+          moveToNextWord();
+        } else {
           setShowLBFlash(true);
           setTimeout(() => {
             setShowLBFlash(false);
             moveToNextWord();
           }, 1800);
         }
-        // In ROUND mode, wait for all players
-      } else {
-        // Solo mode
-        setLastResult({ word: word.word, pts: finalPts, outcome: "correct" });
-        setShowLBFlash(true);
-        setTimeout(() => {
-          setShowLBFlash(false);
-          moveToNextWord();
-        }, 1800);
       }
     },
     [
@@ -559,19 +558,19 @@ const Game: React.FC = () => {
 
         if (state.mode === "sprint") {
           setLastResult({ word: word.word, pts, outcome: "almost" });
+          moveToNextWord();
+        }
+      } else {
+        setLastResult({ word: word.word, pts, outcome: "almost" });
+        if (state.mode === "sprint") {
+          moveToNextWord();
+        } else {
           setShowLBFlash(true);
           setTimeout(() => {
             setShowLBFlash(false);
             moveToNextWord();
           }, 1800);
         }
-      } else {
-        setLastResult({ word: word.word, pts, outcome: "almost" });
-        setShowLBFlash(true);
-        setTimeout(() => {
-          setShowLBFlash(false);
-          moveToNextWord();
-        }, 1800);
       }
     },
     [
@@ -610,21 +609,21 @@ const Game: React.FC = () => {
 
           if (state.mode === "sprint") {
             setLastResult({ word: word.word, pts: 0, outcome });
-            setShowLBFlash(true);
-            setTimeout(() => {
-              setShowLBFlash(false);
-              moveToNextWord();
-            }, 1800);
+            moveToNextWord();
             return;
           }
         }
       } else if (outcome === "skipped") {
         setLastResult({ word: word.word, pts: 0, outcome });
-        setShowLBFlash(true);
-        setTimeout(() => {
-          setShowLBFlash(false);
+        if (state.mode === "sprint") {
           moveToNextWord();
-        }, 1800);
+        } else {
+          setShowLBFlash(true);
+          setTimeout(() => {
+            setShowLBFlash(false);
+            moveToNextWord();
+          }, 1800);
+        }
         return;
       }
 
@@ -671,12 +670,15 @@ const Game: React.FC = () => {
     }
 
     setLastResult({ word: currentWord.word, pts: 0, outcome: "timeout" });
-    setShowLBFlash(true);
-
-    setTimeout(() => {
-      setShowLBFlash(false);
+    if (state.mode === "sprint") {
       moveToNextWord();
-    }, 1800);
+    } else {
+      setShowLBFlash(true);
+      setTimeout(() => {
+        setShowLBFlash(false);
+        moveToNextWord();
+      }, 1800);
+    }
   }, [
     currentWord,
     wordLog,

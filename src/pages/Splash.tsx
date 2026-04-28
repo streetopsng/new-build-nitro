@@ -1,6 +1,7 @@
 // src/pages/Splash.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 
 const Splash: React.FC = () => {
@@ -62,9 +63,9 @@ const Splash: React.FC = () => {
           The Word
         </div>
 
-        <div className="text-[13px] tracking-[3px] uppercase text-[rgba(255,255,255,0.5)] mb-12">
+        {/* <div className="text-[13px] tracking-[3px] uppercase text-[rgba(255,255,255,0.5)] mb-12">
           TeamNitro — April 2026
-        </div>
+        </div> */}
 
         <div className="flex flex-col gap-3 w-full max-w-[320px] mx-auto">
           <button
@@ -87,6 +88,7 @@ const Splash: React.FC = () => {
           </button>
         </div>
       </div>
+      <BackgroundAudio />
     </div>
   );
 };
