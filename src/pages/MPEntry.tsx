@@ -1,6 +1,7 @@
 // src/pages/MPEntry.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 
 const MPEntry: React.FC = () => {
@@ -49,6 +50,7 @@ const MPEntry: React.FC = () => {
           </div>
         </div>
       </div>
+      <BackgroundAudio />
     </div>
   );
 };

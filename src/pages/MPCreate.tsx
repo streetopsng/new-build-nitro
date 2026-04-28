@@ -1,16 +1,25 @@
 // src/pages/MPCreate.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGame } from "../contexts/GameContext";
 import { genRoomCode, genPlayerId, PLAYER_COLORS } from "../utils/helpers";
 import { db } from "../lib/firebase";
 import { ref, set } from "firebase/database";
+import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 
 const MPCreate: React.FC = () => {
   const navigate = useNavigate();
   const { themes, wordBank, loading } = useGame();
   const [playerName, setPlayerName] = useState("");
+
+  useEffect(() => {
+    const savedName = localStorage.getItem("playerName");
+    if (savedName) {
+      setPlayerName(savedName);
+    }
+  }, []);
+
   const [mode, setMode] = useState<"round" | "sprint">("round");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "easy",
@@ -160,7 +169,10 @@ const MPCreate: React.FC = () => {
           <input
             type="text"
             value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
+            onChange={(e) => {
+              setPlayerName(e.target.value);
+              localStorage.setItem("playerName", e.target.value);
+            }}
             className="w-full p-3.5 px-4 bg-[#2e1b14] border border-[rgba(255,255,255,0.12)] rounded-lg text-white text-base outline-none focus:border-[#ff4d00] transition-colors"
             placeholder="Enter your name"
             maxLength={20}
@@ -255,6 +267,7 @@ const MPCreate: React.FC = () => {
           {loading ? "Loading words..." : "Create Room"}
         </button>
       </div>
+      <BackgroundAudio />
     </div>
   );
 };

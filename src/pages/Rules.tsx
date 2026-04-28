@@ -1,6 +1,7 @@
 // src/pages/Rules.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 
 const Rules: React.FC = () => {
@@ -119,6 +120,7 @@ const Rules: React.FC = () => {
           Got it!
         </button>
       </div>
+      <BackgroundAudio />
     </div>
   );
 };
