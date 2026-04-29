@@ -24,13 +24,7 @@ const MPCreate: React.FC = () => {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "easy",
   );
-  const [selectedThemes, setSelectedThemes] = useState<string[]>([
-    "general",
-    "corporate",
-    "food",
-    "culture",
-    "family",
-  ]);
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [hostPlays, setHostPlays] = useState(true);
   const [error, setError] = useState("");
 
@@ -261,8 +255,8 @@ const MPCreate: React.FC = () => {
 
         <button
           onClick={createRoom}
-          disabled={loading}
-          className="w-full py-4 rounded-2xl bg-[#ff4d00] text-white font-barlow font-bold text-xl tracking-[1px] uppercase transition-all hover:bg-[#e04400] active:scale-97"
+          disabled={loading || selectedThemes.length === 0}
+          className={`w-full py-4 rounded-2xl bg-[#ff4d00] text-white font-barlow font-bold text-xl tracking-[1px] uppercase transition-all hover:bg-[#e04400] active:scale-97 ${loading || selectedThemes.length === 0 ? "opacity-40 cursor-not-allowed" : ""}`}
         >
           {loading ? "Loading words..." : "Create Room"}
         </button>
