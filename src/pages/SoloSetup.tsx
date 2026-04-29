@@ -12,13 +12,7 @@ const SoloSetup: React.FC = () => {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "easy",
   );
-  const [selectedThemes, setSelectedThemes] = useState<string[]>([
-    "general",
-    "corporate",
-    "food",
-    "culture",
-    "family",
-  ]);
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
 
   const toggleTheme = (themeKey: string) => {
     setSelectedThemes((prev) =>
