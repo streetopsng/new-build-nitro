@@ -1,126 +1,103 @@
 // src/pages/Rules.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import BackgroundAudio from "../components/BackgroundAudio";
-import SoundToggle from "../components/SoundToggle";
+import { BackgroundDoodles } from "../components/BackgroundDoodles";
 
 const Rules: React.FC = () => {
   const navigate = useNavigate();
 
+  const rulesList = [
+    {
+      step: "01",
+      title: "THE LOOP",
+      desc: "Each round gives you a clue. Type your guess in the letter slots or full input box. Complete words to earn points and progress to the next round.",
+      tag: "CORE",
+    },
+    {
+      step: "02",
+      title: "MULTIPLAYER",
+      desc: "Join a room using a 6-character code created by your host. Compete against teammates in real-time on the live session leaderboard.",
+      tag: "TEAMS",
+    },
+    {
+      step: "03",
+      title: "SESSIONS & TIMING",
+      desc: "The host sets total session duration (e.g. 5 minutes). Solve as many clues as possible before the timer runs out!",
+      tag: "TIMER",
+    },
+    {
+      step: "04",
+      title: "SCORING",
+      desc: "Earn base points per correct guess plus a streak bonus for consecutive correct answers. Fast responses earn higher points.",
+      tag: "POINTS",
+    },
+    {
+      step: "05",
+      title: "HINTS",
+      desc: "Stuck on a tricky word? Click the Hint button to reveal starting letters. Each hint costs 40% of max round points.",
+      tag: "HELP",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#1a120d] p-6 text-[#ffe9dc]">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-7">
+    <div className="min-h-screen bg-slate-100 text-slate-900 p-6 md:p-12 flex flex-col items-center justify-between select-none relative overflow-hidden">
+      {/* Background Line-Art Doodles */}
+      <BackgroundDoodles opacity="opacity-20" />
+
+      {/* Header */}
+      <div className="w-full max-w-2xl flex items-center justify-between z-10 mb-6">
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate("/")}
-            className="w-10 h-10 rounded-full bg-[#2e1b14] border border-[rgba(255,255,255,0.1)] text-white text-xl cursor-pointer flex items-center justify-center hover:bg-[#231510]"
+            onClick={() => navigate(-1)}
+            className="w-9 h-9 rounded-full bg-white border border-slate-300 text-slate-700 flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-sm"
           >
             ←
           </button>
-          <div className="font-barlow font-black text-[28px] uppercase tracking-wide text-[#ffe9dc]">
+          <h1 className="font-heading font-extrabold text-2xl text-black">
             How to Play
-          </div>
-          <SoundToggle className="ml-auto px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
+          </h1>
         </div>
+        <span className="text-xs font-bold text-[#f97316] uppercase tracking-wider">
+          GAME RULES
+        </span>
+      </div>
 
-        <div className="space-y-3">
-          <div className="bg-[#2e1b14] rounded-2xl p-[18px] border border-[rgba(255,255,255,0.06)]">
-            <h3 className="font-barlow text-lg font-bold uppercase text-[#ff9a00] mb-2">
-              The Loop
-            </h3>
-            <p className="text-sm leading-relaxed text-[rgba(255,255,255,0.75)]">
-              Read the description → Type your guess → Beat the clock. No
-              categories shown. No letters given (unless you use a hint).
-            </p>
+      {/* Main 5 Rule Cards matching Image 8 */}
+      <div className="w-full max-w-2xl space-y-3 z-10 my-auto">
+        {rulesList.map((item) => (
+          <div
+            key={item.step}
+            className="rounded-2xl bg-white border border-slate-300 p-4 md:p-5 shadow-xs hover:border-[#f97316] transition-all text-left flex items-start gap-4"
+          >
+            <span className="font-mono font-extrabold text-base text-[#f97316] bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-xl">
+              {item.step}
+            </span>
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="font-heading font-extrabold text-sm text-black">
+                  {item.title}
+                </h2>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">
+                  {item.tag}
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                {item.desc}
+              </p>
+            </div>
           </div>
+        ))}
+      </div>
 
-          <div className="bg-[#2e1b14] rounded-2xl p-[18px] border border-[rgba(255,255,255,0.06)]">
-            <h3 className="font-barlow text-lg font-bold uppercase text-[#ff9a00] mb-2">
-              Modes
-            </h3>
-            <p className="text-sm leading-relaxed text-[rgba(255,255,255,0.75)]">
-              <strong>Round Mode</strong> — 10 questions, each with its own
-              timer. Easy: 30s | Medium: 20s | Hard: 10s
-            </p>
-            <p className="text-sm leading-relaxed text-[rgba(255,255,255,0.75)] mt-2">
-              <strong>Sprint Mode</strong> — One global clock. Answer as many as
-              you can before it runs out. Easy: 3min | Medium: 2min | Hard: 1min
-            </p>
-          </div>
-
-          <div className="bg-[#2e1b14] rounded-2xl p-[18px] border border-[rgba(255,255,255,0.06)]">
-            <h3 className="font-barlow text-lg font-bold uppercase text-[#ff9a00] mb-2">
-              Scoring
-            </h3>
-            <table className="w-full border-collapse mt-2">
-              <tbody>
-                <tr className="border-b border-[rgba(255,255,255,0.05)]">
-                  <td className="py-1.5 text-sm text-[rgba(255,255,255,0.7)]">
-                    Correct guess
-                  </td>
-                  <td className="py-1.5 text-sm text-right text-[#ff9a00] font-semibold">
-                    +50 pts
-                  </td>
-                </tr>
-                <tr className="border-b border-[rgba(255,255,255,0.05)]">
-                  <td className="py-1.5 text-sm text-[rgba(255,255,255,0.7)]">
-                    1 letter off
-                  </td>
-                  <td className="py-1.5 text-sm text-right text-[#ff9a00] font-semibold">
-                    +35 pts
-                  </td>
-                </tr>
-                <tr className="border-b border-[rgba(255,255,255,0.05)]">
-                  <td className="py-1.5 text-sm text-[rgba(255,255,255,0.7)]">
-                    2 letters off
-                  </td>
-                  <td className="py-1.5 text-sm text-right text-[#ff9a00] font-semibold">
-                    +15 pts
-                  </td>
-                </tr>
-                <tr className="border-b border-[rgba(255,255,255,0.05)]">
-                  <td className="py-1.5 text-sm text-[rgba(255,255,255,0.7)]">
-                    Streak (3+ in a row)
-                  </td>
-                  <td className="py-1.5 text-sm text-right text-[#ff9a00] font-semibold">
-                    +30 pts
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-1.5 text-sm text-[rgba(255,255,255,0.7)]">
-                    Skip / Timeout
-                  </td>
-                  <td className="py-1.5 text-sm text-right text-[#ff9a00] font-semibold">
-                    0 pts
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="bg-[#2e1b14] rounded-2xl p-[18px] border border-[rgba(255,255,255,0.06)]">
-            <h3 className="font-barlow text-lg font-bold uppercase text-[#ff9a00] mb-2">
-              Hints
-            </h3>
-            <p className="text-sm leading-relaxed text-[rgba(255,255,255,0.75)]">
-              Up to <strong>5 hints per game</strong>, max 1 per word. Reveals
-              first and last letter. Costs 40% of base score.
-            </p>
-            <p className="text-sm leading-relaxed text-[rgba(255,255,255,0.75)] mt-2">
-              Example: "Jollof rice" →{" "}
-              <strong>J _ _ _ _ F &nbsp; R _ _ E</strong>
-            </p>
-          </div>
-        </div>
-
+      {/* Footer Action Button matching Image 8 */}
+      <div className="w-full max-w-2xl z-10 mt-6 pt-4 flex justify-center border-t border-slate-200">
         <button
-          onClick={() => navigate("/")}
-          className="w-full mt-6 py-4 rounded-2xl bg-[#ff4d00] text-white font-barlow font-bold text-xl tracking-[1px] uppercase transition-all hover:bg-[#e04400]"
+          onClick={() => navigate(-1)}
+          className="px-10 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-base border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
         >
-          Got it!
+          Got it
         </button>
       </div>
-      <BackgroundAudio />
     </div>
   );
 };

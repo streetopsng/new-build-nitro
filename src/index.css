@@ -1,68 +1,92 @@
 @import "tailwindcss";
 
-/* src/index.css - Add these keyframes */
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+/* Light Theme Doodle Background Pattern */
+.bg-doodle-light {
+  background-color: #fafafa;
+  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 24px 24px;
+  position: relative;
+}
+
+.bg-doodle-light::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20 L30 10 L40 20 Z M70 80 C 80 70, 90 90, 70 80' stroke='%23d1d5db' stroke-width='1.5' fill='none' opacity='0.35'/%3E%3C/svg%3E");
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Dark Theme Mesh Gradient */
+.bg-insync-dark {
+  background: radial-gradient(circle at 15% 15%, #1d1440 0%, #0c0d1e 50%),
+              radial-gradient(circle at 85% 20%, #0c2b38 0%, #0c0d1e 60%),
+              radial-gradient(circle at 50% 85%, #180d2a 0%, #0c0d1e 70%);
+  background-attachment: fixed;
+}
+
+/* Glassmorphism Card Style */
+.glass-card-dark {
+  background: rgba(19, 18, 43, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card-dark-hover {
+  transition: all 0.25s ease;
+}
+.glass-card-dark-hover:hover {
+  background: rgba(28, 26, 61, 0.85);
+  border-color: rgba(23, 232, 195, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Glowing Accent Utilities */
+.glow-teal {
+  box-shadow: 0 0 25px rgba(23, 232, 195, 0.35);
+}
+.glow-purple {
+  box-shadow: 0 0 25px rgba(124, 58, 237, 0.4);
+}
+.glow-orange {
+  box-shadow: 0 0 25px rgba(249, 115, 22, 0.4);
+}
+
+/* Keyframes */
+@keyframes pulseProgress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
 @keyframes flicker {
-  0% {
-    transform: scaleY(1) scaleX(1);
-    filter: drop-shadow(0 0 16px rgba(255, 77, 0, 0.8));
-  }
-  40% {
-    transform: scaleY(1.08) scaleX(0.95);
-  }
-  100% {
-    transform: scaleY(0.93) scaleX(1.04);
-    filter: drop-shadow(0 0 28px rgba(255, 154, 0, 0.9));
-  }
+  0% { transform: scaleY(1) scaleX(1); filter: drop-shadow(0 0 16px rgba(255, 77, 0, 0.8)); }
+  40% { transform: scaleY(1.08) scaleX(0.95); }
+  100% { transform: scaleY(0.93) scaleX(1.04); filter: drop-shadow(0 0 28px rgba(255, 154, 0, 0.9)); }
 }
 
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes cardFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes streakFlash {
-  0%,
-  100% {
-    background: rgba(255, 154, 0, 0.15);
-  }
-  40% {
-    background: rgba(255, 154, 0, 0.5);
-    transform: scale(1.08);
-  }
+.animate-pulse-progress {
+  animation: pulseProgress 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
-
-@keyframes popUp {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  60% {
-    opacity: 1;
-    transform: translateY(-50px) scale(1.2);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-90px) scale(0.9);
-  }
-}
-
 .animate-flicker {
   animation: flicker 1.4s ease-in-out infinite alternate;
 }
@@ -72,9 +96,20 @@
 .animate-card-fade-in {
   animation: cardFadeIn 0.35s ease;
 }
-.animate-streak-flash {
-  animation: streakFlash 0.6s ease;
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-.animate-pop-up {
-  animation: popUp 1.2s ease forwards;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5);
+}
+

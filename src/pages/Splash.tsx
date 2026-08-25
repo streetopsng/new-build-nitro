@@ -1,93 +1,147 @@
 // src/pages/Splash.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
+import { ProfileModal } from "../components/ProfileModal";
+import { useProfile } from "../contexts/ProfileContext";
+
+export const InSyncLogoOrange: React.FC<{ size?: number; className?: string }> = ({
+  size = 64,
+  className = "",
+}) => {
+  return (
+    <div
+      className={`relative flex items-center justify-center rounded-full border-2 border-orange-400/60 bg-white p-3 shadow-md ${className}`}
+      style={{ width: size, height: size }}
+    >
+      <svg
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full"
+      >
+        <circle cx="50" cy="50" r="44" stroke="#f97316" strokeWidth="3" />
+        <path
+          d="M 25 50 Q 37.5 25, 50 50 T 75 50"
+          stroke="#ea580c"
+          strokeWidth="4"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <path
+          d="M 25 50 Q 37.5 75, 50 50 T 75 50"
+          stroke="#f97316"
+          strokeWidth="4"
+          strokeLinecap="round"
+          fill="none"
+        />
+      </svg>
+    </div>
+  );
+};
 
 const Splash: React.FC = () => {
   const navigate = useNavigate();
+  const { profile } = useProfile();
+  const [progress, setProgress] = useState(0);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(timer);
+          return 100;
+        }
+        return prev + 2;
+      });
+    }, 35);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleStart = () => {
+    if (!profile.isProfileSet) {
+      setShowProfileModal(true);
+    } else {
+      navigate("/mp-entry");
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#1a120d] flex flex-col items-center justify-center text-center p-6 relative overflow-hidden text-[#ffe9dc]">
-      {/* Background gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_10%,rgba(255,77,0,0.12)_0%,transparent_60%),radial-gradient(ellipse_at_80%_90%,rgba(255,154,0,0.08)_0%,transparent_50%)] pointer-events-none" />
-
-      <div className="relative z-10">
-        <div className="mb-2 flex items-center justify-center gap-4">
-          <SoundToggle className="px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
-        </div>
-        <div className="mb-2">
-          <svg
-            className="w-[72px] h-20 mx-auto animate-[flicker_1.4s_ease-in-out_infinite_alternate]"
-            viewBox="0 0 72 80"
-            fill="none"
-          >
-            <path
-              d="M36 4C36 4 52 20 52 38C52 47 47 54 40 57C42 52 42 47 38 43C38 43 40 55 28 62C22 65 14 61 12 54C10 47 14 40 20 36C20 36 16 46 24 50C24 50 18 42 22 30C24 24 30 16 36 4Z"
-              fill="url(#flameG)"
-            />
-            <path
-              d="M36 28C36 28 44 36 44 46C44 52 40 56 36 58C38 54 37 50 34 47C34 47 36 53 30 57C26 59 22 56 21 52C20 48 22 44 26 42C26 42 24 48 28 50C28 50 25 45 28 38C30 33 32 30 36 28Z"
-              fill="url(#flameG2)"
-            />
-            <defs>
-              <linearGradient
-                id="flameG"
-                x1="36"
-                y1="4"
-                x2="36"
-                y2="70"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stopColor="#FF9A00" />
-                <stop offset="1" stopColor="#FF4D00" />
-              </linearGradient>
-              <linearGradient
-                id="flameG2"
-                x1="36"
-                y1="28"
-                x2="36"
-                y2="60"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stopColor="#FFD700" />
-                <stop offset="1" stopColor="#FF9A00" />
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-
-        <div className="font-barlow font-black text-[clamp(52px,12vw,88px)] leading-[0.9] tracking-[-1px] uppercase bg-gradient-to-br from-white via-[#ff9a00] to-[#ff4d00] bg-clip-text text-transparent mb-2">
-          Guess
-          <br />
-          The Word
-        </div>
-
-        {/* <div className="text-[13px] tracking-[3px] uppercase text-[rgba(255,255,255,0.5)] mb-12">
-          TeamNitro — April 2026
-        </div> */}
-
-        <div className="flex flex-col gap-3 w-full max-w-[320px] mx-auto">
-          <button
-            onClick={() => navigate("/solo-setup")}
-            className="flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-[#ff4d00] text-white font-barlow font-bold text-xl tracking-[1px] uppercase transition-all hover:bg-[#e04400] active:scale-97 shadow-[0_4px_24px_rgba(255,77,0,0.4)]"
-          >
-            ▶ Play Solo
-          </button>
-          <button
-            onClick={() => navigate("/mp-entry")}
-            className="flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-[#2e1b14] text-white font-barlow font-bold text-xl tracking-[1px] uppercase transition-all hover:bg-[#231510] active:scale-97 border border-[rgba(255,255,255,0.12)]"
-          >
-            👥 Multiplayer
-          </button>
-          <button
-            onClick={() => navigate("/rules")}
-            className="flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl bg-transparent text-[rgba(255,255,255,0.5)] font-barlow font-bold text-base tracking-[1px] uppercase transition-all hover:text-white border border-[rgba(255,255,255,0.15)]"
-          >
-            How to Play
-          </button>
-        </div>
+    <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center text-center p-6 relative overflow-hidden select-none">
+      {/* Background Floating Letter Graphics matching White Mockup */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.08] overflow-hidden">
+        <span className="absolute top-[8%] left-[8%] text-8xl font-black font-heading">X</span>
+        <span className="absolute top-[12%] left-[30%] text-7xl font-black font-heading">I</span>
+        <span className="absolute top-[10%] right-[10%] text-9xl font-black font-heading">G</span>
+        <span className="absolute top-[35%] left-[8%] text-9xl font-black font-heading">H</span>
+        <span className="absolute top-[36%] left-[23%] text-6xl font-black font-heading">C</span>
+        <span className="absolute top-[34%] left-[38%] text-7xl font-black font-heading">D</span>
+        <span className="absolute top-[32%] right-[23%] text-8xl font-black font-heading">S</span>
+        <span className="absolute top-[52%] left-[15%] text-9xl font-black font-heading">V</span>
+        <span className="absolute top-[65%] left-[16%] text-[140px] font-black font-heading">U</span>
+        <span className="absolute top-[88%] left-[10%] text-8xl font-black font-heading">O</span>
+        <span className="absolute top-[60%] left-[45%] text-8xl font-black font-heading">E</span>
+        <span className="absolute top-[80%] left-[45%] text-7xl font-black font-heading">B</span>
+        <span className="absolute top-[58%] right-[18%] text-9xl font-black font-heading">H</span>
+        <span className="absolute top-[52%] right-[8%] text-8xl font-black font-heading">R</span>
+        <span className="absolute top-[86%] right-[30%] text-9xl font-black font-heading">X</span>
+        <span className="absolute top-[85%] right-[8%] text-6xl font-black font-heading">T A R</span>
       </div>
+
+      {/* Top right sound toggle */}
+      <div className="absolute top-6 right-6 z-20">
+        <SoundToggle className="px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-full text-xs uppercase tracking-widest text-slate-700 hover:bg-slate-200 transition-all cursor-pointer" />
+      </div>
+
+      {/* Main Content Card matching Image 6 EXACTLY */}
+      <div className="relative z-10 max-w-md w-full flex flex-col items-center animate-card-fade-in">
+        {/* Orange Dual Wave Logo */}
+        <div className="mb-4">
+          <InSyncLogoOrange size={76} />
+        </div>
+
+        {/* Brand Title: In (Black) + Sync (Orange) */}
+        <h1 className="font-heading font-extrabold text-5xl tracking-tight mb-6">
+          <span className="text-black">In</span>
+          <span className="text-[#f97316]">Sync</span>
+        </h1>
+
+        {/* White Mockup Loading Bar */}
+        <div className="w-56 h-3 bg-white border border-slate-300 rounded-full overflow-hidden p-0.5 shadow-sm mb-4">
+          <div
+            className="h-full bg-[#f97316] rounded-full transition-all duration-150 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        {/* Powered By Gummy Gum Subtitle matching Image 6 */}
+        <div className="text-xs font-semibold text-slate-800 flex items-center justify-center gap-1 mb-8">
+          <span>⚡</span> Powered By Gummy Gum
+        </div>
+
+        {/* Auto-enter button when progress finishes */}
+        {progress >= 100 && (
+          <button
+            onClick={handleStart}
+            className="px-8 py-3.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-base tracking-wide border-2 border-slate-950 shadow-[3px_3px_0px_#09090b] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer animate-slide-in"
+          >
+            Enter Session →
+          </button>
+        )}
+      </div>
+
+      {/* Profile Modal */}
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => {
+          setShowProfileModal(false);
+          navigate("/mp-entry");
+        }}
+      />
+
       <BackgroundAudio />
     </div>
   );
