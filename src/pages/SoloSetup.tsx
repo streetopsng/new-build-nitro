@@ -1,136 +1,114 @@
 // src/pages/SoloSetup.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGame } from "../contexts/GameContext";
-import BackgroundAudio from "../components/BackgroundAudio";
-import SoundToggle from "../components/SoundToggle";
 
 const SoloSetup: React.FC = () => {
   const navigate = useNavigate();
-  const { themes } = useGame();
-  const [mode, setMode] = useState<"round" | "sprint">("round");
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
-    "easy",
-  );
-  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
+  const [mode, setMode] = useState<"10Q" | "sprint">("10Q");
 
-  const toggleTheme = (themeKey: string) => {
-    setSelectedThemes((prev) =>
-      prev.includes(themeKey)
-        ? prev.filter((t) => t !== themeKey)
-        : [...prev, themeKey],
-    );
-  };
-
-  const startGame = () => {
-    if (selectedThemes.length === 0) {
-      alert("Please select at least one theme");
-      return;
-    }
-    // Navigate to game with solo mode params
+  const handleStartSolo = () => {
     navigate("/game", {
-      state: { mode, difficulty, themes: selectedThemes, isMultiplayer: false },
+      state: {
+        isMultiplayer: false,
+        isHost: false,
+        mode: difficulty,
+        gameType: mode,
+      },
     });
   };
 
-  const availableThemes =
-    themes.length > 0
-      ? themes
-      : [
-          { key: "general", name: "General" },
-          { key: "corporate", name: "Corporate" },
-          { key: "food", name: "Food" },
-          { key: "culture", name: "Culture" },
-          { key: "family", name: "Family & Friends" },
-        ];
-
   return (
-    <div className="min-h-screen bg-[#1a120d] p-6 text-[#ffe9dc]">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-7">
+    <div className="min-h-screen bg-insync-dark text-white p-4 md:p-8 flex flex-col items-center justify-center">
+      <div className="max-w-md w-full animate-card-fade-in">
+        <div className="rounded-3xl bg-[#13122b]/90 border border-[#2a2656] p-6 md:p-8 shadow-2xl backdrop-blur-xl relative">
           <button
-            onClick={() => navigate("/")}
-            className="w-10 h-10 rounded-full bg-[#2e1b14] border border-[rgba(255,255,255,0.1)] text-white text-xl cursor-pointer flex items-center justify-center hover:bg-[#231510]"
+            onClick={() => navigate("/home")}
+            className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg cursor-pointer"
           >
-            ←
+            ✕
           </button>
-          <div className="font-barlow font-black text-[28px] uppercase tracking-wide text-[#ffe9dc]">
-            Solo Game
-          </div>
-          <SoundToggle className="ml-auto px-3 py-1.5 bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.15)] rounded-full text-xs uppercase tracking-[2px] text-white transition-colors hover:bg-[rgba(255,255,255,0.15)]" />
-        </div>
 
-        {/* Mode Selection */}
-        <div className="mb-6">
-          <div className="text-[11px] tracking-[3px] uppercase text-[rgba(255,255,255,0.4)] mb-2.5">
-            Mode
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-[#7c3aed] flex items-center justify-center text-2xl font-bold mb-4">
+            ▷
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setMode("round")}
-              className={`px-[18px] py-2.5 rounded-full border text-sm font-medium transition-all ${mode === "round" ? "bg-[#ff4d00] border-[#ff4d00] text-white shadow-[0_2px_12px_rgba(255,77,0,0.4)]" : "border-[rgba(255,255,255,0.15)] bg-[#2e1b14] text-[rgba(255,255,255,0.7)] hover:border-[rgba(255,77,0,0.5)] hover:text-white"}`}
-            >
-              Round (10 Qs)
-            </button>
-            <button
-              onClick={() => setMode("sprint")}
-              className={`px-[18px] py-2.5 rounded-full border text-sm font-medium transition-all ${mode === "sprint" ? "bg-[#ff4d00] border-[#ff4d00] text-white shadow-[0_2px_12px_rgba(255,77,0,0.4)]" : "border-[rgba(255,255,255,0.15)] bg-[#2e1b14] text-[rgba(255,255,255,0.7)] hover:border-[rgba(255,77,0,0.5)] hover:text-white"}`}
-            >
-              Sprint
-            </button>
-          </div>
-        </div>
 
-        {/* Difficulty Selection */}
-        <div className="mb-6">
-          <div className="text-[11px] tracking-[3px] uppercase text-[rgba(255,255,255,0.4)] mb-2.5">
-            Difficulty
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {(["easy", "medium", "hard"] as const).map((d) => (
-              <button
-                key={d}
-                onClick={() => setDifficulty(d)}
-                className={`px-[18px] py-2.5 rounded-full border text-sm font-medium transition-all ${difficulty === d ? "bg-[#ff4d00] border-[#ff4d00] text-white shadow-[0_2px_12px_rgba(255,77,0,0.4)]" : "border-[rgba(255,255,255,0.15)] bg-[#2e1b14] text-[rgba(255,255,255,0.7)] hover:border-[rgba(255,77,0,0.5)] hover:text-white"}`}
-              >
-                {d.charAt(0).toUpperCase() + d.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+          <h1 className="font-heading font-extrabold text-2xl text-white mb-1">
+            Solo Mode Setup
+          </h1>
+          <p className="text-xs text-gray-400 mb-6 font-medium">
+            Customize your solo practice round before playing
+          </p>
 
-        {/* Themes Selection */}
-        <div className="mb-8">
-          <div className="text-[11px] tracking-[3px] uppercase text-[rgba(255,255,255,0.4)] mb-2.5">
-            Themes (pick any)
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {availableThemes.map((theme) => (
-              <button
-                key={theme.key}
-                onClick={() => toggleTheme(theme.key)}
-                className={`px-[18px] py-2.5 rounded-full border text-sm font-medium transition-all ${selectedThemes.includes(theme.key) ? "bg-[#ff9a00] border-[#ff9a00] text-white shadow-[0_2px_12px_rgba(255,154,0,0.4)]" : "border-[rgba(255,255,255,0.15)] bg-[#2e1b14] text-[rgba(255,255,255,0.7)] hover:border-[rgba(255,77,0,0.5)] hover:text-white"}`}
-              >
-                {theme.name}
-              </button>
-            ))}
-          </div>
-          {selectedThemes.length === 0 && (
-            <div className="text-xs text-[#d64545] mt-2">
-              Select at least one theme
+          {/* Game Type Selection */}
+          <div className="mb-6 text-left">
+            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-2">
+              ROUND TYPE
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { id: "10Q", title: "10Q Classic", desc: "10 clues round" },
+                { id: "sprint", title: "Time Sprint", desc: "2 minute rush" },
+              ].map((item) => {
+                const isSelected = mode === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setMode(item.id as any)}
+                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-[#17e8c3] bg-[#17e8c3]/15 text-white glow-teal"
+                        : "border-[#2a2656] bg-[#0d0d1a] text-gray-400 hover:border-gray-600"
+                    }`}
+                  >
+                    <div className="font-bold text-sm text-white mb-0.5">{item.title}</div>
+                    <div className="text-[11px] text-gray-400">{item.desc}</div>
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
 
-        <button
-          onClick={startGame}
-          disabled={selectedThemes.length === 0}
-          className={`w-full py-4 rounded-2xl font-barlow font-bold text-xl tracking-[1px] uppercase transition-all ${selectedThemes.length === 0 ? "opacity-40 cursor-not-allowed bg-[#ff4d00]" : "bg-[#ff4d00] hover:bg-[#e04400] active:scale-97"}`}
-        >
-          Start Game
-        </button>
+          {/* Difficulty Selection */}
+          <div className="mb-8 text-left">
+            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-2">
+              DIFFICULTY
+            </label>
+            <div className="grid grid-cols-3 gap-2.5">
+              {[
+                { id: "easy", label: "★ Easy", time: "30s" },
+                { id: "medium", label: "★★ Medium", time: "20s" },
+                { id: "hard", label: "★★★ Hard", time: "10s" },
+              ].map((diff) => {
+                const isSelected = difficulty === diff.id;
+                return (
+                  <button
+                    key={diff.id}
+                    type="button"
+                    onClick={() => setDifficulty(diff.id as any)}
+                    className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-[#7c3aed] bg-[#7c3aed]/20 text-white glow-purple"
+                        : "border-[#2a2656] bg-[#0d0d1a] text-gray-400 hover:border-gray-600"
+                    }`}
+                  >
+                    <div className="font-bold text-xs text-white">{diff.label}</div>
+                    <div className="text-[10px] text-gray-400 font-medium mt-0.5">{diff.time}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            onClick={handleStartSolo}
+            className="w-full py-4 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-extrabold text-base uppercase tracking-wider shadow-lg glow-purple transition-all active:scale-97 cursor-pointer"
+          >
+            Start Solo Round →
+          </button>
+        </div>
       </div>
-      <BackgroundAudio />
     </div>
   );
 };
