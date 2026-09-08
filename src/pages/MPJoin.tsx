@@ -1,24 +1,40 @@
 // src/pages/MPJoin.tsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, get, update } from "firebase/database";
 import { db } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
+import { useGummyGum } from "../contexts/GummyGumContext";
+import { GummyGumGateModal } from "../components/GummyGumGateModal";
 import { JoiningLobby } from "../components/JoiningLobby";
 import { ProfileModal } from "../components/ProfileModal";
 
 const MPJoin: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { ggSession, ggAccessState } = useGummyGum();
 
   const [codeDigits, setCodeDigits] = useState<string[]>(["6", "W", "E", "F", "A", "J"]);
   const [displayName, setDisplayName] = useState(profile.username || "Game_master");
   const [isJoining, setIsJoining] = useState(false);
   const [isLockedModalOpen, setIsLockedModalOpen] = useState(false);
   const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
+  const [showGate, setShowGate] = useState(false);
   const [error, setError] = useState("");
+  const ggAutoJoinedRef = useRef(false);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // A team member who clicked their GummyGum invite link already has a name
+  // and a room code — skip the manual form and drop them straight in.
+  useEffect(() => {
+    if (ggAutoJoinedRef.current) return;
+    if (!ggSession || ggSession.isHost || !ggSession.roomCode) return;
+    ggAutoJoinedRef.current = true;
+    setDisplayName(ggSession.player?.name || displayName);
+    proceedJoin(ggSession.roomCode.toUpperCase());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ggSession]);
 
   const handleDigitChange = (index: number, value: string) => {
     const val = value.toUpperCase().slice(-1);
@@ -39,6 +55,10 @@ const MPJoin: React.FC = () => {
 
   const handleJoinOrProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (ggAccessState === "denied") {
+      setShowGate(true);
+      return;
+    }
     const fullCode = codeDigits.join("").trim().toUpperCase();
     if (fullCode.length < 6 || !displayName.trim()) {
       setError("Please enter a 6-character room code and a display name.");
@@ -60,7 +80,17 @@ const MPJoin: React.FC = () => {
 
     try {
       const roomRef = ref(db, `rooms/${fullCode}`);
-      const snapshot = await get(roomRef);
+      let snapshot = await get(roomRef);
+
+      // A GummyGum invite can land before the host finishes creating their
+      // room — give it a few seconds instead of failing immediately.
+      const ggEmail = ggSession?.player?.email;
+      if (!snapshot.exists() && ggEmail) {
+        for (let i = 0; i < 5 && !snapshot.exists(); i++) {
+          await new Promise((r) => setTimeout(r, 2000));
+          snapshot = await get(roomRef);
+        }
+      }
 
       if (!snapshot.exists()) {
         setError("Room not found. Check your 6-character code!");
@@ -76,13 +106,29 @@ const MPJoin: React.FC = () => {
         return;
       }
 
-      const playerId = "player_" + Date.now();
+      // Reclaim an existing player entry for this same GummyGum identity —
+      // otherwise closing the tab and reopening the invite link (a fresh
+      // playerId each time) creates a duplicate on every reopen, and their
+      // score resets to zero.
+      let playerId = "player_" + Date.now();
+      let carriedScore = 0;
+      if (ggEmail) {
+        const existingPlayers = room.players || {};
+        const staleEntry = Object.values(existingPlayers).find(
+          (p: any) => p?.email && p.email.toLowerCase() === ggEmail.toLowerCase()
+        ) as any;
+        if (staleEntry) {
+          playerId = staleEntry.id;
+          carriedScore = staleEntry.score || 0;
+        }
+      }
 
       await update(ref(db, `rooms/${fullCode}/players/${playerId}`), {
         id: playerId,
         name: displayName.trim(),
+        email: ggEmail || null,
         avatarId: profile.avatarId,
-        score: 0,
+        score: carriedScore,
         ready: true,
         isHost: false,
       });
@@ -285,6 +331,8 @@ const MPJoin: React.FC = () => {
           proceedJoin(codeDigits.join("").trim().toUpperCase());
         }}
       />
+
+      {showGate && <GummyGumGateModal onClose={() => setShowGate(false)} />}
     </div>
   );
 };

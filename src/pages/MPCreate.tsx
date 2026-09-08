@@ -1,9 +1,11 @@
 // src/pages/MPCreate.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, set } from "firebase/database";
+import { ref, set, get } from "firebase/database";
 import { db } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
+import { useGummyGum } from "../contexts/GummyGumContext";
+import { GummyGumGateModal } from "../components/GummyGumGateModal";
 
 const THEME_OPTIONS = [
   { id: "General", label: "General", icon: "🌐" },
@@ -16,11 +18,13 @@ const THEME_OPTIONS = [
 const MPCreate: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useProfile();
+  const { ggSession, ggAccessState } = useGummyGum();
 
   const [lobbyName, setLobbyName] = useState("Q3 New Hire Batch");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
   const [selectedThemes, setSelectedThemes] = useState<string[]>(["General", "Corporate"]);
   const [isCreating, setIsCreating] = useState(false);
+  const [showGate, setShowGate] = useState(false);
 
   const toggleTheme = (themeId: string) => {
     setSelectedThemes((prev) =>
@@ -41,46 +45,69 @@ const MPCreate: React.FC = () => {
 
   const handleGenerateCode = async () => {
     if (!lobbyName.trim() || isCreating) return;
+    if (ggAccessState === "denied") {
+      setShowGate(true);
+      return;
+    }
     setIsCreating(true);
 
-    const roomCode = generateRoomCode();
+    const hostName = ggSession?.player?.name || profile.username || "Host Admin";
     const hostId = "host_" + Date.now();
 
-    const roomData = {
-      name: lobbyName,
-      code: roomCode,
-      hostId,
-      hostName: profile.username || "Host Admin",
-      status: "waiting",
-      locked: false,
-      settings: {
-        difficulty,
-        themes: selectedThemes,
-        maxPlayers: 200,
-      },
-      players: {
-        [hostId]: {
-          id: hostId,
-          name: profile.username || "Host Admin",
-          avatarId: profile.avatarId,
-          score: 0,
-          ready: true,
-          isHost: true,
-        },
-      },
-    };
-
     try {
-      await set(ref(db, `rooms/${roomCode}`), roomData);
-      navigate("/lobby", {
-        state: {
-          roomCode,
-          playerId: hostId,
-          isHost: true,
-          playerName: profile.username || "Host Admin",
-          lobbyName,
+      // Launched via GummyGum: the room code is fixed to the hub's own PIN
+      // (already emailed to the team as their join code), not a random one.
+      // If this host already created the room — tab closed and reopened —
+      // reuse it instead of overwriting the players already in it.
+      if (ggSession?.roomCode) {
+        const roomCode = ggSession.roomCode;
+        const existing = await get(ref(db, `rooms/${roomCode}`));
+        if (existing.exists()) {
+          navigate("/lobby", {
+            state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName: existing.val().name || lobbyName },
+          });
+          return;
+        }
+
+        await set(ref(db, `rooms/${roomCode}`), {
+          name: lobbyName,
+          code: roomCode,
+          hostId,
+          hostName,
+          hostEmail: ggSession.player?.email || null,
+          status: "waiting",
+          locked: false,
+          settings: { difficulty, themes: selectedThemes, maxPlayers: 200 },
+          players: {
+            [hostId]: {
+              id: hostId,
+              name: hostName,
+              email: ggSession.player?.email || null,
+              avatarId: profile.avatarId,
+              score: 0,
+              ready: true,
+              isHost: true,
+            },
+          },
+        });
+        navigate("/lobby", { state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
+        return;
+      }
+
+      const roomCode = generateRoomCode();
+      await set(ref(db, `rooms/${roomCode}`), {
+        name: lobbyName,
+        code: roomCode,
+        hostId,
+        hostName,
+        status: "waiting",
+        locked: false,
+        settings: { difficulty, themes: selectedThemes, maxPlayers: 200 },
+        players: {
+          [hostId]: { id: hostId, name: hostName, avatarId: profile.avatarId, score: 0, ready: true, isHost: true },
         },
       });
+      navigate("/lobby", { state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
     } catch (err) {
       console.error("Failed to create room:", err);
       setIsCreating(false);
@@ -262,6 +289,7 @@ const MPCreate: React.FC = () => {
           </button>
         </div>
       </div>
+      {showGate && <GummyGumGateModal onClose={() => setShowGate(false)} />}
     </div>
   );
 };
