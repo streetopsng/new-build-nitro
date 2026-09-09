@@ -7,6 +7,7 @@ import { Avatar } from "../components/Avatar";
 import SoundToggle from "../components/SoundToggle";
 import { JoiningLobby } from "../components/JoiningLobby";
 import { useProfile } from "../contexts/ProfileContext";
+import { useGummyGum } from "../contexts/GummyGumContext";
 import { BackgroundDoodles } from "../components/BackgroundDoodles";
 
 interface LocationState {
@@ -42,11 +43,16 @@ const Lobby: React.FC = () => {
   const navigate = useNavigate();
   const state = location.state as LocationState;
   const { profile } = useProfile();
+  const { ggSession } = useGummyGum();
 
-  const roomCode = state?.roomCode || "DEFAULT";
-  const isHost = state?.isHost ?? false;
-  const currentUserPlayerName = state?.playerName || profile.username || "Player";
-  const currentUserId = state?.playerId || "player_" + (profile.username || "me");
+  const searchParams = new URLSearchParams(location.search);
+  const queryRoomCode = searchParams.get("roomCode") || searchParams.get("pin") || searchParams.get("code");
+  const queryIsHost = searchParams.get("host") === "true" || searchParams.get("isHost") === "true";
+
+  const roomCode = state?.roomCode || queryRoomCode || ggSession?.roomCode || "DEFAULT";
+  const isHost = state?.isHost ?? (queryIsHost || (ggSession?.isHost ?? false));
+  const currentUserPlayerName = state?.playerName || ggSession?.player?.name || profile.username || (isHost ? "Host Admin" : "Player");
+  const currentUserId = state?.playerId || (isHost ? "host_admin" : ("player_" + (profile.username || "me")));
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [lobbyTitle, setLobbyTitle] = useState(state?.lobbyName || "Game Lobby");

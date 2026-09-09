@@ -17,12 +17,23 @@ const MPEntry: React.FC = () => {
     navigate(path);
   };
 
-  // A team member who clicked their GummyGum invite link lands here first
-  // (the redirect always points at the domain root) — send them straight
-  // into the join flow instead of leaving them on the marketing screen.
+  // When launched from GummyGum with a roomCode:
+  // - Participants go straight to /mp-join
+  // - Hosts go straight to /lobby
   useEffect(() => {
     if (ggSession && !ggSession.isHost && ggSession.roomCode) {
       navigate("/mp-join", { replace: true });
+    } else if (ggSession && ggSession.isHost && ggSession.roomCode) {
+      navigate("/lobby", {
+        replace: true,
+        state: {
+          roomCode: ggSession.roomCode,
+          playerId: "host_" + Date.now(),
+          isHost: true,
+          playerName: ggSession.player?.name || "Host",
+          lobbyName: `${ggSession.player?.name || "Insync"} session`,
+        },
+      });
     }
   }, [ggSession, navigate]);
 
