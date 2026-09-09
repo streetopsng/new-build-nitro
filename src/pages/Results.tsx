@@ -6,7 +6,7 @@ import { useGummyGum } from "../contexts/GummyGumContext";
 import { Avatar } from "../components/Avatar";
 import { db } from "../lib/firebase";
 import { ref, get } from "firebase/database";
-import { reportGummyGumResult } from "../lib/gummygumSession";
+import { reportGummyGumResult, closeGummyGumSession } from "../lib/gummygumSession";
 
 interface LocationState {
   score?: number;
@@ -303,18 +303,37 @@ const Results: React.FC = () => {
 
             {/* Back to Home Button matching Screenshot EXACTLY */}
             {ggSession ? (
-              <a
-                href="https://gummygum.app"
-                className="px-8 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center gap-2"
-              >
-                <span>Back to GummyGum</span> →
-              </a>
+              <div className="flex flex-col gap-2.5 w-full items-center">
+                {ggSession.isHost ? (
+                  <>
+                    <button
+                      onClick={() => closeGummyGumSession()}
+                      className="w-full px-8 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <span>Close Session & Return to GummyGum</span> →
+                    </button>
+                    <button
+                      onClick={() => navigate("/home")}
+                      className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                    >
+                      Insync Home
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => navigate("/home")}
+                    className="w-full px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>Leave Game</span>
+                  </button>
+                )}
+              </div>
             ) : (
               <button
                 onClick={() => navigate("/home")}
                 className="px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-xs transition-all cursor-pointer flex items-center gap-2"
               >
-                <span>Back to Home</span> 🏠
+                <span>Back to Home</span>
               </button>
             )}
           </div>
