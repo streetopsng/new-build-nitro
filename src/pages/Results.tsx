@@ -6,7 +6,7 @@ import { useGummyGum } from "../contexts/GummyGumContext";
 import { Avatar } from "../components/Avatar";
 import { db } from "../lib/firebase";
 import { ref, get } from "firebase/database";
-import { reportGummyGumResult, closeGummyGumSession, returnToGummyGum } from "../lib/gummygumSession";
+import { reportGummyGumResult, closeGummyGumSession } from "../lib/gummygumSession";
 
 interface LocationState {
   score?: number;
