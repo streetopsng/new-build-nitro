@@ -10,6 +10,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { GameProvider } from "./contexts/GameContext";
 import { AudioProvider } from "./contexts/AudioContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
+import { GummyGumProvider } from "./contexts/GummyGumContext";
 
 import ProfileSetup from "./pages/ProfileSetup";
 import Splash from "./pages/Splash";
@@ -50,6 +51,31 @@ function App() {
           </AudioProvider>
         </GameProvider>
       </AuthProvider>
+      <GummyGumProvider>
+        <AuthProvider>
+          <GameProvider>
+            <AudioProvider>
+              <ProfileProvider>
+                <Routes>
+                  <Route path="/" element={<MPEntry />} />
+                  <Route path="/splash" element={<Splash />} />
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/rules" element={<Rules />} />
+                  <Route path="/solo-setup" element={<SoloSetup />} />
+                  <Route path="/mp-entry" element={<MPEntry />} />
+                  <Route path="/mp-create" element={<MPCreate />} />
+                  <Route path="/mp-join" element={<MPJoin />} />
+                  <Route path="/profile-setup" element={<ProfileSetup />} />
+                  <Route path="/lobby" element={<Lobby />} />
+                  <Route path="/game" element={<Game />} />
+                  <Route path="/results" element={<Results />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </ProfileProvider>
+            </AudioProvider>
+          </GameProvider>
+        </AuthProvider>
+      </GummyGumProvider>
     </Router>
   );
 }

@@ -1,10 +1,12 @@
 // src/pages/Results.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
+import { useGummyGum } from "../contexts/GummyGumContext";
 import { Avatar } from "../components/Avatar";
 import { db } from "../lib/firebase";
 import { ref, get } from "firebase/database";
+import { reportGummyGumResult, closeGummyGumSession } from "../lib/gummygumSession";
 
 interface LocationState {
   score?: number;
@@ -22,6 +24,7 @@ interface LeaderboardUser {
   avatarId?: string;
   catchphrase?: string;
   score: number;
+  isHost?: boolean;
 }
 
 const DEFAULT_LEADERBOARD_LIST: LeaderboardUser[] = [
@@ -39,8 +42,10 @@ const Results: React.FC = () => {
   const navigate = useNavigate();
   const state = location.state as LocationState;
   const { profile } = useProfile();
+  const { ggSession } = useGummyGum();
 
   const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>(DEFAULT_LEADERBOARD_LIST);
+  const ggReportedRef = useRef(false);
 
   const roomCode = state?.roomCode;
   const userScore = state?.score ?? 780;
@@ -63,6 +68,7 @@ const Results: React.FC = () => {
               avatarId: p.avatarId,
               catchphrase: p.catchphrase || "Ready and prepared",
               score: p.score || 0,
+              isHost: Boolean(p.isHost),
             }));
 
             list.sort((a, b) => b.score - a.score);
@@ -78,6 +84,23 @@ const Results: React.FC = () => {
       fetchFinalScores();
     }
   }, [roomCode]);
+
+  // Reports the launching player's final result back to GummyGum, once,
+  // after the real leaderboard (not the placeholder default) has loaded.
+  useEffect(() => {
+    if (ggReportedRef.current) return;
+    if (leaderboard === DEFAULT_LEADERBOARD_LIST) return;
+    ggReportedRef.current = true;
+
+    const rank = leaderboard.findIndex((p) => p.name === playerName) + 1;
+    reportGummyGumResult({
+      roomCode,
+      finalScore: userScore,
+      placement: rank || null,
+      totalPlayers: leaderboard.length,
+      leaderboard: leaderboard.map((p) => ({ name: p.name, score: p.score, isHost: p.isHost })),
+    });
+  }, [leaderboard, playerName, roomCode, userScore]);
 
   const winner1 = leaderboard[0] || DEFAULT_LEADERBOARD_LIST[0];
   const winner2 = leaderboard[1] || DEFAULT_LEADERBOARD_LIST[1];
@@ -208,6 +231,42 @@ const Results: React.FC = () => {
                 </div>
               ))}
             </div>
+
+            {/* Back to Home Button matching Screenshot EXACTLY */}
+            {ggSession ? (
+              <div className="flex flex-col gap-2.5 w-full items-center">
+                {ggSession.isHost ? (
+                  <>
+                    <button
+                      onClick={() => closeGummyGumSession()}
+                      className="w-full px-8 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <span>Close Session & Return to GummyGum</span> →
+                    </button>
+                    <button
+                      onClick={() => navigate("/home")}
+                      className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                    >
+                      Insync Home
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => navigate("/home")}
+                    className="w-full px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <span>Leave Game</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate("/home")}
+                className="px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-xs transition-all cursor-pointer flex items-center gap-2"
+              >
+                <span>Back to Home</span>
+              </button>
+            )}
           </div>
         )}
 
