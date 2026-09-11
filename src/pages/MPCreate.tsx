@@ -7,13 +7,11 @@ import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumGateModal } from "../components/GummyGumGateModal";
 
-const THEME_OPTIONS = [
-  { id: "General", label: "General", icon: "🌐" },
-  { id: "Corporate", label: "Corporate", icon: "🏢" },
-  { id: "Food", label: "Food", icon: "🍴" },
-  { id: "Culture", label: "Culture", icon: "☕" },
-  { id: "Family & Friends", label: "Family & Friends", icon: "🎓" },
-];
+interface ThemeOption {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+}
 
 const MPCreate: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +23,63 @@ const MPCreate: React.FC = () => {
   const [selectedThemes, setSelectedThemes] = useState<string[]>(["General", "Corporate"]);
   const [isCreating, setIsCreating] = useState(false);
   const [showGate, setShowGate] = useState(false);
+
+  const themeOptions: ThemeOption[] = [
+    {
+      id: "General",
+      label: "General",
+      icon: (
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="2" y1="12" x2="22" y2="12" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+        </svg>
+      ),
+    },
+    {
+      id: "Corporate",
+      label: "Corporate",
+      icon: (
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="4" y="2" width="16" height="20" rx="2" />
+          <path d="M9 6h2M13 6h2M9 10h2M13 10h2M9 14h2M13 14h2M10 22v-4h4v4" />
+        </svg>
+      ),
+    },
+    {
+      id: "Food",
+      label: "Food",
+      icon: (
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M18 8h1a4 4 0 1 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+          <line x1="6" y1="2" x2="6" y2="4" />
+          <line x1="10" y1="2" x2="10" y2="4" />
+        </svg>
+      ),
+    },
+    {
+      id: "Culture",
+      label: "Culture",
+      icon: (
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="7" r="4" />
+          <path d="M6 21v-2a6 6 0 0 1 12 0v2" />
+        </svg>
+      ),
+    },
+    {
+      id: "Family & Friends",
+      label: "Family & Friends",
+      icon: (
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      ),
+    },
+  ];
 
   const toggleTheme = (themeId: string) => {
     setSelectedThemes((prev) =>
@@ -53,6 +108,30 @@ const MPCreate: React.FC = () => {
 
     const hostName = ggSession?.player?.name || profile.username || "Host Admin";
     const hostId = "host_" + Date.now();
+
+    const roomData = {
+      name: lobbyName,
+      code: roomCode,
+      hostId,
+      hostName: profile.username || "Host Admin",
+      status: "waiting",
+      locked: false,
+      settings: {
+        difficulty,
+        themes: selectedThemes,
+        maxPlayers: 200,
+      },
+      players: {
+        [hostId]: {
+          id: hostId,
+          name: profile.username || "Host Admin",
+          avatarId: profile.avatarId || "av-1",
+          score: 0,
+          ready: true,
+          isHost: true,
+        },
+      },
+    };
 
     try {
       // Launched via GummyGum: the room code is fixed to the hub's own PIN
@@ -115,78 +194,30 @@ const MPCreate: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-slate-900 flex items-center justify-center p-6 relative overflow-hidden select-none">
-      {/* Background Vector Line-Art Graphics matching Mockup EXACTLY */}
-      <div className="absolute inset-0 pointer-events-none opacity-25 overflow-hidden">
-        {/* Top-Left: Briefcase / Messenger Bag */}
-        <svg className="absolute top-12 left-16 w-24 h-24 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <rect x="2" y="7" width="20" height="14" rx="2" />
-          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-          <path d="M12 12v3" />
-          <path d="M8 12h8" />
-        </svg>
+    <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
+      {/* Top Left Close Icon matching Figma #1487:2494 */}
+      <button
+        onClick={() => navigate("/home")}
+        className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
+      >
+        ✕
+      </button>
 
-        {/* Top-Right: Target with Arrow */}
-        <svg className="absolute top-14 right-16 w-28 h-28 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <circle cx="12" cy="12" r="10" />
-          <circle cx="12" cy="12" r="6" />
-          <circle cx="12" cy="12" r="2" />
-          <path d="M22 2l-7.5 7.5" />
-          <path d="M22 2h-5" />
-          <path d="M22 2v5" />
-        </svg>
-
-        {/* Mid-Left: Necktie */}
-        <svg className="absolute top-[45%] left-10 w-20 h-32 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <path d="M8 2h8l-2 4H10L8 2z" />
-          <path d="M10 6l-3 10 5 6 5-6-3-10H10z" />
-        </svg>
-
-        {/* Mid-Right: Office Building */}
-        <svg className="absolute top-[42%] right-10 w-24 h-32 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <rect x="4" y="2" width="16" height="20" rx="1" />
-          <path d="M9 6h2M13 6h2M9 10h2M13 10h2M9 14h2M13 14h2M10 22v-4h4v4" />
-        </svg>
-
-        {/* Bottom-Left: Bar Chart / Growth Graph */}
-        <svg className="absolute bottom-12 left-16 w-24 h-24 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <line x1="18" y1="20" x2="18" y2="10" />
-          <line x1="12" y1="20" x2="12" y2="4" />
-          <line x1="6" y1="20" x2="6" y2="14" />
-          <line x1="2" y1="20" x2="22" y2="20" />
-        </svg>
-
-        {/* Bottom-Right: ID Card / Badge */}
-        <svg className="absolute bottom-10 right-16 w-24 h-24 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <rect x="3" y="4" width="18" height="16" rx="2" />
-          <circle cx="9" cy="10" r="3" />
-          <path d="M15 8h3M15 12h3M7 17h10" />
-        </svg>
-      </div>
-
-      {/* Main Modal Box */}
-      <div className="w-full max-w-xl rounded-3xl bg-white border border-slate-300 p-8 shadow-2xl relative text-left z-10">
-        {/* Top Left Close Icon */}
-        <button
-          onClick={() => navigate("/mp-entry")}
-          className="absolute top-6 left-6 text-slate-400 hover:text-black text-xl cursor-pointer"
-        >
-          ✕
-        </button>
-
-        {/* Header content */}
-        <div className="mt-4 mb-6">
-          <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">
+      {/* Main Admin Setup Container matching Figma #1428:2411 */}
+      <div className="w-full max-w-4xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-6 md:p-12 shadow-sm relative text-left space-y-8 z-10 animate-card-fade-in">
+        {/* Step Header */}
+        <div className="space-y-1">
+          <div className="text-xs md:text-sm font-semibold uppercase tracking-wider text-black/50">
             STEP 1 OF 2
           </div>
-          <h1 className="font-heading font-extrabold text-2xl text-black">
+          <h1 className="font-heading font-black text-2xl md:text-3xl text-black">
             Set up your onboarding session
           </h1>
         </div>
 
         {/* LOBBY NAME Field */}
-        <div className="mb-6">
-          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">
+        <div className="space-y-2">
+          <label className="block text-xs md:text-sm font-black uppercase tracking-wider text-black">
             LOBBY NAME
           </label>
           <input
@@ -194,96 +225,118 @@ const MPCreate: React.FC = () => {
             value={lobbyName}
             onChange={(e) => setLobbyName(e.target.value)}
             placeholder="eg. Q3 New Hire Batch"
-            className="w-full bg-white border-2 border-[#f97316] rounded-2xl px-4 py-3 text-sm text-black font-semibold focus:outline-none transition-colors"
+            className="w-full h-14 md:h-16 px-5 rounded-2xl bg-white border border-[#FF6403] focus:outline-none text-base md:text-lg font-medium text-black transition-colors"
           />
         </div>
 
-        {/* DIFFICULTY Buttons */}
-        <div className="mb-6">
-          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">
+        {/* DIFFICULTY Selection matching Figma #1375:2267 */}
+        <div className="space-y-2">
+          <label className="block text-xs md:text-sm font-black uppercase tracking-wider text-black">
             DIFFICULTY
           </label>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { id: "easy", label: "★ Easy" },
-              { id: "medium", label: "★★ Medium" },
-              { id: "hard", label: "★★★ Hard" },
-            ].map((diff) => {
-              const isSelected = difficulty === diff.id;
-              return (
-                <button
-                  key={diff.id}
-                  type="button"
-                  onClick={() => setDifficulty(diff.id as any)}
-                  className={`py-3 px-3 rounded-2xl border transition-all font-bold text-xs cursor-pointer ${
-                    isSelected
-                      ? "border-[#f97316] text-[#f97316] bg-white shadow-xs"
-                      : "border-slate-300 text-black bg-white hover:bg-slate-50"
-                  }`}
-                >
-                  <span className={isSelected ? "text-[#f97316]" : "text-black"}>
-                    {diff.label}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap gap-4">
+            {/* Easy */}
+            <button
+              type="button"
+              onClick={() => setDifficulty("easy")}
+              className={`h-16 md:h-20 px-6 rounded-xl border flex items-center justify-center gap-2 font-black text-base md:text-lg transition-all cursor-pointer ${
+                difficulty === "easy"
+                  ? "bg-white border-[#FF8E37] text-[#FF8E37] shadow-xs"
+                  : "bg-white border-black/40 text-black hover:bg-slate-50"
+              }`}
+            >
+              <span>★</span>
+              <span>Easy</span>
+            </button>
+
+            {/* Medium */}
+            <button
+              type="button"
+              onClick={() => setDifficulty("medium")}
+              className={`h-16 md:h-20 px-6 rounded-xl border flex items-center justify-center gap-2 font-black text-base md:text-lg transition-all cursor-pointer ${
+                difficulty === "medium"
+                  ? "bg-white border-[#FF8E37] text-[#FF8E37] shadow-xs"
+                  : "bg-white border-black/40 text-black hover:bg-slate-50"
+              }`}
+            >
+              <span>★★</span>
+              <span>Medium</span>
+            </button>
+
+            {/* Hard */}
+            <button
+              type="button"
+              onClick={() => setDifficulty("hard")}
+              className={`h-16 md:h-20 px-6 rounded-xl border flex items-center justify-center gap-2 font-black text-base md:text-lg transition-all cursor-pointer ${
+                difficulty === "hard"
+                  ? "bg-white border-[#FF8E37] text-[#FF8E37] shadow-xs"
+                  : "bg-white border-black/40 text-black hover:bg-slate-50"
+              }`}
+            >
+              <span>★★★</span>
+              <span>Hard</span>
+            </button>
           </div>
         </div>
 
-        {/* THEMES Chips */}
-        <div className="mb-6">
-          <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">
+        {/* THEMES Selection matching Figma #1375:2276 */}
+        <div className="space-y-2">
+          <label className="block text-xs md:text-sm font-black uppercase tracking-wider text-black">
             THEMES (choose from one or more)
           </label>
-          <div className="flex flex-wrap gap-2.5">
-            {THEME_OPTIONS.map((theme) => {
-              const isSelected = selectedThemes.includes(theme.id);
+          <div className="flex flex-wrap gap-4">
+            {themeOptions.map((t) => {
+              const isSelected = selectedThemes.includes(t.id);
               return (
                 <button
-                  key={theme.id}
+                  key={t.id}
                   type="button"
-                  onClick={() => toggleTheme(theme.id)}
-                  className={`py-2.5 px-4 rounded-2xl border transition-all font-bold text-xs flex items-center gap-1.5 cursor-pointer ${
+                  onClick={() => toggleTheme(t.id)}
+                  className={`h-16 md:h-20 px-6 rounded-xl border flex items-center justify-center gap-3 font-black text-base md:text-lg transition-all cursor-pointer ${
                     isSelected
-                      ? "border-[#f97316] text-[#f97316] bg-white shadow-xs"
-                      : "border-slate-300 text-black bg-white hover:bg-slate-50"
+                      ? "bg-white border-[#FF8E37] text-[#FF8E37] shadow-xs"
+                      : "bg-white border-black/40 text-black hover:bg-slate-50"
                   }`}
                 >
-                  <span>{theme.icon}</span> {theme.label}
+                  {t.icon}
+                  <span>{t.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Divider OR */}
-        <div className="relative my-6 text-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
-          </div>
-          <span className="relative bg-white px-4 text-xs font-extrabold tracking-widest text-slate-400 uppercase">
+        {/* OR Divider matching Figma #1674:483 */}
+        <div className="flex items-center justify-center gap-4 py-2">
+          <div className="w-48 sm:w-64 border-t border-black/30" />
+          <span className="text-xs font-black text-black/50 uppercase tracking-widest">
             OR
           </span>
+          <div className="w-48 sm:w-64 border-t border-black/30" />
         </div>
 
-        {/* Create your own questions card */}
-        <div className="mb-8 rounded-2xl border-2 border-dashed border-[#f97316] bg-white p-4 flex items-center justify-between cursor-pointer hover:bg-orange-50/20 transition-colors">
-          <div>
-            <div className="font-extrabold text-sm text-black">Create your own questions</div>
-            <div className="text-xs text-slate-500 font-medium">Write custom clues tailored to your team</div>
+        {/* Create Your Own Questions Dashed Card matching Figma #1674:486 */}
+        <div className="p-6 rounded-2xl border-2 border-dashed border-[#FF8E37] bg-white flex items-center justify-between cursor-pointer hover:bg-orange-50/20 transition-colors">
+          <div className="space-y-1">
+            <h3 className="font-heading font-black text-lg md:text-xl text-black">
+              Create your own questions
+            </h3>
+            <p className="text-sm md:text-base text-black/60 font-normal">
+              Write custom clues tailored to your team
+            </p>
           </div>
-          <div className="w-7 h-7 rounded-full border border-[#f97316] text-[#f97316] flex items-center justify-center font-extrabold text-sm">
-            →
+          <div className="w-10 h-10 rounded-full border border-[#FF8E37] text-[#FF8E37] flex items-center justify-center text-lg font-black">
+            ➔
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="flex justify-center">
+        {/* Action Button matching Figma #1488:2573 */}
+        <div className="flex justify-center pt-2">
           <button
             type="button"
             onClick={handleGenerateCode}
             disabled={!lobbyName.trim() || isCreating}
-            className="px-8 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+            className="w-full sm:w-auto px-10 py-4 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-xl border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
           >
             {isCreating ? "Generating..." : "Generate lobby code"}
           </button>
