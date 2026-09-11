@@ -79,15 +79,16 @@ interface UserProfile {
 interface ProfileContextType {
   profile: UserProfile;
   setProfile: (profile: Partial<UserProfile>) => void;
-  updateProfile: (username: string, avatarId: string) => void;
+  updateProfile: (username: string, avatarId: string, catchphrase?: string) => void;
   addGameStats: (score: number) => void;
   resetProfile: () => void;
 }
 
 const DEFAULT_PROFILE: UserProfile = {
   username: "Ayus",
-  avatarId: "avatar_1",
-  avatarUrl: AVATAR_OPTIONS[0].url,
+  avatarId: "av-1",
+  avatarUrl: "",
+  catchphrase: "Probably the smartest 😒",
   level: 10,
   gamesPlayed: 9,
   totalScore: 726,
@@ -117,13 +118,12 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     setProfileState((prev) => ({ ...prev, ...updates }));
   };
 
-  const updateProfile = (username: string, avatarId: string) => {
-    const avatar = AVATAR_OPTIONS.find((a) => a.id === avatarId) || AVATAR_OPTIONS[0];
+  const updateProfile = (username: string, avatarId: string, catchphrase?: string) => {
     setProfileState((prev) => ({
       ...prev,
       username,
       avatarId,
-      avatarUrl: avatar.url,
+      ...(catchphrase !== undefined ? { catchphrase } : {}),
       isProfileSet: true,
     }));
   };

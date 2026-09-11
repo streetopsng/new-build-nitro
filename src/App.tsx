@@ -16,7 +16,6 @@ import Splash from "./pages/Splash";
 import Home from "./pages/Home";
 import Rules from "./pages/Rules";
 import SoloSetup from "./pages/SoloSetup";
-import MPEntry from "./pages/MPEntry";
 import MPCreate from "./pages/MPCreate";
 import MPJoin from "./pages/MPJoin";
 import Lobby from "./pages/Lobby";
@@ -33,12 +32,12 @@ function App() {
           <AudioProvider>
             <ProfileProvider>
               <Routes>
-                <Route path="/" element={<MPEntry />} />
+                <Route path="/" element={<Splash />} />
                 <Route path="/splash" element={<Splash />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/rules" element={<Rules />} />
                 <Route path="/solo-setup" element={<SoloSetup />} />
-                <Route path="/mp-entry" element={<MPEntry />} />
+                <Route path="/mp-entry" element={<Home />} />
                 <Route path="/mp-create" element={<MPCreate />} />
                 <Route path="/mp-join" element={<MPJoin />} />
                 <Route path="/profile-setup" element={<ProfileSetup />} />

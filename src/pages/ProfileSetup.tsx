@@ -1,9 +1,17 @@
 // src/pages/ProfileSetup.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
-import { Avatar } from "../components/Avatar";
+import {
+  Avatar,
+  getRandomAvatarConfig,
+  encodeAvatarConfig,
+  decodeAvatarConfig,
+  type AvatarConfig,
+} from "../components/Avatar";
 import { ProfileModal } from "../components/ProfileModal";
+import { ref, update } from "firebase/database";
+import { db } from "../lib/firebase";
 
 interface LocationState {
   roomCode?: string;
@@ -23,193 +31,218 @@ const ProfileSetup: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState;
-  const { profile, setProfile } = useProfile();
+  const { profile, updateProfile } = useProfile();
 
-  const [selectedCatchphrase, setSelectedCatchphrase] = useState("Probably the smartest 😒");
+  // Avatar config state
+  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>(() =>
+    decodeAvatarConfig(profile.avatarId || "av-1")
+  );
+  const [isShuffling, setIsShuffling] = useState(false);
+
+  // User details state
+  const [playerName, setPlayerName] = useState(
+    state?.playerName || profile.username || "Ayoola"
+  );
+  const [selectedCatchphrase, setSelectedCatchphrase] = useState(
+    profile.catchphrase || "Probably the smartest 😒"
+  );
   const [customCatchphrase, setCustomCatchphrase] = useState("");
   const [showAvatarPickerModal, setShowAvatarPickerModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  const username = state?.playerName || profile.username || "Ayoola";
   const activeCatchphrase = customCatchphrase.trim() || selectedCatchphrase;
 
-  const handleJoinLobby = () => {
+  // Sync initial avatar if state is updated
+  useEffect(() => {
+    if (profile.avatarId) {
+      setAvatarConfig(decodeAvatarConfig(profile.avatarId));
+    }
+  }, [profile.avatarId]);
+
+  // Shuffle Avatar generator action matching Figma #1586:3066
+  const handleShuffle = () => {
+    setIsShuffling(true);
+    const newConfig = getRandomAvatarConfig();
+    setAvatarConfig(newConfig);
+    setTimeout(() => {
+      setIsShuffling(false);
+    }, 400);
+  };
+
+  const handleJoinLobby = async () => {
     setIsSaving(true);
-    setProfile({ username });
+    const serializedAvatar = encodeAvatarConfig(avatarConfig);
+    updateProfile(playerName.trim() || "Ayoola", serializedAvatar, activeCatchphrase);
+
+    const roomCode = state?.roomCode || "DEMO01";
+    const playerId = "player_" + Date.now();
+
+    try {
+      if (state?.roomCode) {
+        await update(ref(db, `rooms/${roomCode}/players/${playerId}`), {
+          id: playerId,
+          name: playerName.trim() || "Ayoola",
+          avatarId: serializedAvatar,
+          score: 0,
+          ready: true,
+          isHost: false,
+          catchphrase: activeCatchphrase,
+        });
+      }
+    } catch (err) {
+      console.warn("Could not save to Firebase, continuing locally:", err);
+    }
 
     setTimeout(() => {
       navigate("/lobby", {
         state: {
-          roomCode: state?.roomCode || "6WEFAJ",
-          playerId: "player_" + Date.now(),
+          roomCode,
+          playerId,
           isHost: false,
-          playerName: username,
+          playerName: playerName.trim() || "Ayoola",
           catchphrase: activeCatchphrase,
+          avatarId: serializedAvatar,
         },
       });
     }, 1500);
   };
 
   /* ------------------------------------------------------------------ */
-  /* Render Mode: "Saving your identity..." Loading Screen (Image Match) */
+  /* Step 2: Saving / Identity Transition Screen from node #1586:3066   */
   /* ------------------------------------------------------------------ */
   if (isSaving) {
     return (
       <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
-        {/* Background Food & Drink Line-Art Doodles matching Screenshot EXACTLY */}
-        <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
-          {/* Burger */}
-          <svg className="absolute top-10 left-12 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M6 10a6 6 0 0 1 12 0v1H6v-1z"/>
-            <path d="M3 13h18"/>
-            <path d="M5 20h14a2 2 0 0 0 2-2v-1H3v1a2 2 0 0 0 2 2z"/>
-          </svg>
-
-          {/* Drink with straw */}
-          <svg className="absolute top-12 left-[35%] w-16 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M6 8l1.5 12a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2L18 8"/>
-            <line x1="12" y1="2" x2="16" y2="8"/>
-          </svg>
-
-          {/* Ramen Bowl with chopsticks */}
-          <svg className="absolute top-10 left-[60%] w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M3 12h18a9 9 0 0 1-18 0z"/>
-            <line x1="16" y1="3" x2="10" y2="12"/>
-            <line x1="20" y1="3" x2="12" y2="12"/>
-          </svg>
-
-          {/* Pizza */}
-          <svg className="absolute top-12 right-16 w-24 h-24 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M15 11l-3 3M12 4L3 20h18L12 4z"/>
-            <circle cx="10" cy="14" r="1.5" fill="currentColor"/>
-          </svg>
-
-          {/* Cloche */}
-          <svg className="absolute top-[35%] left-16 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M12 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-            <path d="M4 18h16a1 1 0 0 0 1-1A9 9 0 0 0 3 17a1 1 0 0 0 1 1z"/>
-          </svg>
-
-          {/* Cupcake */}
-          <svg className="absolute top-[36%] right-20 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M5 11l2 10h10l2-10"/>
-            <path d="M4 11c0-2 2-3 4-3s3 1 4 3c1-2 2-3 4-3s4 1 4 3"/>
-          </svg>
-
-          {/* Coffee Cup */}
-          <svg className="absolute top-[60%] left-20 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M18 8h1a4 4 0 1 1 0 8h-1"/>
-            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
-          </svg>
-
-          {/* Fork & Knife */}
-          <svg className="absolute top-[60%] right-20 w-16 h-24 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M6 2v6a3 3 0 0 0 6 0V2"/>
-            <line x1="9" y1="11" x2="9" y2="22"/>
-            <path d="M18 2v8a4 4 0 0 1-4 4v8"/>
-          </svg>
-
-          {/* Chef Hat */}
-          <svg className="absolute bottom-10 left-16 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M6 14h12v4a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4z"/>
-          </svg>
-
-          {/* Coffee to go */}
-          <svg className="absolute bottom-10 right-20 w-16 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-            <path d="M6 8l1.5 12a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2L18 8"/>
-            <rect x="4" y="4" width="16" height="4" rx="1"/>
-          </svg>
+        {/* Floating decorative badges */}
+        <div className="absolute top-1/4 left-1/4 animate-bounce text-2xl opacity-60">
+          🎨
+        </div>
+        <div className="absolute bottom-1/3 right-1/4 animate-pulse text-2xl opacity-60">
+          ✨
+        </div>
+        <div className="absolute top-1/3 right-1/3 animate-bounce text-2xl opacity-60 delay-150">
+          👓
         </div>
 
-        {/* Center Orange Avatar Icon & Title matching Screenshot EXACTLY */}
-        <div className="relative z-10 flex flex-col items-center animate-card-fade-in">
-          <div className="w-20 h-20 rounded-full bg-[#f97316] flex items-center justify-center text-4xl shadow-md mb-4 animate-pulse">
-            🦊
+        <div className="relative z-10 flex flex-col items-center space-y-5 text-center animate-card-fade-in max-w-md">
+          {/* Avatar preview with pulse ring */}
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-[#FF8E37]/30 animate-ping" />
+            <div className="relative p-1.5 rounded-full bg-white border-2 border-black shadow-lg">
+              <Avatar config={avatarConfig} size="xl" />
+            </div>
           </div>
-          <h2 className="font-heading font-extrabold text-xl text-black">
-            Saving your identity...
-          </h2>
+
+          <div className="space-y-1.5">
+            <h2 className="font-heading font-black text-2xl md:text-3xl text-black">
+              Preparing your session identity...
+            </h2>
+            <p className="text-sm font-medium text-black/60">
+              Creating something awesome...
+            </p>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-56 h-3 bg-slate-100 border border-black/20 rounded-full overflow-hidden p-0.5">
+            <div className="h-full bg-[#FF8E37] animate-pulse-progress rounded-full" />
+          </div>
         </div>
       </div>
     );
   }
 
   /* ------------------------------------------------------------------ */
-  /* Main Profile Setup Form View                                      */
+  /* Step 3: Avatar Revealed & Profile Setup Card                      */
   /* ------------------------------------------------------------------ */
   return (
-    <div className="min-h-screen bg-[#fafafa] text-slate-900 flex items-center justify-center p-6 select-none relative overflow-hidden">
-      {/* Background Line-Art Food & Drink Doodles */}
-      <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
-        <svg className="absolute top-10 left-12 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <path d="M6 10a6 6 0 0 1 12 0v1H6v-1z"/>
-          <path d="M3 13h18"/>
-          <path d="M5 20h14a2 2 0 0 0 2-2v-1H3v1a2 2 0 0 0 2 2z"/>
-        </svg>
-
-        <svg className="absolute top-12 right-16 w-24 h-24 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <path d="M15 11l-3 3M12 4L3 20h18L12 4z"/>
-          <circle cx="10" cy="14" r="1.5" fill="currentColor"/>
-        </svg>
-
-        <svg className="absolute top-[35%] left-16 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <path d="M12 4a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-          <path d="M4 18h16a1 1 0 0 0 1-1A9 9 0 0 0 3 17a1 1 0 0 0 1 1z"/>
-        </svg>
-
-        <svg className="absolute top-[36%] right-20 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <path d="M5 11l2 10h10l2-10"/>
-        </svg>
-
-        <svg className="absolute top-[60%] left-20 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <path d="M18 8h1a4 4 0 1 1 0 8h-1"/>
-          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
-        </svg>
-
-        <svg className="absolute bottom-10 left-16 w-20 h-20 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
-          <path d="M6 14h12v4a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4z"/>
-        </svg>
-      </div>
-
+    <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
       {/* Top Left Back Arrow */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-6 left-6 text-slate-800 hover:text-black text-xl font-bold cursor-pointer z-20"
+        className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
+        title="Back"
       >
         ←
       </button>
 
-      {/* Main Center Profile Setup Card matching Screenshot EXACTLY */}
-      <div className="w-full max-w-md rounded-3xl bg-[#fffdfa] border border-slate-300 p-8 shadow-xl relative text-center z-10">
-        {/* Top Profile Avatar & Name Preview */}
-        <div className="mb-4 flex items-center justify-center gap-4">
-          <div className="p-1 rounded-full border-2 border-black bg-white">
-            <Avatar id={profile.avatarId || "av-1"} size="xl" />
+      {/* Main Card Container */}
+      <div className="w-full max-w-xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-6 sm:p-10 shadow-sm relative text-center space-y-7 z-10 animate-card-fade-in">
+        {/* Title Header matching node 1586:3066 */}
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF8E37]/15 border border-[#FF8E37]/40 text-[11px] font-black uppercase tracking-wider text-black">
+            <span>✨</span> Session Identity <span>✨</span>
           </div>
-          <div className="text-left">
-            <h2 className="font-heading font-extrabold text-xl text-black">
-              {username}
-            </h2>
-            <div className="text-xs text-slate-700 font-medium italic">
-              “{activeCatchphrase}”
-            </div>
+          <h1 className="font-heading font-black text-2xl sm:text-3xl text-black pt-1">
+            Your Session Avatar
+          </h1>
+          <p className="text-xs sm:text-sm text-black/60 font-medium">
+            Randomly generated gender-neutral avatar for your game room
+          </p>
+        </div>
+
+        {/* Avatar Display & Shuffle Control */}
+        <div className="flex flex-col items-center justify-center space-y-3">
+          <div
+            className={`p-1.5 rounded-full border-3 border-black bg-white shadow-md transition-all duration-300 ${
+              isShuffling ? "rotate-[360deg] scale-110" : "hover:scale-105"
+            }`}
+          >
+            <Avatar config={avatarConfig} size="2xl" />
+          </div>
+
+          {/* Shuffle & Customize Buttons */}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleShuffle}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-sm border-2 border-black shadow-2xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              <span className={isShuffling ? "animate-spin inline-block" : ""}>🔀</span>
+              <span>Shuffle Avatar</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowAvatarPickerModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-bold text-sm border border-black/30 shadow-2xs transition-all cursor-pointer"
+            >
+              <span>🎨</span>
+              <span>Customize</span>
+            </button>
           </div>
         </div>
 
-        {/* Choose Your Avatar Button */}
-        <button
-          type="button"
-          onClick={() => setShowAvatarPickerModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-800 font-bold text-xs mb-6 cursor-pointer transition-colors"
-        >
-          <span>👤</span> Choose Your Avatar
-        </button>
-
-        {/* PICK A CATCHPHRASE Section matching Screenshot */}
-        <div className="mb-6 text-left">
-          <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-2">
-            PICK A CATCHPHRASE
+        {/* User Name Input */}
+        <div className="text-left space-y-2">
+          <label className="block text-xs font-black uppercase tracking-wider text-black">
+            ENTER YOUR NAME
           </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40 text-base">
+              👤
+            </span>
+            <input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              placeholder="e.g. Ayoola"
+              maxLength={20}
+              className="w-full bg-white border border-black/30 focus:border-[#FF8E37] rounded-2xl pl-11 pr-4 py-3.5 text-base text-black font-semibold focus:outline-none transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Catchphrase Selector */}
+        <div className="text-left space-y-2.5">
+          <div className="flex justify-between items-center">
+            <label className="block text-xs font-black uppercase tracking-wider text-black">
+              PICK A CATCHPHRASE
+            </label>
+            <span className="text-[11px] text-black/50 font-bold">
+              {activeCatchphrase.length} / 30
+            </span>
+          </div>
+
           <div className="grid grid-cols-2 gap-2">
             {CATCHPHRASES.map((phrase) => {
               const isSelected = selectedCatchphrase === phrase && !customCatchphrase;
@@ -221,10 +254,10 @@ const ProfileSetup: React.FC = () => {
                     setSelectedCatchphrase(phrase);
                     setCustomCatchphrase("");
                   }}
-                  className={`px-3 py-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer truncate ${
+                  className={`px-3 py-2.5 rounded-2xl border text-xs sm:text-sm font-bold transition-all cursor-pointer truncate ${
                     isSelected
-                      ? "bg-[#f97316] text-black border-2 border-black shadow-xs font-extrabold"
-                      : "bg-white text-slate-800 border-slate-300 hover:bg-slate-50"
+                      ? "bg-[#FF8E37] text-black border-2 border-black shadow-2xs font-black"
+                      : "bg-white text-black/80 border-black/25 hover:bg-slate-50"
                   }`}
                 >
                   {phrase}
@@ -232,44 +265,39 @@ const ProfileSetup: React.FC = () => {
               );
             })}
           </div>
-        </div>
 
-        {/* OR WRITE YOUR OWN (0 / 25) Section */}
-        <div className="mb-8 text-left">
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
-              OR WRITE YOUR OWN
-            </label>
-            <span className="text-[10px] text-slate-400 font-bold">
-              ({customCatchphrase.length} / 25)
-            </span>
-          </div>
+          {/* Or Write Your Own */}
           <input
             type="text"
-            maxLength={25}
+            maxLength={30}
             value={customCatchphrase}
             onChange={(e) => setCustomCatchphrase(e.target.value)}
-            placeholder="Say something clever..."
-            className="w-full bg-white border border-slate-300 focus:border-[#f97316] rounded-2xl px-4 py-3 text-sm text-black font-semibold focus:outline-none transition-colors"
+            placeholder="Or write your own witty phrase..."
+            className="w-full bg-white border border-black/30 focus:border-[#FF8E37] rounded-2xl px-4 py-3 text-sm text-black font-medium focus:outline-none transition-colors mt-2"
           />
         </div>
 
-        {/* Join Lobby Action Button matching Screenshot EXACTLY */}
-        <div className="flex justify-center">
+        {/* Action Button: Join Lobby */}
+        <div className="pt-2">
           <button
             type="button"
             onClick={handleJoinLobby}
-            className="px-8 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer flex items-center gap-2"
+            disabled={!playerName.trim()}
+            className="w-full sm:w-auto px-10 py-4 bg-[#FF8E37] hover:bg-[#EA580C] disabled:opacity-50 text-black font-heading font-black text-xl border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-3 mx-auto"
           >
-            Join Lobby ➔
+            <span>Join Lobby</span>
+            <span>➔</span>
           </button>
         </div>
       </div>
 
-      {/* Avatar Picker Modal */}
+      {/* Avatar Studio / Picker Modal */}
       <ProfileModal
         isOpen={showAvatarPickerModal}
         onClose={() => setShowAvatarPickerModal(false)}
+        onAvatarSelect={(selected) => {
+          setAvatarConfig(decodeAvatarConfig(selected));
+        }}
       />
     </div>
   );
