@@ -26,39 +26,49 @@
   opacity: 0.6;
 }
 
-/* Dark Theme Mesh Gradient */
-.bg-insync-dark {
-  background: radial-gradient(circle at 15% 15%, #1d1440 0%, #0c0d1e 50%),
-              radial-gradient(circle at 85% 20%, #0c2b38 0%, #0c0d1e 60%),
-              radial-gradient(circle at 50% 85%, #180d2a 0%, #0c0d1e 70%);
-  background-attachment: fixed;
+/* InSync Figma Neo-brutalist & Card Styles */
+.btn-insync-primary {
+  background-color: #FF8E37;
+  color: #000000;
+  font-weight: 750;
+  border-width: 2px 5px 5px 2px;
+  border-style: solid;
+  border-color: #000000;
+  border-radius: 20px;
+  transition: all 0.15s ease-out;
+  cursor: pointer;
+}
+.btn-insync-primary:hover {
+  background-color: #EA580C;
+}
+.btn-insync-primary:active {
+  transform: translate(2px, 2px);
+  border-width: 2px 3px 3px 2px;
 }
 
-/* Glassmorphism Card Style */
-.glass-card-dark {
-  background: rgba(19, 18, 43, 0.75);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.btn-insync-secondary {
+  background-color: #FFFFFF;
+  color: #FF8E37;
+  font-weight: 750;
+  border-width: 2px 5px 5px 2px;
+  border-style: solid;
+  border-color: #FF8E37;
+  border-radius: 20px;
+  transition: all 0.15s ease-out;
+  cursor: pointer;
+}
+.btn-insync-secondary:hover {
+  background-color: #FFF7ED;
+}
+.btn-insync-secondary:active {
+  transform: translate(2px, 2px);
+  border-width: 2px 3px 3px 2px;
 }
 
-.glass-card-dark-hover {
-  transition: all 0.25s ease;
-}
-.glass-card-dark-hover:hover {
-  background: rgba(28, 26, 61, 0.85);
-  border-color: rgba(23, 232, 195, 0.3);
-  transform: translateY(-2px);
-}
-
-/* Glowing Accent Utilities */
-.glow-teal {
-  box-shadow: 0 0 25px rgba(23, 232, 195, 0.35);
-}
-.glow-purple {
-  box-shadow: 0 0 25px rgba(124, 58, 237, 0.4);
-}
-.glow-orange {
-  box-shadow: 0 0 25px rgba(249, 115, 22, 0.4);
+.card-insync {
+  background-color: #FFFBF7;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  border-radius: 20px;
 }
 
 /* Keyframes */

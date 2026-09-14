@@ -19,36 +19,38 @@ const SoloSetup: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-insync-dark text-white p-4 md:p-8 flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-white text-slate-900 p-4 md:p-8 flex flex-col items-center justify-center select-none relative overflow-x-hidden">
       <div className="max-w-md w-full animate-card-fade-in">
-        <div className="rounded-3xl bg-[#13122b]/90 border border-[#2a2656] p-6 md:p-8 shadow-2xl backdrop-blur-xl relative">
+        <div className="card-insync bg-[#FFFBF7] p-6 md:p-8 shadow-sm relative space-y-6 text-left">
           <button
             onClick={() => navigate("/home")}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white text-lg cursor-pointer"
+            className="absolute top-5 right-5 text-black/50 hover:text-black text-xl font-bold cursor-pointer"
           >
             ✕
           </button>
 
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/30 text-[#7c3aed] flex items-center justify-center text-2xl font-bold mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-orange-100 border border-orange-200 text-[#FF8E37] flex items-center justify-center text-2xl font-black">
             ▷
           </div>
 
-          <h1 className="font-heading font-extrabold text-2xl text-white mb-1">
-            Solo Mode Setup
-          </h1>
-          <p className="text-xs text-gray-400 mb-6 font-medium">
-            Customize your solo practice round before playing
-          </p>
+          <div>
+            <h1 className="font-heading font-black text-2xl text-black">
+              Solo Practice Setup
+            </h1>
+            <p className="text-sm text-black/60 font-medium mt-1">
+              Customize your solo round before playing
+            </p>
+          </div>
 
           {/* Game Type Selection */}
-          <div className="mb-6 text-left">
-            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-2">
+          <div className="space-y-2">
+            <label className="block text-xs font-black uppercase tracking-wider text-black">
               ROUND TYPE
             </label>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { id: "10Q", title: "10Q Classic", desc: "10 clues round" },
-                { id: "sprint", title: "Time Sprint", desc: "2 minute rush" },
+                { id: "sprint", title: "Time Sprint", desc: "5 minute rush" },
               ].map((item) => {
                 const isSelected = mode === item.id;
                 return (
@@ -56,14 +58,14 @@ const SoloSetup: React.FC = () => {
                     key={item.id}
                     type="button"
                     onClick={() => setMode(item.id as any)}
-                    className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? "border-[#17e8c3] bg-[#17e8c3]/15 text-white glow-teal"
-                        : "border-[#2a2656] bg-[#0d0d1a] text-gray-400 hover:border-gray-600"
+                        ? "border-[#FF8E37] bg-white text-black shadow-xs font-black"
+                        : "border-black/20 bg-white text-black/60 hover:bg-slate-50"
                     }`}
                   >
-                    <div className="font-bold text-sm text-white mb-0.5">{item.title}</div>
-                    <div className="text-[11px] text-gray-400">{item.desc}</div>
+                    <div className="font-black text-sm text-black mb-0.5">{item.title}</div>
+                    <div className="text-xs text-black/50">{item.desc}</div>
                   </button>
                 );
               })}
@@ -71,8 +73,8 @@ const SoloSetup: React.FC = () => {
           </div>
 
           {/* Difficulty Selection */}
-          <div className="mb-8 text-left">
-            <label className="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400 mb-2">
+          <div className="space-y-2">
+            <label className="block text-xs font-black uppercase tracking-wider text-black">
               DIFFICULTY
             </label>
             <div className="grid grid-cols-3 gap-2.5">
@@ -87,26 +89,29 @@ const SoloSetup: React.FC = () => {
                     key={diff.id}
                     type="button"
                     onClick={() => setDifficulty(diff.id as any)}
-                    className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
                       isSelected
-                        ? "border-[#7c3aed] bg-[#7c3aed]/20 text-white glow-purple"
-                        : "border-[#2a2656] bg-[#0d0d1a] text-gray-400 hover:border-gray-600"
+                        ? "border-[#FF8E37] bg-white text-[#FF8E37] shadow-xs font-black"
+                        : "border-black/20 bg-white text-black hover:bg-slate-50"
                     }`}
                   >
-                    <div className="font-bold text-xs text-white">{diff.label}</div>
-                    <div className="text-[10px] text-gray-400 font-medium mt-0.5">{diff.time}</div>
+                    <div className="font-black text-xs">{diff.label}</div>
+                    <div className="text-[10px] text-black/50 font-semibold mt-0.5">{diff.time}</div>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <button
-            onClick={handleStartSolo}
-            className="w-full py-4 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-extrabold text-base uppercase tracking-wider shadow-lg glow-purple transition-all active:scale-97 cursor-pointer"
-          >
-            Start Solo Round →
-          </button>
+          {/* Action Button */}
+          <div className="pt-4">
+            <button
+              onClick={handleStartSolo}
+              className="w-full py-4 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              Start Solo Game ▷
+            </button>
+          </div>
         </div>
       </div>
     </div>

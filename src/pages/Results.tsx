@@ -31,13 +31,10 @@ const DEFAULT_LEADERBOARD_LIST: LeaderboardUser[] = [
   { id: "p-1", name: "Chidi", avatarId: "av-2", catchphrase: "Locked in paa..", score: 960 },
   { id: "p-2", name: "Blessing", avatarId: "av-6", catchphrase: "Probably the smartest 😒", score: 780 },
   { id: "p-3", name: "Ayoola", avatarId: "av-1", catchphrase: "Probably the smartest 😒", score: 720 },
-  { id: "p-4", name: "Tope", avatarId: "av-9", catchphrase: "Unstoppable energy", score: 720 },
-  { id: "p-5", name: "Mercy", avatarId: "av-5", catchphrase: "I am here to WIN", score: 680 },
-  { id: "p-6", name: "Ope", avatarId: "av-4", catchphrase: "Force of nature", score: 630 },
-  { id: "p-7", name: "Ade", avatarId: "av-3", catchphrase: "Quietly the GOAT", score: 570 },
-  { id: "p-8", name: "Barry", avatarId: "av-5", catchphrase: "Probably the smartest 😒", score: 510 },
-  { id: "p-9", name: "Augusta", avatarId: "av-8", catchphrase: "Tis I, the winner 😁", score: 460 },
-  { id: "p-10", name: "Kunle", avatarId: "av-9", catchphrase: "Small but mighty", score: 400 },
+  { id: "p-4", name: "Tope", avatarId: "av-9", catchphrase: "Unstoppable energy", score: 620 },
+  { id: "p-5", name: "Mercy", avatarId: "av-5", catchphrase: "I am here to WIN", score: 580 },
+  { id: "p-6", name: "Ope", avatarId: "av-4", catchphrase: "Force of nature", score: 540 },
+  { id: "p-7", name: "Ade", avatarId: "av-3", catchphrase: "Quietly the GOAT", score: 480 },
 ];
 
 const Results: React.FC = () => {
@@ -55,7 +52,6 @@ const Results: React.FC = () => {
   const userRank = state?.rank ?? 3;
   const userStreaks = state?.streaks ?? 3;
   const userHintsUsed = state?.hintsUsed ?? 1;
-  const userCorrectCount = state?.correctCount ?? 11;
   const playerName = state?.playerName || profile.username || "Ayoola";
 
   // Real-Time Firebase Fetch for Room Final Scores if available
@@ -70,7 +66,7 @@ const Results: React.FC = () => {
               id: p.id || p.name,
               name: p.name,
               avatarId: p.avatarId,
-              catchphrase: p.catchphrase || "Game enthusiast",
+              catchphrase: p.catchphrase || "Ready and prepared",
               score: p.score || 0,
               isHost: Boolean(p.isHost),
             }));
@@ -113,192 +109,127 @@ const Results: React.FC = () => {
   const lowerRanks = leaderboard.slice(3);
 
   return (
-    <div className="min-h-screen bg-[#fff5e9] text-slate-900 p-6 md:p-12 flex flex-col items-center select-none relative overflow-hidden">
-      {/* Background Decorative Orange Wave Circles */}
-      <div className="absolute top-0 left-0 w-48 h-48 rounded-full border-[16px] border-orange-200/50 -translate-x-20 -translate-y-20 pointer-events-none" />
-      <div className="absolute top-0 right-0 w-48 h-48 rounded-full border-[16px] border-orange-200/50 translate-x-20 -translate-y-20 pointer-events-none" />
-      <div className="absolute bottom-0 inset-x-0 h-32 bg-[#ffd8b3]/40 rounded-t-[50%] pointer-events-none" />
+    <div className="min-h-screen bg-[#FFEDD5] text-slate-900 p-6 md:p-12 flex flex-col items-center select-none relative overflow-x-hidden">
+      {/* Background Decorative Rings matching Figma */}
+      <div className="absolute -top-16 -left-16 w-56 h-56 rounded-full border-[18px] border-orange-200/50 pointer-events-none" />
+      <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full border-[18px] border-orange-200/50 pointer-events-none" />
 
-      <div className="max-w-5xl w-full z-10 animate-card-fade-in">
-        {/* Top Header */}
-        <div className="text-center mb-8">
-          <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
-            ROUND COMPLETE • Q3 NEW HIRE BATCH
+      <div className="max-w-5xl w-full z-10 space-y-8 animate-card-fade-in">
+        {/* Top Header matching Figma #1604:420 */}
+        <header className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white border-2 border-black font-black text-xs uppercase tracking-widest text-[#FF8E37] shadow-xs">
+            <span>🏆</span> SESSION CONCLUDED
           </div>
-          <h1 className="font-heading font-extrabold text-3xl text-black flex items-center justify-center gap-2 mt-1">
-            <span>🏆</span> Final Results
+          <h1 className="font-heading font-black text-4xl md:text-5xl text-black">
+            Final Results
           </h1>
-        </div>
+          <p className="text-black/60 font-medium text-base">
+            Congratulations to everyone on the leaderboard!
+          </p>
+        </header>
 
-        {/* Podium Section (Top 3 Winners) matching Screenshot EXACTLY */}
-        <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto items-end mb-10 text-center">
-          {/* #2 Silver Winner (Left) */}
-          <div className="flex flex-col items-center">
-            <span className="text-xs font-extrabold text-slate-400 mb-1">#2</span>
-            <div className="p-1 rounded-full border-2 border-black bg-white mb-2 shadow-xs">
-              <Avatar id={winner2.avatarId || "av-2"} size="lg" />
+        {/* Top 3 Podium Winners Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4 pb-2">
+          {/* 2nd Place */}
+          <div className="order-2 md:order-1 bg-white border-2 border-black rounded-3xl p-6 text-center shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-400 text-slate-700 font-black text-lg flex items-center justify-center mx-auto">
+              2
             </div>
-            <h3 className="font-heading font-extrabold text-lg text-black">
-              {winner2.name}
-            </h3>
-            <div className="text-[11px] text-slate-500 font-medium italic mb-1">
-              "{winner2.catchphrase || "Probably the smartest 😒"}"
+            <Avatar id={winner2.avatarId || "av-6"} size="lg" className="mx-auto" />
+            <div>
+              <div className="font-heading font-black text-xl text-black">{winner2.name}</div>
+              <div className="text-xs text-black/50 italic">"{winner2.catchphrase}"</div>
             </div>
-            <div className="font-heading font-extrabold text-2xl text-slate-800 mb-3">
-              {winner2.score}
-            </div>
-            <div className="w-full h-16 rounded-2xl bg-slate-200 border border-slate-300 flex items-center justify-center shadow-xs">
-              <div className="w-8 h-8 rounded-full bg-slate-300 border border-slate-400 flex items-center justify-center font-extrabold text-xs text-slate-700">
-                🥈 2
-              </div>
+            <div className="text-2xl font-black font-heading text-[#FF8E37]">
+              {winner2.score} pts
             </div>
           </div>
 
-          {/* #1 Gold Winner (Center - Elevated) */}
-          <div className="flex flex-col items-center -translate-y-4">
-            <span className="text-sm font-extrabold text-[#f97316] flex items-center gap-1 mb-1">
-              <span>👑</span> #1 WINNER
-            </span>
-            <div className="p-1.5 rounded-full border-2 border-black bg-white mb-2 shadow-md">
-              <Avatar id={winner1.avatarId || "av-1"} size="xl" />
+          {/* 1st Place (Center / Taller) */}
+          <div className="order-1 md:order-2 bg-[#FFFBF7] border-[3px] border-black rounded-3xl p-8 text-center shadow-lg space-y-4 relative -translate-y-2">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#FF8E37] text-black font-black text-xs uppercase tracking-wider border-2 border-black flex items-center gap-1.5 shadow-xs">
+              <span>👑</span> 1ST PLACE
             </div>
-            <h3 className="font-heading font-extrabold text-xl text-black">
-              {winner1.name}
-            </h3>
-            <div className="text-[11px] text-[#f97316] font-extrabold italic mb-1">
-              "{winner1.catchphrase || "Locked in paa.."}"
+            <div className="pt-2">
+              <Avatar id={winner1.avatarId || "av-2"} size="xl" className="mx-auto" />
             </div>
-            <div className="font-heading font-extrabold text-3xl text-[#f97316] mb-3">
-              {winner1.score}
+            <div>
+              <div className="font-heading font-black text-2xl text-black">{winner1.name}</div>
+              <div className="text-xs text-black/50 italic">"{winner1.catchphrase}"</div>
             </div>
-            <div className="w-full h-20 rounded-2xl bg-[#ffedd5] border-2 border-[#f97316] flex items-center justify-center shadow-md">
-              <div className="w-10 h-10 rounded-full bg-[#f97316] text-black flex items-center justify-center font-extrabold text-sm shadow-xs">
-                🥇 1
-              </div>
+            <div className="text-4xl font-black font-heading text-[#FF8E37]">
+              {winner1.score} pts
             </div>
           </div>
 
-          {/* #3 Bronze Winner (Right) */}
-          <div className="flex flex-col items-center">
-            <span className="text-xs font-extrabold text-slate-400 mb-1">#3</span>
-            <div className="p-1 rounded-full border-2 border-black bg-white mb-2 shadow-xs">
-              <Avatar id={winner3.avatarId || "av-3"} size="lg" />
+          {/* 3rd Place */}
+          <div className="order-3 bg-white border-2 border-black rounded-3xl p-6 text-center shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-full bg-amber-100 border-2 border-amber-600 text-amber-800 font-black text-lg flex items-center justify-center mx-auto">
+              3
             </div>
-            <h3 className="font-heading font-extrabold text-lg text-black">
-              {winner3.name}
-            </h3>
-            <div className="text-[11px] text-slate-500 font-medium italic mb-1">
-              "{winner3.catchphrase || "Probably the smartest 😒"}"
+            <Avatar id={winner3.avatarId || "av-1"} size="lg" className="mx-auto" />
+            <div>
+              <div className="font-heading font-black text-xl text-black">{winner3.name}</div>
+              <div className="text-xs text-black/50 italic">"{winner3.catchphrase}"</div>
             </div>
-            <div className="font-heading font-extrabold text-2xl text-slate-800 mb-3">
-              {winner3.score}
-            </div>
-            <div className="w-full h-16 rounded-2xl bg-[#fed7aa]/60 border border-orange-300 flex items-center justify-center shadow-xs">
-              <div className="w-8 h-8 rounded-full bg-orange-300 border border-orange-400 flex items-center justify-center font-extrabold text-xs text-orange-900">
-                🥉 3
-              </div>
+            <div className="text-2xl font-black font-heading text-[#FF8E37]">
+              {winner3.score} pts
             </div>
           </div>
         </div>
 
-        <div className="border-t border-orange-200/60 my-6" />
-
-        {/* Main 2 Columns: LEADERBOARD list vs YOUR RESULT card matching Screenshot */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Left Column: LEADERBOARD (Ranks 4-10) */}
-          <div className="md:col-span-7 text-left space-y-2.5">
-            <div className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-3">
-              LEADERBOARD
-            </div>
-
-            {lowerRanks.map((item, idx) => (
-              <div
-                key={item.id}
-                className="p-3.5 rounded-2xl bg-white border-2 border-orange-200 flex items-center justify-between shadow-xs hover:border-[#f97316] transition-colors"
-              >
-                <div className="flex items-center gap-3.5">
-                  <span className="font-extrabold text-sm text-slate-400 w-5 text-center">
-                    {idx + 4}
-                  </span>
-                  <Avatar id={item.avatarId || "av-1"} size="md" />
-                  <div>
-                    <div className="font-extrabold text-sm text-black">
-                      {item.name}
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      {item.catchphrase || "Game participant"}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="font-heading font-extrabold text-base text-[#f97316]">
-                  {item.score}
-                </div>
-              </div>
-            ))}
+        {/* Your Performance Summary Card */}
+        <div className="bg-white border-2 border-black rounded-3xl p-6 shadow-xs text-left">
+          <div className="text-xs font-black uppercase tracking-wider text-black/50 mb-4">
+            YOUR PERFORMANCE SUMMARY ({playerName})
           </div>
-
-          {/* Right Column: YOUR RESULT Card matching Screenshot EXACTLY */}
-          <div className="md:col-span-5 text-center flex flex-col items-center">
-            <div className="text-xs font-extrabold text-slate-400 uppercase tracking-wider text-left w-full mb-3">
-              YOUR RESULT
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="p-3 bg-orange-50 rounded-2xl border border-orange-200">
+              <div className="text-xs text-black/50 font-bold">YOUR RANK</div>
+              <div className="font-heading font-black text-2xl text-black mt-1">#{userRank}</div>
             </div>
+            <div className="p-3 bg-orange-50 rounded-2xl border border-orange-200">
+              <div className="text-xs text-black/50 font-bold">TOTAL SCORE</div>
+              <div className="font-heading font-black text-2xl text-[#FF8E37] mt-1">{userScore} pts</div>
+            </div>
+            <div className="p-3 bg-orange-50 rounded-2xl border border-orange-200">
+              <div className="text-xs text-black/50 font-bold">MAX STREAK</div>
+              <div className="font-heading font-black text-2xl text-black mt-1">{userStreaks} 🔥</div>
+            </div>
+            <div className="p-3 bg-orange-50 rounded-2xl border border-orange-200">
+              <div className="text-xs text-black/50 font-bold">HINTS USED</div>
+              <div className="font-heading font-black text-2xl text-black mt-1">{userHintsUsed} / 5</div>
+            </div>
+          </div>
+        </div>
 
-            <div className="w-full rounded-3xl bg-white border-2 border-[#f97316] p-6 shadow-md relative text-center mb-6">
-              {/* #3 PLACE Top Badge */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#f97316] text-white font-extrabold text-xs shadow-xs uppercase tracking-wider">
-                #{userRank} PLACE
-              </div>
-
-              <div className="mt-2 mb-3 flex justify-center">
-                <Avatar id={profile.avatarId} size="xl" />
-              </div>
-
-              <h2 className="font-heading font-extrabold text-xl text-black">
-                {playerName}
-              </h2>
-              <div className="text-xs text-[#f97316] font-bold italic mb-6">
-                "{profile.catchphrase || "Probably the smartest 😒"}"
-              </div>
-
-              {/* Metrics Grid matching Screenshot */}
-              <div className="border-t border-slate-100 pt-4 space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-left">
-                  <div>
-                    <div className="text-[10px] font-extrabold uppercase text-slate-400">
-                      SCORE
-                    </div>
-                    <div className="font-heading font-extrabold text-2xl text-[#f97316]">
-                      {userScore}
+        {/* All Participants List (ranks 4+) */}
+        {lowerRanks.length > 0 && (
+          <div className="bg-white border-2 border-black rounded-3xl p-6 shadow-xs text-left space-y-3">
+            <div className="text-xs font-black uppercase tracking-wider text-black/50 mb-2">
+              ALL PARTICIPANTS
+            </div>
+            <div className="space-y-2">
+              {lowerRanks.map((player, idx) => (
+                <div
+                  key={player.id}
+                  className="flex items-center justify-between p-3.5 rounded-2xl border border-black/10 bg-slate-50/50 hover:bg-slate-100 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-white border border-black/20 text-xs font-black flex items-center justify-center">
+                      {idx + 4}
+                    </span>
+                    <Avatar id={player.avatarId || "av-1"} size="sm" />
+                    <div>
+                      <div className="font-bold text-sm text-black">{player.name}</div>
+                      <div className="text-xs text-black/40 italic">"{player.catchphrase}"</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-extrabold uppercase text-slate-400">
-                      RANK
-                    </div>
-                    <div className="font-heading font-extrabold text-2xl text-black">
-                      #{userRank}
-                    </div>
+                  <div className="font-heading font-black text-base text-[#FF8E37]">
+                    {player.score} pts
                   </div>
                 </div>
-
-                <div className="pt-2 space-y-2 text-xs font-bold text-slate-600">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Streaks</span>
-                    <span className="text-[#f97316]">{userStreaks} 🔥</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Hints used</span>
-                    <span className="text-black">{userHintsUsed}/5</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Correct</span>
-                    <span className="text-black">{userCorrectCount}</span>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Back to Home Button matching Screenshot EXACTLY */}
@@ -337,6 +268,23 @@ const Results: React.FC = () => {
               </button>
             )}
           </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-4 pt-4 pb-8">
+          <button
+            onClick={() => navigate("/home")}
+            className="px-8 py-4 bg-white hover:bg-slate-50 text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+          >
+            Back to Home
+          </button>
+          <button
+            onClick={() => navigate("/mp-create")}
+            className="px-8 py-4 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
+          >
+            <span>Play Again</span>
+            <span>➔</span>
+          </button>
         </div>
       </div>
     </div>

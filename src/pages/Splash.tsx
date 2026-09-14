@@ -5,42 +5,6 @@ import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 import { ProfileModal } from "../components/ProfileModal";
 import { useProfile } from "../contexts/ProfileContext";
-
-export const InSyncLogoOrange: React.FC<{ size?: number; className?: string }> = ({
-  size = 64,
-  className = "",
-}) => {
-  return (
-    <div
-      className={`relative flex items-center justify-center rounded-full border-2 border-orange-400/60 bg-white p-3 shadow-md ${className}`}
-      style={{ width: size, height: size }}
-    >
-      <svg
-        viewBox="0 0 100 100"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full"
-      >
-        <circle cx="50" cy="50" r="44" stroke="#f97316" strokeWidth="3" />
-        <path
-          d="M 25 50 Q 37.5 25, 50 50 T 75 50"
-          stroke="#ea580c"
-          strokeWidth="4"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <path
-          d="M 25 50 Q 37.5 75, 50 50 T 75 50"
-          stroke="#f97316"
-          strokeWidth="4"
-          strokeLinecap="round"
-          fill="none"
-        />
-      </svg>
-    </div>
-  );
-};
-
 const Splash: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useProfile();
@@ -98,35 +62,31 @@ const Splash: React.FC = () => {
 
       {/* Main Content Card matching Image 6 EXACTLY */}
       <div className="relative z-10 max-w-md w-full flex flex-col items-center animate-card-fade-in">
-        {/* Orange Dual Wave Logo */}
-        <div className="mb-4">
-          <InSyncLogoOrange size={76} />
-        </div>
 
         {/* Brand Title: In (Black) + Sync (Orange) */}
-        <h1 className="font-heading font-extrabold text-5xl tracking-tight mb-6">
+        <h1 className="font-heading font-extrabold text-6xl tracking-tight mb-6">
           <span className="text-black">In</span>
-          <span className="text-[#f97316]">Sync</span>
+          <span className="text-[#FF8E37]">Sync</span>
         </h1>
 
-        {/* White Mockup Loading Bar */}
-        <div className="w-56 h-3 bg-white border border-slate-300 rounded-full overflow-hidden p-0.5 shadow-sm mb-4">
+        {/* Loading Bar */}
+        <div className="w-64 h-3.5 bg-white border border-slate-300 rounded-full overflow-hidden p-0.5 shadow-xs mb-4">
           <div
-            className="h-full bg-[#f97316] rounded-full transition-all duration-150 ease-out"
+            className="h-full bg-[#FF8E37] rounded-full transition-all duration-150 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        {/* Powered By Gummy Gum Subtitle matching Image 6 */}
-        <div className="text-xs font-semibold text-slate-800 flex items-center justify-center gap-1 mb-8">
-          <span>⚡</span> Powered By Gummy Gum
+        {/* Powered By Gummy Gum Subtitle */}
+        <div className="text-sm font-semibold text-slate-800 flex items-center justify-center gap-1.5 mb-8">
+          <span className="text-[#FF8E37]">⚡</span> Powered By Gummy Gum
         </div>
 
         {/* Auto-enter button when progress finishes */}
         {progress >= 100 && (
           <button
             onClick={handleStart}
-            className="px-8 py-3.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-base tracking-wide border-2 border-slate-950 shadow-[3px_3px_0px_#09090b] transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-none cursor-pointer animate-slide-in"
+            className="px-8 py-3.5 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-extrabold text-base tracking-wide border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer animate-slide-in"
           >
             Enter Session →
           </button>
