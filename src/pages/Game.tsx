@@ -4,7 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Avatar } from "../components/Avatar";
 import { useGame } from "../contexts/GameContext";
 import { db } from "../lib/firebase";
-import { ref, onValue, update } from "firebase/database";
+import { ref, onValue, update, get } from "firebase/database";
+import type { Word } from "../types";
 
 interface LocationState {
   roomCode?: string;
@@ -49,8 +50,23 @@ const Game: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // The host's own clues for this room, if they wrote any at setup — falls
+  // back to the shared built-in word bank when absent/empty.
+  const [customWords, setCustomWords] = useState<Word[] | null>(null);
+  useEffect(() => {
+    if (!roomCode || roomCode === "DEMO") return;
+    get(ref(db, `rooms/${roomCode}/customWords`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const list = Object.values(snapshot.val()) as Word[];
+        if (list.length > 0) setCustomWords(list);
+      }
+    }).catch((err) => console.error("Failed to load custom words:", err));
+  }, [roomCode]);
+
+  const effectiveWordBank = customWords && customWords.length > 0 ? customWords : wordBank;
+
   // Active word
-  const rawWord = wordBank[currentWordIndex % Math.max(wordBank.length, 1)];
+  const rawWord = effectiveWordBank[currentWordIndex % Math.max(effectiveWordBank.length, 1)];
   const activeWord = {
     word: rawWord?.word || "TOUCHLIGHT",
     clue: rawWord?.easy || rawWord?.medium || rawWord?.hard || "A portable light you hold in your hand when it is dark.",
@@ -140,7 +156,7 @@ const Game: React.FC = () => {
     setWordTimer(30);
     setHintActive(false);
     setUserGuess("");
-    setCurrentWordIndex((prev) => (prev + 1) % Math.max(wordBank.length, 1));
+    setCurrentWordIndex((prev) => (prev + 1) % Math.max(effectiveWordBank.length, 1));
   };
 
   const handleGuessSubmit = async (e: React.FormEvent) => {
