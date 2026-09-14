@@ -1,11 +1,10 @@
-// src/pages/MPJoin.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, get } from "firebase/database";
+import { ref, get, update } from "firebase/database";
 import { db } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
-import { GummyGumGateModal } from "../components/GummyGumGateModal";
+import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 import { JoiningLobby } from "../components/JoiningLobby";
 
 const MPJoin: React.FC = () => {
@@ -17,8 +16,6 @@ const MPJoin: React.FC = () => {
   const [displayName, setDisplayName] = useState(profile.username || "");
   const [isJoining, setIsJoining] = useState(false);
   const [isLockedModalOpen, setIsLockedModalOpen] = useState(false);
-  const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
-  const [showGate, setShowGate] = useState(false);
   const [error, setError] = useState("");
   const ggAutoJoinedRef = useRef(false);
 
@@ -31,7 +28,7 @@ const MPJoin: React.FC = () => {
     if (!ggSession || ggSession.isHost || !ggSession.roomCode) return;
     ggAutoJoinedRef.current = true;
     setDisplayName(ggSession.player?.name || displayName);
-    proceedJoin(ggSession.roomCode.toUpperCase());
+    proceedJoin(ggSession.roomCode.toUpperCase(), ggSession.player?.name);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ggSession]);
 
@@ -52,18 +49,9 @@ const MPJoin: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (ggAccessState === "denied") {
-      setShowGate(true);
-      return;
-    }
-    const fullCode = codeDigits.join("").trim().toUpperCase();
-    if (fullCode.length < 6) {
-      setError("Please enter all 6 characters of the room code.");
-      return;
-    }
-    if (!displayName.trim()) {
+  const proceedJoin = async (fullCode: string, nameOverride?: string) => {
+    const nameToUse = (nameOverride ?? displayName).trim();
+    if (!nameToUse) {
       setError("Please enter a display name for this session.");
       return;
     }
@@ -118,7 +106,7 @@ const MPJoin: React.FC = () => {
 
       await update(ref(db, `rooms/${fullCode}/players/${playerId}`), {
         id: playerId,
-        name: displayName.trim(),
+        name: nameToUse,
         email: ggEmail || null,
         avatarId: profile.avatarId,
         score: carriedScore,
@@ -132,7 +120,7 @@ const MPJoin: React.FC = () => {
             roomCode: fullCode,
             playerId,
             isHost: false,
-            playerName: displayName.trim(),
+            playerName: nameToUse,
             lobbyName: room.name || "Onboarding Lobby",
           },
         });
@@ -146,18 +134,36 @@ const MPJoin: React.FC = () => {
     navigate("/profile-setup", {
       state: {
         roomCode: fullCode,
-        playerName: displayName.trim(),
+        playerName: nameToUse,
       },
     });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const fullCode = codeDigits.join("").trim().toUpperCase();
+    if (fullCode.length < 6) {
+      setError("Please enter all 6 characters of the room code.");
+      return;
+    }
+    if (!displayName.trim()) {
+      setError("Please enter a display name for this session.");
+      return;
+    }
+
+    await proceedJoin(fullCode);
   };
 
   if (isJoining) {
     return <JoiningLobby message="Joining the lobby..." />;
   }
 
+  if (ggAccessState === "denied") {
+    return <GummyGumLockedScreen />;
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
-      {/* Top Left Close Icon matching Figma */}
       <button
         onClick={() => navigate("/home")}
         className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
@@ -167,7 +173,6 @@ const MPJoin: React.FC = () => {
 
       {/* Main Center Modal Container matching Figma #1494:3626 */}
       <div className="w-full max-w-xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-8 md:p-12 shadow-sm relative text-left space-y-8 z-10 animate-card-fade-in">
-        {/* Header */}
         <div className="space-y-1">
           <div className="text-xs md:text-sm font-semibold uppercase tracking-wider text-black/50">
             ENTER LOBBY
@@ -260,17 +265,6 @@ const MPJoin: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Profile Setup Modal */}
-      <ProfileModal
-        isOpen={showProfileSetupModal}
-        onClose={() => {
-          setShowProfileSetupModal(false);
-          proceedJoin(codeDigits.join("").trim().toUpperCase());
-        }}
-      />
-
-      {showGate && <GummyGumGateModal onClose={() => setShowGate(false)} />}
     </div>
   );
 };

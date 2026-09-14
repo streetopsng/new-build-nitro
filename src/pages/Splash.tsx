@@ -1,4 +1,3 @@
-// src/pages/Splash.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BackgroundAudio from "../components/BackgroundAudio";
@@ -55,7 +54,6 @@ const Splash: React.FC = () => {
         <span className="absolute top-[85%] right-[8%] text-6xl font-black font-heading">T A R</span>
       </div>
 
-      {/* Top right sound toggle */}
       <div className="absolute top-6 right-6 z-20">
         <SoundToggle className="px-3 py-1.5 bg-slate-100 border border-slate-300 rounded-full text-xs uppercase tracking-widest text-slate-700 hover:bg-slate-200 transition-all cursor-pointer" />
       </div>
@@ -63,13 +61,11 @@ const Splash: React.FC = () => {
       {/* Main Content Card matching Image 6 EXACTLY */}
       <div className="relative z-10 max-w-md w-full flex flex-col items-center animate-card-fade-in">
 
-        {/* Brand Title: In (Black) + Sync (Orange) */}
         <h1 className="font-heading font-extrabold text-6xl tracking-tight mb-6">
           <span className="text-black">In</span>
           <span className="text-[#FF8E37]">Sync</span>
         </h1>
 
-        {/* Loading Bar */}
         <div className="w-64 h-3.5 bg-white border border-slate-300 rounded-full overflow-hidden p-0.5 shadow-xs mb-4">
           <div
             className="h-full bg-[#FF8E37] rounded-full transition-all duration-150 ease-out"
@@ -77,12 +73,10 @@ const Splash: React.FC = () => {
           />
         </div>
 
-        {/* Powered By Gummy Gum Subtitle */}
         <div className="text-sm font-semibold text-slate-800 flex items-center justify-center gap-1.5 mb-8">
           <span className="text-[#FF8E37]">⚡</span> Powered By Gummy Gum
         </div>
 
-        {/* Auto-enter button when progress finishes */}
         {progress >= 100 && (
           <button
             onClick={handleStart}
@@ -93,7 +87,6 @@ const Splash: React.FC = () => {
         )}
       </div>
 
-      {/* Profile Modal */}
       <ProfileModal
         isOpen={showProfileModal}
         onClose={() => {

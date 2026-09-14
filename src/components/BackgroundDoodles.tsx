@@ -1,4 +1,3 @@
-// src/components/BackgroundDoodles.tsx
 import React from "react";
 
 export const BackgroundDoodles: React.FC<{ opacity?: string }> = ({

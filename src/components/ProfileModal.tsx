@@ -1,4 +1,3 @@
-// src/components/ProfileModal.tsx
 import React, { useState } from "react";
 import {
   Avatar,
@@ -88,7 +87,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-card-fade-in">
       <div className="w-full max-w-xl max-h-[90vh] flex flex-col rounded-3xl bg-[#FFFBF7] border border-black/40 shadow-2xl p-6 sm:p-8 text-center text-slate-900 relative space-y-5 overflow-hidden">
-        {/* Top Close Button */}
         <button
           onClick={onClose}
           className="absolute top-5 right-5 text-black/50 hover:text-black text-xl font-bold cursor-pointer z-10"
@@ -96,7 +94,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
           ✕
         </button>
 
-        {/* Modal Header */}
         <div>
           <h2 className="text-2xl sm:text-3xl font-black font-heading text-black">
             ✨ Avatar Studio ✨
@@ -106,7 +103,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
           </p>
         </div>
 
-        {/* Main Avatar Preview & Shuffle */}
         <div className="flex flex-col items-center justify-center gap-3">
           <div
             className={`p-1 rounded-full border-2 border-black bg-white shadow-md transition-transform duration-300 ${
@@ -126,7 +122,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
           </button>
         </div>
 
-        {/* Tabs: Presets vs Custom Studio */}
         <div className="flex justify-center">
           <div className="inline-flex p-1 rounded-2xl bg-black/5 border border-black/15">
             <button
@@ -154,10 +149,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
           </div>
         </div>
 
-        {/* Tab Content Container */}
         <div className="flex-1 overflow-y-auto max-h-[300px] pr-1 space-y-4 text-left">
           {activeTab === "presets" ? (
-            /* Presets Grid */
             <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2.5 justify-items-center py-1">
               {AVATAR_LIST.map((av) => {
                 const isSelected =
@@ -182,9 +175,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
               })}
             </div>
           ) : (
-            /* Mix & Match Studio */
             <div className="space-y-4">
-              {/* Background Color Swatches */}
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-wider text-black/80 mb-1.5">
                   Background Color
@@ -207,7 +198,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
                 </div>
               </div>
 
-              {/* Hairstyle Chips */}
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-wider text-black/80 mb-1.5">
                   Hairstyle
@@ -235,7 +225,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
                 </div>
               </div>
 
-              {/* Accessories */}
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-wider text-black/80 mb-1.5">
                   Accessory
@@ -263,7 +252,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
                 </div>
               </div>
 
-              {/* Outfits */}
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-wider text-black/80 mb-1.5">
                   Outfit
@@ -294,7 +282,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
           )}
         </div>
 
-        {/* Username Input Field */}
         <div className="text-left space-y-1">
           <label className="block text-[11px] font-black uppercase tracking-wider text-black">
             YOUR NAME
@@ -324,7 +311,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
           )}
         </div>
 
-        {/* Confirm Action Button */}
         <div className="pt-1">
           <button
             type="button"

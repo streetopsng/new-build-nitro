@@ -1,4 +1,3 @@
-// src/pages/ProfileSetup.tsx
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
@@ -33,13 +32,11 @@ const ProfileSetup: React.FC = () => {
   const state = location.state as LocationState;
   const { profile, updateProfile } = useProfile();
 
-  // Avatar config state
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>(() =>
     decodeAvatarConfig(profile.avatarId || "av-1")
   );
   const [isShuffling, setIsShuffling] = useState(false);
 
-  // User details state
   const [playerName, setPlayerName] = useState(
     state?.playerName || profile.username || "Ayoola"
   );
@@ -107,13 +104,10 @@ const ProfileSetup: React.FC = () => {
     }, 1500);
   };
 
-  /* ------------------------------------------------------------------ */
-  /* Step 2: Saving / Identity Transition Screen from node #1586:3066   */
-  /* ------------------------------------------------------------------ */
+  // Step 2: Saving / Identity Transition Screen from node #1586:3066
   if (isSaving) {
     return (
       <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
-        {/* Floating decorative badges */}
         <div className="absolute top-1/4 left-1/4 animate-bounce text-2xl opacity-60">
           🎨
         </div>
@@ -125,7 +119,6 @@ const ProfileSetup: React.FC = () => {
         </div>
 
         <div className="relative z-10 flex flex-col items-center space-y-5 text-center animate-card-fade-in max-w-md">
-          {/* Avatar preview with pulse ring */}
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-[#FF8E37]/30 animate-ping" />
             <div className="relative p-1.5 rounded-full bg-white border-2 border-black shadow-lg">
@@ -142,7 +135,6 @@ const ProfileSetup: React.FC = () => {
             </p>
           </div>
 
-          {/* Progress bar */}
           <div className="w-56 h-3 bg-slate-100 border border-black/20 rounded-full overflow-hidden p-0.5">
             <div className="h-full bg-[#FF8E37] animate-pulse-progress rounded-full" />
           </div>
@@ -151,12 +143,8 @@ const ProfileSetup: React.FC = () => {
     );
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Step 3: Avatar Revealed & Profile Setup Card                      */
-  /* ------------------------------------------------------------------ */
   return (
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
-      {/* Top Left Back Arrow */}
       <button
         onClick={() => navigate(-1)}
         className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
@@ -165,7 +153,6 @@ const ProfileSetup: React.FC = () => {
         ←
       </button>
 
-      {/* Main Card Container */}
       <div className="w-full max-w-xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-6 sm:p-10 shadow-sm relative text-center space-y-7 z-10 animate-card-fade-in">
         {/* Title Header matching node 1586:3066 */}
         <div className="space-y-1">
@@ -180,7 +167,6 @@ const ProfileSetup: React.FC = () => {
           </p>
         </div>
 
-        {/* Avatar Display & Shuffle Control */}
         <div className="flex flex-col items-center justify-center space-y-3">
           <div
             className={`p-1.5 rounded-full border-3 border-black bg-white shadow-md transition-all duration-300 ${
@@ -190,7 +176,6 @@ const ProfileSetup: React.FC = () => {
             <Avatar config={avatarConfig} size="2xl" />
           </div>
 
-          {/* Shuffle & Customize Buttons */}
           <div className="flex items-center gap-2 pt-1">
             <button
               type="button"
@@ -212,7 +197,6 @@ const ProfileSetup: React.FC = () => {
           </div>
         </div>
 
-        {/* User Name Input */}
         <div className="text-left space-y-2">
           <label className="block text-xs font-black uppercase tracking-wider text-black">
             ENTER YOUR NAME
@@ -232,7 +216,6 @@ const ProfileSetup: React.FC = () => {
           </div>
         </div>
 
-        {/* Catchphrase Selector */}
         <div className="text-left space-y-2.5">
           <div className="flex justify-between items-center">
             <label className="block text-xs font-black uppercase tracking-wider text-black">
@@ -266,7 +249,6 @@ const ProfileSetup: React.FC = () => {
             })}
           </div>
 
-          {/* Or Write Your Own */}
           <input
             type="text"
             maxLength={30}
@@ -277,7 +259,6 @@ const ProfileSetup: React.FC = () => {
           />
         </div>
 
-        {/* Action Button: Join Lobby */}
         <div className="pt-2">
           <button
             type="button"
@@ -291,7 +272,6 @@ const ProfileSetup: React.FC = () => {
         </div>
       </div>
 
-      {/* Avatar Studio / Picker Modal */}
       <ProfileModal
         isOpen={showAvatarPickerModal}
         onClose={() => setShowAvatarPickerModal(false)}

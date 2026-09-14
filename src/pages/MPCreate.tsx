@@ -1,11 +1,10 @@
-// src/pages/MPCreate.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, set, get } from "firebase/database";
 import { db } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
-import { GummyGumGateModal } from "../components/GummyGumGateModal";
+import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 
 interface ThemeOption {
   id: string;
@@ -22,7 +21,6 @@ const MPCreate: React.FC = () => {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
   const [selectedThemes, setSelectedThemes] = useState<string[]>(["General", "Corporate"]);
   const [isCreating, setIsCreating] = useState(false);
-  const [showGate, setShowGate] = useState(false);
 
   const themeOptions: ThemeOption[] = [
     {
@@ -100,17 +98,11 @@ const MPCreate: React.FC = () => {
 
   const handleGenerateCode = async () => {
     if (!lobbyName.trim() || isCreating) return;
-    if (ggAccessState === "denied") {
-      setShowGate(true);
-      return;
-    }
     setIsCreating(true);
 
     const hostName = ggSession?.player?.name || profile.username || "Host Admin";
     const hostId = "host_" + Date.now();
 
-    // The host presents/moderates only — never written into `players`, so
-    // they can't guess, score, or show up in the reported leaderboard.
     try {
       // Launched via GummyGum: the room code is fixed to the hub's own PIN
       // (already emailed to the team as their join code), not a random one.
@@ -157,6 +149,10 @@ const MPCreate: React.FC = () => {
     }
   };
 
+  if (ggAccessState === "denied") {
+    return <GummyGumLockedScreen />;
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
       {/* Top Left Close Icon matching Figma #1487:2494 */}
@@ -169,7 +165,6 @@ const MPCreate: React.FC = () => {
 
       {/* Main Admin Setup Container matching Figma #1428:2411 */}
       <div className="w-full max-w-4xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-6 md:p-12 shadow-sm relative text-left space-y-8 z-10 animate-card-fade-in">
-        {/* Step Header */}
         <div className="space-y-1">
           <div className="text-xs md:text-sm font-semibold uppercase tracking-wider text-black/50">
             STEP 1 OF 2
@@ -179,7 +174,6 @@ const MPCreate: React.FC = () => {
           </h1>
         </div>
 
-        {/* LOBBY NAME Field */}
         <div className="space-y-2">
           <label className="block text-xs md:text-sm font-black uppercase tracking-wider text-black">
             LOBBY NAME
@@ -199,7 +193,6 @@ const MPCreate: React.FC = () => {
             DIFFICULTY
           </label>
           <div className="flex flex-wrap gap-4">
-            {/* Easy */}
             <button
               type="button"
               onClick={() => setDifficulty("easy")}
@@ -213,7 +206,6 @@ const MPCreate: React.FC = () => {
               <span>Easy</span>
             </button>
 
-            {/* Medium */}
             <button
               type="button"
               onClick={() => setDifficulty("medium")}
@@ -227,7 +219,6 @@ const MPCreate: React.FC = () => {
               <span>Medium</span>
             </button>
 
-            {/* Hard */}
             <button
               type="button"
               onClick={() => setDifficulty("hard")}
@@ -306,7 +297,6 @@ const MPCreate: React.FC = () => {
           </button>
         </div>
       </div>
-      {showGate && <GummyGumGateModal onClose={() => setShowGate(false)} />}
     </div>
   );
 };

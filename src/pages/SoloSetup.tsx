@@ -1,4 +1,3 @@
-// src/pages/SoloSetup.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -42,7 +41,6 @@ const SoloSetup: React.FC = () => {
             </p>
           </div>
 
-          {/* Game Type Selection */}
           <div className="space-y-2">
             <label className="block text-xs font-black uppercase tracking-wider text-black">
               ROUND TYPE
@@ -72,7 +70,6 @@ const SoloSetup: React.FC = () => {
             </div>
           </div>
 
-          {/* Difficulty Selection */}
           <div className="space-y-2">
             <label className="block text-xs font-black uppercase tracking-wider text-black">
               DIFFICULTY
@@ -103,7 +100,6 @@ const SoloSetup: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Button */}
           <div className="pt-4">
             <button
               onClick={handleStartSolo}

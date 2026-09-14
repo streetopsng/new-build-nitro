@@ -1,4 +1,3 @@
-// src/pages/Rules.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -7,7 +6,6 @@ const Rules: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center p-6 md:py-10 select-none relative overflow-x-hidden">
-      {/* Background Floating Element */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.04] overflow-hidden">
         <span className="absolute top-[12%] left-[8%] text-8xl font-black font-heading">?</span>
         <span className="absolute bottom-[20%] right-[10%] text-9xl font-black font-heading">!</span>
@@ -28,7 +26,6 @@ const Rules: React.FC = () => {
 
       {/* Main Instructions Content Container (880px) matching Figma #1480:2414 */}
       <main className="w-full max-w-[880px] my-8 space-y-6 z-10">
-        {/* Card 1: THE LOOP */}
         <section className="bg-white border border-black/30 rounded-2xl p-6 md:p-7 text-left space-y-2.5 shadow-xs">
           <h2 className="font-heading font-black text-lg md:text-xl text-black uppercase tracking-wider">
             THE LOOP
@@ -38,7 +35,6 @@ const Rules: React.FC = () => {
           </p>
         </section>
 
-        {/* Card 2: MULTIPLAYER */}
         <section className="bg-white border border-black/30 rounded-2xl p-6 md:p-7 text-left space-y-2.5 shadow-xs">
           <h2 className="font-heading font-black text-lg md:text-xl text-black uppercase tracking-wider">
             MULTIPLAYER
@@ -48,7 +44,6 @@ const Rules: React.FC = () => {
           </p>
         </section>
 
-        {/* Card 3: SESSIONS & TIMING */}
         <section className="bg-white border border-black/30 rounded-2xl p-6 md:p-7 text-left space-y-4 shadow-xs">
           <h2 className="font-heading font-black text-lg md:text-xl text-black uppercase tracking-wider">
             SESSIONS & TIMING
@@ -73,7 +68,6 @@ const Rules: React.FC = () => {
           </div>
         </section>
 
-        {/* Card 4: SCORING */}
         <section className="bg-white border border-black/30 rounded-2xl p-6 md:p-7 text-left space-y-4 shadow-xs">
           <h2 className="font-heading font-black text-lg md:text-xl text-black uppercase tracking-wider">
             SCORING
@@ -103,7 +97,6 @@ const Rules: React.FC = () => {
           </div>
         </section>
 
-        {/* Card 5: HINTS */}
         <section className="bg-white border border-black/30 rounded-2xl p-6 md:p-7 text-left space-y-3 shadow-xs">
           <h2 className="font-heading font-black text-lg md:text-xl text-black uppercase tracking-wider">
             HINTS
