@@ -242,10 +242,10 @@ const Game: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
             <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
               <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
-                <span>🏆</span> YOUR SCORE
+                <span>🏆</span> {isHost ? "PLAYERS" : "YOUR SCORE"}
               </div>
               <div className="font-heading font-black text-3xl md:text-4xl text-[#FF8E37] mt-1">
-                {score}
+                {isHost ? leaderboard.length : score}
               </div>
             </div>
 
@@ -317,22 +317,24 @@ const Game: React.FC = () => {
               ))}
             </div>
 
-            {/* Current Player Indicator */}
-            <div className="pt-2 border-t border-black/10">
-              <div className="p-3 rounded-2xl bg-[#FFEDD5] border-2 border-[#FF8E37] flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Avatar id="av-1" size="sm" />
-                  <div className="text-left">
-                    <div className="font-black text-xs text-black">
-                      {playerName} <span className="text-[#FF8E37]">(YOU)</span>
-                    </div>
-                    <div className="text-xs font-black text-[#FF8E37]">
-                      {score} pts
+            {/* Current Player Indicator — host presents/moderates only, never a ranked player */}
+            {!isHost && (
+              <div className="pt-2 border-t border-black/10">
+                <div className="p-3 rounded-2xl bg-[#FFEDD5] border-2 border-[#FF8E37] flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar id="av-1" size="sm" />
+                    <div className="text-left">
+                      <div className="font-black text-xs text-black">
+                        {playerName} <span className="text-[#FF8E37]">(YOU)</span>
+                      </div>
+                      <div className="text-xs font-black text-[#FF8E37]">
+                        {score} pts
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right Column: CLUE CARD */}
@@ -374,7 +376,13 @@ const Game: React.FC = () => {
               </div>
             )}
 
-            {/* Guess Form */}
+            {/* Guess Form — host presents/moderates only, never guesses */}
+            {isHost ? (
+              <div className="p-5 rounded-2xl bg-slate-50 border-2 border-dashed border-black/20 text-center">
+                <div className="text-sm font-black text-black/60">Your team is guessing…</div>
+                <div className="text-xs text-black/40 mt-1">Live rankings update on the left as they answer.</div>
+              </div>
+            ) : (
             <form onSubmit={handleGuessSubmit} className="space-y-6">
               <input
                 ref={inputRef}
@@ -419,6 +427,7 @@ const Game: React.FC = () => {
                 </button>
               </div>
             </form>
+            )}
           </div>
         </div>
 
