@@ -31,9 +31,6 @@ const Game: React.FC = () => {
   const roomCode = state?.roomCode || "DEMO";
   const playerName = state?.playerName || "Ayoola";
   const playerId = state?.playerId || "player_" + Date.now();
-  // The host presents/moderates only — never scores, never seated in
-  // rooms/{code}/players. Guarded here too in case their browser somehow
-  // reaches this screen, so a guess can never write a stray player node.
   const isHost = state?.isHost || false;
 
   const [score, setScore] = useState(0);
@@ -50,8 +47,7 @@ const Game: React.FC = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // The host's own clues for this room, if they wrote any at setup — falls
-  // back to the shared built-in word bank when absent/empty.
+  // Host's own clues from setup, if any — falls back to the built-in word bank.
   const [customWords, setCustomWords] = useState<Word[] | null>(null);
   useEffect(() => {
     if (!roomCode || roomCode === "DEMO") return;

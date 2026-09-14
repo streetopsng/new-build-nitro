@@ -109,8 +109,6 @@ const MPCreate: React.FC = () => {
     const hostName = ggSession?.player?.name || profile.username || "Host Admin";
     const hostId = "host_" + Date.now();
 
-    // The host presents/moderates only — never written into `players`, so
-    // they can't guess, score, or show up in the reported leaderboard.
     try {
       // Launched via GummyGum: the room code is fixed to the hub's own PIN
       // (already emailed to the team as their join code), not a random one.

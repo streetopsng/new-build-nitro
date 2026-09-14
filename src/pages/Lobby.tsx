@@ -99,9 +99,7 @@ const Lobby: React.FC = () => {
           setStatusText(room.locked ? "Lobby locked" : "Waiting for host to start");
         }
 
-        // Real-Time Players — the host presents/moderates only and is
-        // never written to rooms/{code}/players, so nobody has joined yet
-        // is a real empty room for them, not a list of one (themselves).
+        // Real-Time Players
         if (room.players) {
           const playerList = Object.values(room.players) as Player[];
           setPlayers(playerList);
@@ -135,7 +133,7 @@ const Lobby: React.FC = () => {
           setChatMessages(rawMsgs);
         }
       } else if (isHost) {
-        // Fallback local — host presents/moderates only, not a player.
+        // Fallback local — host is never a player.
         setPlayers([]);
       } else {
         // Fallback local
