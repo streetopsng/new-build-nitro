@@ -73,15 +73,6 @@ const MPJoin: React.FC = () => {
 
     try {
       const roomRef = ref(db, `rooms/${fullCode}`);
-      const snapshot = await get(roomRef);
-      if (snapshot.exists()) {
-        const room = snapshot.val();
-        if (room.locked) {
-          setIsJoining(false);
-          setIsLockedModalOpen(true);
-          return;
-        }
-      }
       let snapshot = await get(roomRef);
 
       // A GummyGum invite can land before the host finishes creating their

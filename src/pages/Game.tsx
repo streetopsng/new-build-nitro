@@ -30,6 +30,10 @@ const Game: React.FC = () => {
   const roomCode = state?.roomCode || "DEMO";
   const playerName = state?.playerName || "Ayoola";
   const playerId = state?.playerId || "player_" + Date.now();
+  // The host presents/moderates only — never scores, never seated in
+  // rooms/{code}/players. Guarded here too in case their browser somehow
+  // reaches this screen, so a guess can never write a stray player node.
+  const isHost = state?.isHost || false;
 
   const [score, setScore] = useState(0);
   const [wordTimer, setWordTimer] = useState(30);
@@ -142,7 +146,7 @@ const Game: React.FC = () => {
   const handleGuessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanGuess = userGuess.trim().toUpperCase();
-    if (!cleanGuess) return;
+    if (!cleanGuess || isHost) return;
 
     if (cleanGuess === activeWord.word.toUpperCase()) {
       const basePoints = hintActive ? 18 : 30;

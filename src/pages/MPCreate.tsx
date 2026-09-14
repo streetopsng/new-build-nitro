@@ -109,30 +109,8 @@ const MPCreate: React.FC = () => {
     const hostName = ggSession?.player?.name || profile.username || "Host Admin";
     const hostId = "host_" + Date.now();
 
-    const roomData = {
-      name: lobbyName,
-      code: roomCode,
-      hostId,
-      hostName: profile.username || "Host Admin",
-      status: "waiting",
-      locked: false,
-      settings: {
-        difficulty,
-        themes: selectedThemes,
-        maxPlayers: 200,
-      },
-      players: {
-        [hostId]: {
-          id: hostId,
-          name: profile.username || "Host Admin",
-          avatarId: profile.avatarId || "av-1",
-          score: 0,
-          ready: true,
-          isHost: true,
-        },
-      },
-    };
-
+    // The host presents/moderates only — never written into `players`, so
+    // they can't guess, score, or show up in the reported leaderboard.
     try {
       // Launched via GummyGum: the room code is fixed to the hub's own PIN
       // (already emailed to the team as their join code), not a random one.
@@ -157,17 +135,6 @@ const MPCreate: React.FC = () => {
           status: "waiting",
           locked: false,
           settings: { difficulty, themes: selectedThemes, maxPlayers: 200 },
-          players: {
-            [hostId]: {
-              id: hostId,
-              name: hostName,
-              email: ggSession.player?.email || null,
-              avatarId: profile.avatarId,
-              score: 0,
-              ready: true,
-              isHost: true,
-            },
-          },
         });
         navigate("/lobby", { state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
         return;
@@ -182,9 +149,6 @@ const MPCreate: React.FC = () => {
         status: "waiting",
         locked: false,
         settings: { difficulty, themes: selectedThemes, maxPlayers: 200 },
-        players: {
-          [hostId]: { id: hostId, name: hostName, avatarId: profile.avatarId, score: 0, ready: true, isHost: true },
-        },
       });
       navigate("/lobby", { state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
     } catch (err) {
