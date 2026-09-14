@@ -11,6 +11,7 @@ import { ProfileProvider } from "./contexts/ProfileContext";
 import { GummyGumProvider } from "./contexts/GummyGumContext";
 
 import ProfileSetup from "./pages/ProfileSetup";
+import MPEntry from "./pages/MPEntry";
 import Splash from "./pages/Splash";
 import Home from "./pages/Home";
 import Rules from "./pages/Rules";

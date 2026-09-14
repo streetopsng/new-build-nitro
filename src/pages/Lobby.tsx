@@ -7,7 +7,6 @@ import SoundToggle from "../components/SoundToggle";
 import { JoiningLobby } from "../components/JoiningLobby";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
-import { BackgroundDoodles } from "../components/BackgroundDoodles";
 
 interface LocationState {
   roomCode: string;

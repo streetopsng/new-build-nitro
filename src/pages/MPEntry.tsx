@@ -1,5 +1,3 @@
-import Home from "./Home";
-export default Home;
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGummyGum } from "../contexts/GummyGumContext";
