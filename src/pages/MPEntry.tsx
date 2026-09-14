@@ -1,20 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGummyGum } from "../contexts/GummyGumContext";
-import { GummyGumGateModal } from "../components/GummyGumGateModal";
+import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 
 const MPEntry: React.FC = () => {
   const navigate = useNavigate();
   const { ggSession, ggAccessState } = useGummyGum();
-  const [showGate, setShowGate] = useState(false);
-
-  const goOrGate = (path: string) => {
-    if (ggAccessState === "denied") {
-      setShowGate(true);
-      return;
-    }
-    navigate(path);
-  };
 
   // When launched from GummyGum with a roomCode:
   // - Participants go straight to /mp-join
@@ -35,6 +26,10 @@ const MPEntry: React.FC = () => {
       });
     }
   }, [ggSession, navigate]);
+
+  if (ggAccessState === "denied") {
+    return <GummyGumLockedScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-between p-6 md:p-12 select-none relative overflow-hidden">
@@ -177,7 +172,7 @@ const MPEntry: React.FC = () => {
             </div>
 
             <button
-              onClick={() => goOrGate("/mp-create")}
+              onClick={() => navigate("/mp-create")}
               className="w-full py-3.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center"
             >
               Create new lobby →
@@ -199,7 +194,7 @@ const MPEntry: React.FC = () => {
             </div>
 
             <button
-              onClick={() => goOrGate("/mp-join")}
+              onClick={() => navigate("/mp-join")}
               className="w-full py-3.5 rounded-xl bg-white hover:bg-slate-50 text-[#f97316] font-extrabold text-sm border-2 border-[#f97316] shadow-2xs transition-all cursor-pointer text-center"
             >
               Join lobby →
@@ -207,7 +202,6 @@ const MPEntry: React.FC = () => {
           </div>
         </div>
       </div>
-      {showGate && <GummyGumGateModal onClose={() => setShowGate(false)} />}
     </div>
   );
 };

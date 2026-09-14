@@ -4,7 +4,7 @@ import { ref, set, get } from "firebase/database";
 import { db } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
-import { GummyGumGateModal } from "../components/GummyGumGateModal";
+import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 
 interface ThemeOption {
   id: string;
@@ -21,7 +21,6 @@ const MPCreate: React.FC = () => {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
   const [selectedThemes, setSelectedThemes] = useState<string[]>(["General", "Corporate"]);
   const [isCreating, setIsCreating] = useState(false);
-  const [showGate, setShowGate] = useState(false);
 
   const themeOptions: ThemeOption[] = [
     {
@@ -99,10 +98,6 @@ const MPCreate: React.FC = () => {
 
   const handleGenerateCode = async () => {
     if (!lobbyName.trim() || isCreating) return;
-    if (ggAccessState === "denied") {
-      setShowGate(true);
-      return;
-    }
     setIsCreating(true);
 
     const hostName = ggSession?.player?.name || profile.username || "Host Admin";
@@ -153,6 +148,10 @@ const MPCreate: React.FC = () => {
       setIsCreating(false);
     }
   };
+
+  if (ggAccessState === "denied") {
+    return <GummyGumLockedScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
@@ -298,7 +297,6 @@ const MPCreate: React.FC = () => {
           </button>
         </div>
       </div>
-      {showGate && <GummyGumGateModal onClose={() => setShowGate(false)} />}
     </div>
   );
 };

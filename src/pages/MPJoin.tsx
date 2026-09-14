@@ -4,7 +4,7 @@ import { ref, get, update } from "firebase/database";
 import { db } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
-import { GummyGumGateModal } from "../components/GummyGumGateModal";
+import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 import { JoiningLobby } from "../components/JoiningLobby";
 
 const MPJoin: React.FC = () => {
@@ -16,7 +16,6 @@ const MPJoin: React.FC = () => {
   const [displayName, setDisplayName] = useState(profile.username || "");
   const [isJoining, setIsJoining] = useState(false);
   const [isLockedModalOpen, setIsLockedModalOpen] = useState(false);
-  const [showGate, setShowGate] = useState(false);
   const [error, setError] = useState("");
   const ggAutoJoinedRef = useRef(false);
 
@@ -142,10 +141,6 @@ const MPJoin: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (ggAccessState === "denied") {
-      setShowGate(true);
-      return;
-    }
     const fullCode = codeDigits.join("").trim().toUpperCase();
     if (fullCode.length < 6) {
       setError("Please enter all 6 characters of the room code.");
@@ -161,6 +156,10 @@ const MPJoin: React.FC = () => {
 
   if (isJoining) {
     return <JoiningLobby message="Joining the lobby..." />;
+  }
+
+  if (ggAccessState === "denied") {
+    return <GummyGumLockedScreen />;
   }
 
   return (
@@ -266,8 +265,6 @@ const MPJoin: React.FC = () => {
           </div>
         </div>
       )}
-
-      {showGate && <GummyGumGateModal onClose={() => setShowGate(false)} />}
     </div>
   );
 };
