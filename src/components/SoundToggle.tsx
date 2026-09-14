@@ -1,4 +1,3 @@
-// src/components/SoundToggle.tsx
 import React from "react";
 import { useAudio } from "../contexts/AudioContext";
 

@@ -1,4 +1,3 @@
-// src/pages/MPEntry.tsx
 import Home from "./Home";
 export default Home;
 import React, { useEffect, useState } from "react";
@@ -165,7 +164,6 @@ const MPEntry: React.FC = () => {
 
         {/* 2 Action Cards matching Screenshot EXACTLY */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-          {/* Card 1: FOR HOST / ADMIN */}
           <div className="rounded-3xl bg-white border border-slate-300 p-6 md:p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/80 text-[#f97316] font-extrabold text-[10px] uppercase tracking-wider mb-4 border border-orange-200">
@@ -188,7 +186,6 @@ const MPEntry: React.FC = () => {
             </button>
           </div>
 
-          {/* Card 2: FOR EMPLOYEES */}
           <div className="rounded-3xl bg-white border border-slate-300 p-6 md:p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-extrabold text-[10px] uppercase tracking-wider mb-4 border border-slate-200">

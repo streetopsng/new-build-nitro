@@ -1,4 +1,3 @@
-// src/pages/MPCreate.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, set, get } from "firebase/database";
@@ -167,7 +166,6 @@ const MPCreate: React.FC = () => {
 
       {/* Main Admin Setup Container matching Figma #1428:2411 */}
       <div className="w-full max-w-4xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-6 md:p-12 shadow-sm relative text-left space-y-8 z-10 animate-card-fade-in">
-        {/* Step Header */}
         <div className="space-y-1">
           <div className="text-xs md:text-sm font-semibold uppercase tracking-wider text-black/50">
             STEP 1 OF 2
@@ -177,7 +175,6 @@ const MPCreate: React.FC = () => {
           </h1>
         </div>
 
-        {/* LOBBY NAME Field */}
         <div className="space-y-2">
           <label className="block text-xs md:text-sm font-black uppercase tracking-wider text-black">
             LOBBY NAME
@@ -197,7 +194,6 @@ const MPCreate: React.FC = () => {
             DIFFICULTY
           </label>
           <div className="flex flex-wrap gap-4">
-            {/* Easy */}
             <button
               type="button"
               onClick={() => setDifficulty("easy")}
@@ -211,7 +207,6 @@ const MPCreate: React.FC = () => {
               <span>Easy</span>
             </button>
 
-            {/* Medium */}
             <button
               type="button"
               onClick={() => setDifficulty("medium")}
@@ -225,7 +220,6 @@ const MPCreate: React.FC = () => {
               <span>Medium</span>
             </button>
 
-            {/* Hard */}
             <button
               type="button"
               onClick={() => setDifficulty("hard")}

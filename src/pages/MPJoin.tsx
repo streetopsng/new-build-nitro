@@ -1,4 +1,3 @@
-// src/pages/MPJoin.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, get } from "firebase/database";
@@ -157,7 +156,6 @@ const MPJoin: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
-      {/* Top Left Close Icon matching Figma */}
       <button
         onClick={() => navigate("/home")}
         className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
@@ -167,7 +165,6 @@ const MPJoin: React.FC = () => {
 
       {/* Main Center Modal Container matching Figma #1494:3626 */}
       <div className="w-full max-w-xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-8 md:p-12 shadow-sm relative text-left space-y-8 z-10 animate-card-fade-in">
-        {/* Header */}
         <div className="space-y-1">
           <div className="text-xs md:text-sm font-semibold uppercase tracking-wider text-black/50">
             ENTER LOBBY
@@ -261,7 +258,6 @@ const MPJoin: React.FC = () => {
         </div>
       )}
 
-      {/* Profile Setup Modal */}
       <ProfileModal
         isOpen={showProfileSetupModal}
         onClose={() => {

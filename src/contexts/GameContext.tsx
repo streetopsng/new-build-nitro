@@ -1,4 +1,3 @@
-// src/contexts/GameContext.tsx
 import React, {
   createContext,
   useContext,

@@ -1,4 +1,3 @@
-// src/pages/Results.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
@@ -54,7 +53,6 @@ const Results: React.FC = () => {
   const userHintsUsed = state?.hintsUsed ?? 1;
   const playerName = state?.playerName || profile.username || "Ayoola";
 
-  // Real-Time Firebase Fetch for Room Final Scores if available
   useEffect(() => {
     if (roomCode) {
       const fetchFinalScores = async () => {
@@ -128,9 +126,7 @@ const Results: React.FC = () => {
           </p>
         </header>
 
-        {/* Top 3 Podium Winners Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4 pb-2">
-          {/* 2nd Place */}
           <div className="order-2 md:order-1 bg-white border-2 border-black rounded-3xl p-6 text-center shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-400 text-slate-700 font-black text-lg flex items-center justify-center mx-auto">
               2
@@ -145,7 +141,6 @@ const Results: React.FC = () => {
             </div>
           </div>
 
-          {/* 1st Place (Center / Taller) */}
           <div className="order-1 md:order-2 bg-[#FFFBF7] border-[3px] border-black rounded-3xl p-8 text-center shadow-lg space-y-4 relative -translate-y-2">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#FF8E37] text-black font-black text-xs uppercase tracking-wider border-2 border-black flex items-center gap-1.5 shadow-xs">
               <span>👑</span> 1ST PLACE
@@ -162,7 +157,6 @@ const Results: React.FC = () => {
             </div>
           </div>
 
-          {/* 3rd Place */}
           <div className="order-3 bg-white border-2 border-black rounded-3xl p-6 text-center shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-full bg-amber-100 border-2 border-amber-600 text-amber-800 font-black text-lg flex items-center justify-center mx-auto">
               3
@@ -178,7 +172,6 @@ const Results: React.FC = () => {
           </div>
         </div>
 
-        {/* Your Performance Summary Card */}
         <div className="bg-white border-2 border-black rounded-3xl p-6 shadow-xs text-left">
           <div className="text-xs font-black uppercase tracking-wider text-black/50 mb-4">
             YOUR PERFORMANCE SUMMARY ({playerName})
@@ -270,7 +263,6 @@ const Results: React.FC = () => {
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-4 pt-4 pb-8">
           <button
             onClick={() => navigate("/home")}

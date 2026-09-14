@@ -1,4 +1,3 @@
-// src/components/JoiningLobby.tsx
 import React from "react";
 
 export const JoiningLobby: React.FC<{ message?: string }> = ({
@@ -8,7 +7,6 @@ export const JoiningLobby: React.FC<{ message?: string }> = ({
     <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center p-6 relative overflow-hidden select-none">
       {/* Background Line-Art Doodles matching Screenshot EXACTLY */}
       <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
-        {/* Row 1 */}
         <svg className="absolute top-[8%] left-[6%] w-14 h-14 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
           <circle cx="12" cy="7" r="3"/>
           <path d="M5 21v-2a7 7 0 0 1 14 0v2"/>
@@ -36,7 +34,6 @@ export const JoiningLobby: React.FC<{ message?: string }> = ({
           <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
         </svg>
 
-        {/* Row 2 */}
         <svg className="absolute top-[32%] left-[10%] w-16 h-16 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
           <circle cx="12" cy="12" r="5"/>
           <line x1="12" y1="1" x2="12" y2="3"/>
@@ -58,7 +55,6 @@ export const JoiningLobby: React.FC<{ message?: string }> = ({
           <path d="M10 6l-3 10 5 6 5-6-3-10H10z"/>
         </svg>
 
-        {/* Row 3 */}
         <svg className="absolute top-[52%] left-[6%] w-16 h-16 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
           <path d="m22 2-7 20-4-9-9-4Zm0 0L11 13"/>
         </svg>
@@ -80,7 +76,6 @@ export const JoiningLobby: React.FC<{ message?: string }> = ({
           <path d="M9 6h2M13 6h2M9 10h2M13 10h2M9 14h2M13 14h2M10 22v-4h4v4"/>
         </svg>
 
-        {/* Row 4 */}
         <svg className="absolute bottom-[18%] left-[14%] w-16 h-16 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
           <path d="m6.5 6.5 11 11M21 21l-1 1M3 3l1 1"/>
           <path d="M18 6a3 3 0 1 0-6 0v12a3 3 0 1 0 6 0V6z"/>
@@ -104,11 +99,9 @@ export const JoiningLobby: React.FC<{ message?: string }> = ({
       {/* Center Orange Spinner & Message matching Screenshot EXACTLY */}
       <div className="relative z-10 flex flex-col items-center animate-card-fade-in">
         <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
-          {/* Outer Orange Spinner Ring */}
           <div className="w-16 h-16 rounded-full border-4 border-orange-200 border-t-[#f97316] animate-spin" />
         </div>
 
-        {/* Text directly below spinner */}
         <h2 className="font-heading font-extrabold text-xl text-black tracking-tight">
           {message}
         </h2>

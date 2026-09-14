@@ -1,4 +1,3 @@
-// src/contexts/GummyGumContext.tsx
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { resolveGummyGumLaunch, type GummyGumSession } from "../lib/gummygumSession";
 

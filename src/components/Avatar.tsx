@@ -1,4 +1,3 @@
-// src/components/Avatar.tsx
 import React from "react";
 
 export interface AvatarConfig {
@@ -26,7 +25,6 @@ export const AVATAR_LIST: AvatarConfig[] = [
   { id: "av-6", bg: "#93B5FF", hairColor: "#18181b", hairStyle: "wavy", accessory: "mask", outfit: "blue-collar" },
   { id: "av-7", bg: "#83BCA9", hairColor: "#1e1b4b", hairStyle: "bob", accessory: "earring", outfit: "navy-crew" },
   { id: "av-8", bg: "#FED7AA", hairColor: "#18181b", hairStyle: "quiff", accessory: "mask", outfit: "yellow-collar" },
-  // Extended gallery combinations
   { id: "av-9", bg: "#E2F4E9", hairColor: "#312e81", hairStyle: "afro", accessory: "glasses", outfit: "shirt-tie" },
   { id: "av-10", bg: "#FFF8EE", hairColor: "#7c2d12", hairStyle: "curly", accessory: "earring", outfit: "polka" },
   { id: "av-11", bg: "#FFD166", hairColor: "#0f172a", hairStyle: "sidepart", accessory: "moustache", outfit: "sweater" },
@@ -99,7 +97,6 @@ export const Avatar: React.FC<AvatarProps> = ({ id = "av-1", config: customConfi
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        {/* Background Circle */}
         <circle cx="50" cy="50" r="50" fill={cfg.bg} />
 
         {/* Base Body Silhouette matching Figma */}
@@ -152,7 +149,6 @@ export const Avatar: React.FC<AvatarProps> = ({ id = "av-1", config: customConfi
           </g>
         )}
 
-        {/* Neck */}
         <rect x="44" y="52" width="12" height="15" rx="2" fill="#FED7AA" stroke="#000000" strokeWidth="2" />
 
         {/* Head Base Silhouette matching Figma "Base" */}
@@ -163,7 +159,6 @@ export const Avatar: React.FC<AvatarProps> = ({ id = "av-1", config: customConfi
           strokeWidth="2.5"
         />
 
-        {/* Ears */}
         <circle cx="31" cy="45" r="4.5" fill="#FED7AA" stroke="#000000" strokeWidth="2" />
         <circle cx="69" cy="45" r="4.5" fill="#FED7AA" stroke="#000000" strokeWidth="2" />
 
@@ -228,10 +223,8 @@ export const Avatar: React.FC<AvatarProps> = ({ id = "av-1", config: customConfi
         <circle cx="57" cy="44" r="2.2" fill="#000000" />
         <path d="M40 39 Q 43 37 46 39" stroke="#000000" strokeWidth="2" strokeLinecap="round" fill="none" />
         <path d="M54 39 Q 57 37 60 39" stroke="#000000" strokeWidth="2" strokeLinecap="round" fill="none" />
-        {/* Nose dot */}
         <circle cx="50" cy="48" r="1.2" fill="#000000" />
 
-        {/* Smile (when no mask) */}
         {cfg.accessory !== "mask" && (
           <path d="M45 54 Q 50 58 55 54" stroke="#000000" strokeWidth="2" strokeLinecap="round" fill="none" />
         )}
@@ -279,7 +272,6 @@ export const Avatar: React.FC<AvatarProps> = ({ id = "av-1", config: customConfi
         )}
       </svg>
 
-      {/* Rank or Level Badge */}
       {badge !== undefined && (
         <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-full bg-[#FF8E37] text-black font-black text-[10px] border-2 border-black shadow-xs">
           {badge}

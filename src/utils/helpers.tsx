@@ -1,4 +1,3 @@
-// src/utils/helpers.ts
 export function levenshtein(a: string, b: string): number {
   a = a.toLowerCase();
   b = b.toLowerCase();

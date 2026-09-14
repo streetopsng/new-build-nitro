@@ -1,4 +1,3 @@
-// src/pages/Game.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Avatar } from "../components/Avatar";
@@ -61,7 +60,6 @@ const Game: React.FC = () => {
 
   const effectiveWordBank = customWords && customWords.length > 0 ? customWords : wordBank;
 
-  // Active word
   const rawWord = effectiveWordBank[currentWordIndex % Math.max(effectiveWordBank.length, 1)];
   const activeWord = {
     word: rawWord?.word || "TOUCHLIGHT",
@@ -90,7 +88,6 @@ const Game: React.FC = () => {
       .join("   ");
   };
 
-  // Realtime Firebase Leaderboard Sync
   useEffect(() => {
     if (roomCode && roomCode !== "DEMO") {
       const playersRef = ref(db, `rooms/${roomCode}/players`);
@@ -109,7 +106,6 @@ const Game: React.FC = () => {
       });
       return () => unsubscribe();
     } else {
-      // Demo rankings
       setLeaderboard([
         { id: "1", name: "Chidi", avatarId: "av-2", score: 960 },
         { id: "2", name: "Blessing", avatarId: "av-6", score: 780 },
@@ -119,7 +115,6 @@ const Game: React.FC = () => {
     }
   }, [roomCode, playerName, score]);
 
-  // Session 5-minute timer
   useEffect(() => {
     const sessionInterval = setInterval(() => {
       setSessionTimer((prev) => {
@@ -134,7 +129,6 @@ const Game: React.FC = () => {
     return () => clearInterval(sessionInterval);
   }, []);
 
-  // Clue 30s timer
   useEffect(() => {
     const wordInterval = setInterval(() => {
       setWordTimer((prev) => {
@@ -174,7 +168,6 @@ const Game: React.FC = () => {
       setFeedback(newStreak >= 3 ? "streak" : "correct");
       setTimeout(() => setFeedback(null), 1400);
 
-      // Push score to Firebase
       if (roomCode && roomCode !== "DEMO") {
         try {
           await update(ref(db, `rooms/${roomCode}/players/${playerId}`), {
@@ -232,14 +225,12 @@ const Game: React.FC = () => {
     <div className="min-h-screen bg-white text-slate-900 p-4 md:p-8 flex flex-col items-center justify-center select-none relative overflow-x-hidden">
       {/* Outer Tech Frame Container matching Figma #1563:2405 */}
       <div className="max-w-6xl w-full bg-[#FFFBF7] border-2 border-black/40 rounded-3xl p-6 md:p-10 shadow-xl relative z-10 space-y-6 animate-card-fade-in">
-        {/* Top Notch Accents */}
         <div className="absolute top-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
           <div className="w-4 h-1.5 bg-[#FF8E37] rounded-full" />
           <div className="w-4 h-1.5 bg-[#FF8E37] rounded-full" />
           <div className="w-4 h-1.5 bg-[#FF8E37] rounded-full" />
         </div>
 
-        {/* Session Name Header */}
         <div className="text-center pt-2">
           <div className="text-[11px] font-black uppercase tracking-widest text-black/50">
             SESSION
@@ -289,7 +280,6 @@ const Game: React.FC = () => {
             </div>
           </div>
 
-          {/* Full-width Timer Progress Line */}
           <div className="w-full bg-black/10 h-2 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
@@ -300,9 +290,7 @@ const Game: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content: LIVE RANKINGS vs CLUE CARD */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          {/* Left Column: LIVE RANKINGS */}
           <div className="md:col-span-4 bg-white border border-black/30 rounded-3xl p-5 shadow-xs text-left space-y-3">
             <div className="text-xs font-black text-[#FF8E37] uppercase tracking-wider flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-[#FF8E37] animate-ping" />
@@ -349,9 +337,7 @@ const Game: React.FC = () => {
             )}
           </div>
 
-          {/* Right Column: CLUE CARD */}
           <div className="md:col-span-8 bg-white border border-black/30 rounded-3xl p-6 md:p-8 text-left shadow-xs space-y-6 relative overflow-hidden">
-            {/* Feedback Popups */}
             {feedback === "correct" && (
               <div className="absolute top-4 right-6 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-400 text-emerald-800 font-black text-xs animate-bounce">
                 ✓ CORRECT! +30 PTS
@@ -368,17 +354,14 @@ const Game: React.FC = () => {
               </div>
             )}
 
-            {/* Theme / Category Badge */}
             <div className="inline-block px-3.5 py-1 rounded-full border-2 border-[#FF8E37] bg-orange-50 text-[#FF8E37] font-black text-xs uppercase tracking-wider">
               {activeWord.theme}
             </div>
 
-            {/* Clue Text */}
             <h2 className="font-heading font-black text-xl md:text-2xl text-black leading-relaxed">
               {activeWord.clue}
             </h2>
 
-            {/* Hint Revealed Display */}
             {hintActive && (
               <div className="p-4 rounded-2xl bg-[#FFFBF7] border-2 border-dashed border-[#FF8E37] text-center">
                 <div className="text-xs font-black text-black/50 mb-1">REVEALED LETTERS</div>
@@ -443,7 +426,6 @@ const Game: React.FC = () => {
           </div>
         </div>
 
-        {/* Session Time Remaining Footer */}
         <div className="text-center text-xs font-bold text-black/50">
           Session time left: <span className="text-[#FF8E37] font-black">{formatSessionTime(sessionTimer)}</span>
         </div>

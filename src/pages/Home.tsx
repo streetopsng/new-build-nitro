@@ -1,4 +1,3 @@
-// src/pages/Home.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import SoundToggle from "../components/SoundToggle";
@@ -9,7 +8,6 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col justify-between p-6 md:px-16 md:py-10 select-none relative overflow-hidden">
-      {/* Subtle Background Floating Elements */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.05] overflow-hidden">
         <span className="absolute top-[10%] left-[8%] text-8xl font-black font-heading">X</span>
         <span className="absolute top-[15%] right-[12%] text-9xl font-black font-heading">G</span>
@@ -48,7 +46,6 @@ const Home: React.FC = () => {
             Sync minds. Guess words. Win together.
           </p>
 
-          {/* Session Info Pills */}
           <div className="flex flex-wrap items-center gap-4 pt-2">
             <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-black/50 bg-white text-black text-sm md:text-base font-normal shadow-xs">
               <svg className="w-5 h-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -72,7 +69,6 @@ const Home: React.FC = () => {
 
         {/* 2 Big Action Cards matching Figma #1480:2238 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
-          {/* Card 1: FOR HOST / ADMIN */}
           <div className="card-insync bg-white p-8 md:p-12 border border-black/50 rounded-3xl flex flex-col justify-between hover:shadow-lg transition-shadow">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FBE6D5] text-[#FF8E37] text-sm font-normal">
@@ -104,7 +100,6 @@ const Home: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: FOR EMPLOYEES */}
           <div className="card-insync bg-white p-8 md:p-12 border border-black/50 rounded-3xl flex flex-col justify-between hover:shadow-lg transition-shadow">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E6E6E6] text-black text-sm font-normal">
@@ -140,7 +135,6 @@ const Home: React.FC = () => {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="w-full max-w-7xl mx-auto flex items-center justify-between z-10 pt-6 border-t border-black/10 text-xs md:text-sm text-black/50">
         <button
           onClick={() => navigate("/rules")}

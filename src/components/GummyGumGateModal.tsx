@@ -1,4 +1,3 @@
-// src/components/GummyGumGateModal.tsx
 import React from "react";
 
 export const GummyGumGateModal: React.FC<{ onClose: () => void }> = ({ onClose }) => (

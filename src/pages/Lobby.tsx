@@ -1,4 +1,3 @@
-// src/pages/Lobby.tsx
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { db } from "../lib/firebase";
@@ -62,7 +61,6 @@ const Lobby: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [isSelfReady, setIsSelfReady] = useState(true);
 
-  // Chat State
   const [showChat, setShowChat] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -70,7 +68,6 @@ const Lobby: React.FC = () => {
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Real-time Firebase Listener
   useEffect(() => {
     if (!roomCode) return;
 
@@ -99,7 +96,6 @@ const Lobby: React.FC = () => {
           setStatusText(room.locked ? "Lobby locked" : "Waiting for host to start");
         }
 
-        // Real-Time Players
         if (room.players) {
           const playerList = Object.values(room.players) as Player[];
           setPlayers(playerList);
@@ -123,7 +119,6 @@ const Lobby: React.FC = () => {
           ]);
         }
 
-        // Real-Time Chat Messages
         if (room.messages) {
           const rawMsgs = Object.entries(room.messages).map(([id, val]: [string, any]) => ({
             id,
@@ -136,7 +131,6 @@ const Lobby: React.FC = () => {
         // Fallback local — host is never a player.
         setPlayers([]);
       } else {
-        // Fallback local
         setPlayers([
           {
             id: currentUserId,
@@ -259,21 +253,16 @@ const Lobby: React.FC = () => {
   const totalJoined = players.length;
   const markedReady = players.filter((p) => (p.id === currentUserId ? isSelfReady : p.ready !== false)).length;
 
-  /* --------------------------------------------------------------------- */
-  /* LOADING TRANSITION: Game start loading screen matching Figma #1375:3083*/
-  /* --------------------------------------------------------------------- */
+  // LOADING TRANSITION: Game start loading screen matching Figma #1375:3083
   if (isStarting) {
     return <JoiningLobby message="Game is starting... Get ready!" />;
   }
 
-  /* --------------------------------------------------------------------- */
-  /* EMPLOYEE WAITING LOBBY VIEW matching Figma #1505:1524                 */
-  /* --------------------------------------------------------------------- */
+  // EMPLOYEE WAITING LOBBY VIEW matching Figma #1505:1524
   if (!isHost) {
     return (
       <div className="min-h-screen bg-white text-slate-900 p-6 md:px-12 md:py-8 flex flex-col items-center select-none relative overflow-x-hidden">
         <div className="max-w-6xl w-full z-10 space-y-6">
-          {/* Top Header */}
           <div className="flex items-center justify-between pb-4 border-b border-black/10">
             <div className="flex items-center gap-4">
               <button
@@ -305,7 +294,6 @@ const Lobby: React.FC = () => {
             </div>
           </div>
 
-          {/* Status & Ready Bar */}
           <div className="card-insync bg-[#FFFBF7] p-6 shadow-xs flex flex-wrap items-center justify-between gap-4">
             <button
               onClick={toggleReadyState}
@@ -331,9 +319,7 @@ const Lobby: React.FC = () => {
             </div>
           </div>
 
-          {/* Main 2 Columns Grid: Players vs Chat */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-            {/* Left Column: PLAYERS Grid */}
             <div className="md:col-span-7 card-insync bg-[#FFFBF7] p-6 shadow-xs text-left space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-black/10">
                 <h2 className="font-heading font-black text-sm uppercase tracking-wider text-black flex items-center gap-2">
@@ -344,7 +330,6 @@ const Lobby: React.FC = () => {
                 </span>
               </div>
 
-              {/* Grid of Player Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[380px] overflow-y-auto pr-1">
                 {players.map((player) => {
                   const isSelf = player.name === currentUserPlayerName || player.id === currentUserId;
@@ -383,7 +368,6 @@ const Lobby: React.FC = () => {
                 })}
               </div>
 
-              {/* Readiness Progress Bar */}
               <div className="pt-2">
                 <div className="flex justify-between items-center text-[11px] font-bold uppercase tracking-wider text-black/50 mb-1.5">
                   <span className="text-[#FF8E37]">Readiness</span>
@@ -398,7 +382,6 @@ const Lobby: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Column: CHAT Panel */}
             <div className="md:col-span-5 card-insync bg-[#FFFBF7] p-6 shadow-xs text-left flex flex-col h-[500px]">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-black/10">
                 <h2 className="font-heading font-black text-sm uppercase tracking-wider text-black flex items-center gap-2">
@@ -406,7 +389,6 @@ const Lobby: React.FC = () => {
                 </h2>
               </div>
 
-              {/* Messages list */}
               <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                 {chatMessages.length === 0 ? (
                   <div className="text-xs text-black/40 italic text-center py-12">
@@ -437,7 +419,6 @@ const Lobby: React.FC = () => {
                 )}
               </div>
 
-              {/* Message Input Box */}
               <form onSubmit={sendChatMessage} className="pt-3 border-t border-black/10">
                 <input
                   type="text"
@@ -454,9 +435,7 @@ const Lobby: React.FC = () => {
     );
   }
 
-  /* --------------------------------------------------------------------- */
-  /* HOST LOBBY VIEW matching Figma #1489:3336                             */
-  /* --------------------------------------------------------------------- */
+  // HOST LOBBY VIEW matching Figma #1489:3336
   return (
     <div className="min-h-screen bg-white text-slate-900 p-6 md:px-12 md:py-8 flex flex-col items-center select-none relative overflow-x-hidden">
       <div className="max-w-6xl w-full z-10 space-y-6">
@@ -493,7 +472,6 @@ const Lobby: React.FC = () => {
           </div>
         </div>
 
-        {/* 3 Summary Stat Cards matching Figma */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
           <div className="card-insync bg-[#FFFBF7] p-5 shadow-xs">
             <div className="text-xs font-black uppercase tracking-wider text-black/50">
@@ -525,9 +503,7 @@ const Lobby: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Grid: Participants vs Session Controls / Chat */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Participants */}
           <div className="md:col-span-7 card-insync bg-[#FFFBF7] p-6 shadow-xs text-left space-y-4">
             {toastMessage && (
               <div className="px-4 py-2.5 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center gap-2 animate-slide-in">
@@ -588,7 +564,6 @@ const Lobby: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Controls or Chat */}
           <div className="md:col-span-5">
             {!showChat ? (
               <div className="card-insync bg-[#FFFBF7] p-6 shadow-xs text-left space-y-6">
