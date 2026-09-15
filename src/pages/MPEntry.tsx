@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
+import { JoiningLobby } from "../components/JoiningLobby";
 
 const MPEntry: React.FC = () => {
   const navigate = useNavigate();
@@ -27,8 +28,16 @@ const MPEntry: React.FC = () => {
     }
   }, [ggSession, navigate]);
 
+  if (ggAccessState === "checking") {
+    return <JoiningLobby message="Loading your session..." />;
+  }
+
   if (ggAccessState === "denied") {
     return <GummyGumLockedScreen />;
+  }
+
+  if (ggSession && ggSession.roomCode) {
+    return <JoiningLobby message="Taking you to your session..." />;
   }
 
   return (

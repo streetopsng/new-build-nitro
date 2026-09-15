@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, get, update } from "firebase/database";
+import { ref, get } from "firebase/database";
 import { db } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
@@ -104,33 +104,21 @@ const MPJoin: React.FC = () => {
         }
       }
 
-      await update(ref(db, `rooms/${fullCode}/players/${playerId}`), {
-        id: playerId,
-        name: nameToUse,
-        email: ggEmail || null,
-        avatarId: profile.avatarId,
-        score: carriedScore,
-        ready: true,
-        isHost: false,
+      setIsJoining(false);
+      navigate("/profile-setup", {
+        state: {
+          roomCode: fullCode,
+          playerName: nameToUse,
+          playerId,
+          carriedScore,
+          email: ggEmail || null,
+        },
       });
-
-      setTimeout(() => {
-        navigate("/lobby", {
-          state: {
-            roomCode: fullCode,
-            playerId,
-            isHost: false,
-            playerName: nameToUse,
-            lobbyName: room.name || "Onboarding Lobby",
-          },
-        });
-      }, 1200);
+      return;
     } catch (err) {
       console.warn("Could not check room status on Firebase:", err);
     }
     setIsJoining(false);
-
-    // Go to profile avatar & catchphrase setup first
     navigate("/profile-setup", {
       state: {
         roomCode: fullCode,
@@ -158,8 +146,16 @@ const MPJoin: React.FC = () => {
     return <JoiningLobby message="Joining the lobby..." />;
   }
 
+  if (ggAccessState === "checking") {
+    return <JoiningLobby message="Loading your session..." />;
+  }
+
   if (ggAccessState === "denied") {
     return <GummyGumLockedScreen />;
+  }
+
+  if (ggSession && !ggSession.isHost && ggSession.roomCode) {
+    return <JoiningLobby message="Joining the lobby..." />;
   }
 
   return (
