@@ -15,6 +15,9 @@ import { db } from "../lib/firebase";
 interface LocationState {
   roomCode?: string;
   playerName?: string;
+  playerId?: string;
+  carriedScore?: number;
+  email?: string | null;
 }
 
 const CATCHPHRASES = [
@@ -72,15 +75,16 @@ const ProfileSetup: React.FC = () => {
     updateProfile(playerName.trim() || "Ayoola", serializedAvatar, activeCatchphrase);
 
     const roomCode = state?.roomCode || "DEMO01";
-    const playerId = "player_" + Date.now();
+    const playerId = state?.playerId || "player_" + Date.now();
 
     try {
       if (state?.roomCode) {
         await update(ref(db, `rooms/${roomCode}/players/${playerId}`), {
           id: playerId,
           name: playerName.trim() || "Ayoola",
+          email: state?.email || null,
           avatarId: serializedAvatar,
-          score: 0,
+          score: state?.carriedScore || 0,
           ready: true,
           isHost: false,
           catchphrase: activeCatchphrase,
