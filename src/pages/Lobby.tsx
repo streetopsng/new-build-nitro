@@ -57,7 +57,6 @@ const Lobby: React.FC = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [statusText, setStatusText] = useState("Waiting for host to start");
   const [isStarting, setIsStarting] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [isSelfReady, setIsSelfReady] = useState(true);
 
   const [showChat, setShowChat] = useState(false);
@@ -145,12 +144,6 @@ const Lobby: React.FC = () => {
 
     return () => unsubscribe();
   }, [roomCode, currentUserId, currentUserPlayerName, profile.avatarId, state?.catchphrase, isHost, navigate]);
-
-  const copyRoomCode = () => {
-    navigator.clipboard.writeText(roomCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const toggleReadyState = async () => {
     const nextReady = !isSelfReady;
@@ -459,15 +452,6 @@ const Lobby: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <SoundToggle className="p-2 bg-white rounded-full border border-black/30 text-black cursor-pointer shadow-xs" />
-            <button
-              onClick={copyRoomCode}
-              className="flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-white border-2 border-black font-mono font-black text-lg tracking-wider text-black shadow-xs hover:bg-slate-50 transition-all cursor-pointer"
-            >
-              <span>{roomCode}</span>
-              <span className="text-xs font-sans font-bold px-2 py-0.5 rounded-lg bg-orange-100 border border-orange-300 text-[#FF8E37]">
-                {copied ? "copied!" : "📋 copy"}
-              </span>
-            </button>
           </div>
         </div>
 
