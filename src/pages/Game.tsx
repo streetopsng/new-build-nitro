@@ -101,7 +101,7 @@ const Game: React.FC = () => {
             score: p.score || 0,
           }));
           list.sort((a, b) => b.score - a.score);
-          setLeaderboard(list.slice(0, 5));
+          setLeaderboard(list);
         }
       });
       return () => unsubscribe();
@@ -220,6 +220,9 @@ const Game: React.FC = () => {
 
   const topScorerName = leaderboard[0]?.name || playerName;
   const topScorerScore = leaderboard[0]?.score || score;
+  const sidebarLeaderboard = leaderboard.slice(0, 5);
+  const totalPlayers = leaderboard.length;
+  const avgScore = totalPlayers ? Math.round(leaderboard.reduce((sum, p) => sum + p.score, 0) / totalPlayers) : 0;
 
   return (
     <div className="min-h-screen bg-white text-slate-900 p-4 md:p-8 flex flex-col items-center justify-center select-none relative overflow-x-hidden">
@@ -298,7 +301,7 @@ const Game: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              {leaderboard.map((item, idx) => (
+              {sidebarLeaderboard.map((item, idx) => (
                 <div
                   key={item.id}
                   className="p-3 rounded-2xl bg-[#FF8E37] text-black border-2 border-black flex items-center justify-between shadow-xs font-heading font-black"
@@ -371,11 +374,45 @@ const Game: React.FC = () => {
               </div>
             )}
 
-            {/* Guess Form — host presents/moderates only, never guesses */}
+            {/* Host presents/moderates only, never guesses — sees full team stats instead of a guess form */}
             {isHost ? (
-              <div className="p-5 rounded-2xl bg-slate-50 border-2 border-dashed border-black/20 text-center">
-                <div className="text-sm font-black text-black/60">Your team is guessing…</div>
-                <div className="text-xs text-black/40 mt-1">Live rankings update on the left as they answer.</div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-slate-50 border border-black/15 rounded-2xl p-3 text-center">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-black/50">Players</div>
+                    <div className="font-heading font-black text-2xl text-black mt-0.5">{totalPlayers}</div>
+                  </div>
+                  <div className="bg-slate-50 border border-black/15 rounded-2xl p-3 text-center">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-black/50">Avg Score</div>
+                    <div className="font-heading font-black text-2xl text-black mt-0.5">{avgScore}</div>
+                  </div>
+                  <div className="bg-slate-50 border border-black/15 rounded-2xl p-3 text-center">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-black/50">Top Score</div>
+                    <div className="font-heading font-black text-2xl text-[#FF8E37] mt-0.5">{topScorerScore}</div>
+                  </div>
+                </div>
+
+                <div className="border-2 border-dashed border-black/20 rounded-2xl p-3 max-h-56 overflow-y-auto space-y-2">
+                  {totalPlayers === 0 ? (
+                    <div className="text-center text-sm font-bold text-black/40 py-4">Waiting for players to join…</div>
+                  ) : (
+                    leaderboard.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-black/10"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-5 h-5 rounded-full bg-slate-100 text-black/60 font-black text-[10px] flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <Avatar id={item.avatarId || "av-1"} size="sm" />
+                          <span className="text-sm font-bold text-black truncate max-w-[160px]">{item.name}</span>
+                        </div>
+                        <span className="font-mono text-sm font-black text-[#FF8E37]">{item.score} pts</span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             ) : (
             <form onSubmit={handleGuessSubmit} className="space-y-6">
