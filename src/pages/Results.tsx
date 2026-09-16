@@ -4,8 +4,8 @@ import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { Avatar } from "../components/Avatar";
 import { db } from "../lib/firebase";
-import { ref, get } from "firebase/database";
-import { reportGummyGumResult, closeGummyGumSession } from "../lib/gummygumSession";
+import { ref, get, set } from "firebase/database";
+import { reportGummyGumResult, closeGummyGumSession, startNextRoundGummyGum } from "../lib/gummygumSession";
 
 interface LocationState {
   score?: number;
@@ -99,6 +99,35 @@ const Results: React.FC = () => {
       leaderboard: leaderboard.map((p) => ({ name: p.name, score: p.score, isHost: p.isHost })),
     });
   }, [leaderboard, playerName, roomCode, userScore]);
+
+  const [startingNewSession, setStartingNewSession] = useState(false);
+
+  const handleStartNewSession = async () => {
+    if (startingNewSession || !ggSession?.roomCode) return;
+    setStartingNewSession(true);
+    const code = ggSession.roomCode;
+    const hostName = ggSession.player?.name || profile.username || "Host Admin";
+    const hostId = "host_" + Date.now();
+    try {
+      await startNextRoundGummyGum();
+      const existing = await get(ref(db, `rooms/${code}`));
+      const lobbyName = existing.exists() ? existing.val().name : "Insync session";
+      await set(ref(db, `rooms/${code}`), {
+        name: lobbyName,
+        code,
+        hostId,
+        hostName,
+        hostEmail: ggSession.player?.email || null,
+        status: "waiting",
+        locked: false,
+        settings: { difficulty: "easy", themes: ["General", "Corporate"], maxPlayers: 200 },
+      });
+      navigate("/lobby", { state: { roomCode: code, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
+    } catch (err) {
+      console.error("Failed to start new session:", err);
+      setStartingNewSession(false);
+    }
+  };
 
   const winner1 = leaderboard[0] || DEFAULT_LEADERBOARD_LIST[0];
   const winner2 = leaderboard[1] || DEFAULT_LEADERBOARD_LIST[1];
@@ -224,60 +253,53 @@ const Results: React.FC = () => {
                 </div>
               ))}
             </div>
-
-            {/* Back to Home Button matching Screenshot EXACTLY */}
-            {ggSession ? (
-              <div className="flex flex-col gap-2.5 w-full items-center">
-                {ggSession.isHost ? (
-                  <>
-                    <button
-                      onClick={() => closeGummyGumSession()}
-                      className="w-full px-8 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      <span>Close Session & Return to GummyGum</span> →
-                    </button>
-                    <button
-                      onClick={() => navigate("/home")}
-                      className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                    >
-                      Insync Home
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => navigate("/home")}
-                    className="w-full px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <span>Leave Game</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <button
-                onClick={() => navigate("/home")}
-                className="px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-xs transition-all cursor-pointer flex items-center gap-2"
-              >
-                <span>Back to Home</span>
-              </button>
-            )}
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-4 pb-8">
-          <button
-            onClick={() => navigate("/home")}
-            className="px-8 py-4 bg-white hover:bg-slate-50 text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-          >
-            Back to Home
-          </button>
-          <button
-            onClick={() => navigate("/mp-create")}
-            className="px-8 py-4 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
-          >
-            <span>Play Again</span>
-            <span>➔</span>
-          </button>
-        </div>
+        {ggSession ? (
+          <div className="flex flex-col gap-2.5 w-full items-center pt-2 pb-8">
+            {ggSession.isHost ? (
+              <>
+                <button
+                  onClick={handleStartNewSession}
+                  disabled={startingNewSession}
+                  className="w-full max-w-md px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 disabled:opacity-50 text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>{startingNewSession ? "Starting…" : "Start New Session"}</span>
+                </button>
+                <button
+                  onClick={() => closeGummyGumSession()}
+                  className="w-full max-w-md px-8 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Close Session & Return to GummyGum</span> →
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => navigate("/home")}
+                className="w-full max-w-md px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <span>Leave Game</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4 pb-8">
+            <button
+              onClick={() => navigate("/home")}
+              className="px-8 py-4 bg-white hover:bg-slate-50 text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+            >
+              Back to Home
+            </button>
+            <button
+              onClick={() => navigate("/mp-create")}
+              className="px-8 py-4 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
+            >
+              <span>Play Again</span>
+              <span>➔</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
