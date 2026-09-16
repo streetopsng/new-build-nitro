@@ -1,60 +1,19 @@
 import React, { useState } from "react";
-import {
-  Avatar,
-  AVATAR_LIST,
-  AVATAR_PALETTES,
-  getRandomAvatarConfig,
-  encodeAvatarConfig,
-  decodeAvatarConfig,
-  type AvatarConfig,
-} from "./Avatar";
+import { Avatar, AVATAR_IDS, getRandomAvatarId } from "./Avatar";
 import { useProfile } from "../contexts/ProfileContext";
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAvatarSelect?: (avatarIdOrJson: string) => void;
+  onAvatarSelect?: (avatarId: string) => void;
 }
 
 const TAKEN_USERNAMES = ["dodge_insync", "admin", "nitro", "host", "taken_user"];
 
-const HAIR_STYLES: Array<{ key: AvatarConfig["hairStyle"]; label: string }> = [
-  { key: "curly", label: "Curly" },
-  { key: "wavy", label: "Wavy" },
-  { key: "ponytail", label: "Ponytail" },
-  { key: "bun", label: "Bun" },
-  { key: "bob", label: "Bob" },
-  { key: "afro", label: "Afro" },
-  { key: "quiff", label: "Quiff" },
-  { key: "sidepart", label: "Side Part" },
-];
-
-const ACCESSORIES: Array<{ key: AvatarConfig["accessory"]; label: string }> = [
-  { key: "none", label: "None" },
-  { key: "glasses", label: "Glasses" },
-  { key: "mask", label: "Mask" },
-  { key: "earring", label: "Earring" },
-  { key: "beard", label: "Beard" },
-  { key: "moustache", label: "Moustache" },
-];
-
-const OUTFITS: Array<{ key: AvatarConfig["outfit"]; label: string }> = [
-  { key: "blue-collar", label: "Blue Collar" },
-  { key: "yellow-collar", label: "Yellow Collar" },
-  { key: "black-top", label: "Black Top" },
-  { key: "navy-crew", label: "Navy Crew" },
-  { key: "shirt-tie", label: "Shirt & Tie" },
-  { key: "polka", label: "Polka Dots" },
-  { key: "sweater", label: "Sweater" },
-];
-
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onAvatarSelect }) => {
   const { profile, updateProfile } = useProfile();
 
-  const [activeTab, setActiveTab] = useState<"presets" | "custom">("presets");
-  const [currentConfig, setCurrentConfig] = useState<AvatarConfig>(() =>
-    decodeAvatarConfig(profile.avatarId || "av-1")
-  );
+  const [selectedAvatarId, setSelectedAvatarId] = useState(profile.avatarId || "av-1");
   const [username, setUsername] = useState(profile.username || "Ayoola");
   const [isSpinning, setIsSpinning] = useState(false);
 
@@ -65,21 +24,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
 
   const handleShuffle = () => {
     setIsSpinning(true);
-    const randomized = getRandomAvatarConfig();
-    setCurrentConfig(randomized);
+    setSelectedAvatarId(getRandomAvatarId());
     setTimeout(() => setIsSpinning(false), 450);
-  };
-
-  const handleSelectPreset = (preset: AvatarConfig) => {
-    setCurrentConfig({ ...preset });
   };
 
   const handleConfirm = () => {
     if (!isValid) return;
-    const serialized = encodeAvatarConfig(currentConfig);
-    updateProfile(username.trim(), serialized);
+    updateProfile(username.trim(), selectedAvatarId);
     if (onAvatarSelect) {
-      onAvatarSelect(serialized);
+      onAvatarSelect(selectedAvatarId);
     }
     onClose();
   };
@@ -99,7 +52,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
             ✨ Avatar Studio ✨
           </h2>
           <p className="text-xs sm:text-sm text-black/60 font-medium mt-1">
-            Pick a preset or customize your gender-neutral avatar
+            Pick your GummyGum avatar
           </p>
         </div>
 
@@ -109,7 +62,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
               isSpinning ? "rotate-[360deg] scale-110" : ""
             }`}
           >
-            <Avatar config={currentConfig} size="xl" />
+            <Avatar id={selectedAvatarId} size="xl" />
           </div>
 
           <button
@@ -122,164 +75,26 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
           </button>
         </div>
 
-        <div className="flex justify-center">
-          <div className="inline-flex p-1 rounded-2xl bg-black/5 border border-black/15">
-            <button
-              type="button"
-              onClick={() => setActiveTab("presets")}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === "presets"
-                  ? "bg-white text-black shadow-2xs border border-black/20"
-                  : "text-black/60 hover:text-black"
-              }`}
-            >
-              Curated Avatars (16)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("custom")}
-              className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                activeTab === "custom"
-                  ? "bg-white text-black shadow-2xs border border-black/20"
-                  : "text-black/60 hover:text-black"
-              }`}
-            >
-              Mix & Match 🎨
-            </button>
+        <div className="flex-1 overflow-y-auto max-h-[340px] pr-1 py-1">
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5 justify-items-center">
+            {AVATAR_IDS.map((avId) => {
+              const isSelected = selectedAvatarId === avId;
+              return (
+                <button
+                  key={avId}
+                  type="button"
+                  onClick={() => setSelectedAvatarId(avId)}
+                  className={`p-1 rounded-full transition-all cursor-pointer ${
+                    isSelected
+                      ? "ring-3 ring-[#FF8E37] scale-110 bg-orange-100"
+                      : "hover:scale-105 opacity-80 hover:opacity-100"
+                  }`}
+                >
+                  <Avatar id={avId} size="md" />
+                </button>
+              );
+            })}
           </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto max-h-[300px] pr-1 space-y-4 text-left">
-          {activeTab === "presets" ? (
-            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-2.5 justify-items-center py-1">
-              {AVATAR_LIST.map((av) => {
-                const isSelected =
-                  currentConfig.hairStyle === av.hairStyle &&
-                  currentConfig.accessory === av.accessory &&
-                  currentConfig.outfit === av.outfit &&
-                  currentConfig.bg === av.bg;
-                return (
-                  <button
-                    key={av.id}
-                    type="button"
-                    onClick={() => handleSelectPreset(av)}
-                    className={`p-1 rounded-full transition-all cursor-pointer ${
-                      isSelected
-                        ? "ring-3 ring-[#FF8E37] scale-110 bg-orange-100"
-                        : "hover:scale-105 opacity-80 hover:opacity-100"
-                    }`}
-                  >
-                    <Avatar config={av} size="md" />
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-black/80 mb-1.5">
-                  Background Color
-                </label>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {AVATAR_PALETTES.bg.map((color) => {
-                    const isSelected = currentConfig.bg === color;
-                    return (
-                      <button
-                        key={color}
-                        type="button"
-                        onClick={() => setCurrentConfig((prev) => ({ ...prev, bg: color }))}
-                        className={`w-7 h-7 rounded-full border-2 border-black transition-all cursor-pointer ${
-                          isSelected ? "ring-2 ring-black scale-115" : "hover:scale-110"
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-black/80 mb-1.5">
-                  Hairstyle
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {HAIR_STYLES.map((h) => {
-                    const isSelected = currentConfig.hairStyle === h.key;
-                    return (
-                      <button
-                        key={h.key}
-                        type="button"
-                        onClick={() =>
-                          setCurrentConfig((prev) => ({ ...prev, hairStyle: h.key }))
-                        }
-                        className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer truncate ${
-                          isSelected
-                            ? "bg-[#FF8E37] text-black border-black font-black shadow-2xs"
-                            : "bg-white text-black/80 border-black/20 hover:bg-slate-50"
-                        }`}
-                      >
-                        {h.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-black/80 mb-1.5">
-                  Accessory
-                </label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                  {ACCESSORIES.map((acc) => {
-                    const isSelected = currentConfig.accessory === acc.key;
-                    return (
-                      <button
-                        key={acc.key}
-                        type="button"
-                        onClick={() =>
-                          setCurrentConfig((prev) => ({ ...prev, accessory: acc.key }))
-                        }
-                        className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer truncate ${
-                          isSelected
-                            ? "bg-[#FF8E37] text-black border-black font-black shadow-2xs"
-                            : "bg-white text-black/80 border-black/20 hover:bg-slate-50"
-                        }`}
-                      >
-                        {acc.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-black/80 mb-1.5">
-                  Outfit
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                  {OUTFITS.map((outfit) => {
-                    const isSelected = currentConfig.outfit === outfit.key;
-                    return (
-                      <button
-                        key={outfit.key}
-                        type="button"
-                        onClick={() =>
-                          setCurrentConfig((prev) => ({ ...prev, outfit: outfit.key }))
-                        }
-                        className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer truncate ${
-                          isSelected
-                            ? "bg-[#FF8E37] text-black border-black font-black shadow-2xs"
-                            : "bg-white text-black/80 border-black/20 hover:bg-slate-50"
-                        }`}
-                      >
-                        {outfit.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="text-left space-y-1">

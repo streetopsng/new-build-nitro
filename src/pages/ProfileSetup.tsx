@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
-import {
-  Avatar,
-  getRandomAvatarConfig,
-  encodeAvatarConfig,
-  decodeAvatarConfig,
-  type AvatarConfig,
-} from "../components/Avatar";
+import { Avatar, getRandomAvatarId } from "../components/Avatar";
 import { ProfileModal } from "../components/ProfileModal";
 import { ref, update } from "firebase/database";
 import { db } from "../lib/firebase";
@@ -35,9 +29,7 @@ const ProfileSetup: React.FC = () => {
   const state = location.state as LocationState;
   const { profile, updateProfile } = useProfile();
 
-  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>(() =>
-    decodeAvatarConfig(profile.avatarId || "av-1")
-  );
+  const [avatarId, setAvatarId] = useState(profile.avatarId || "av-1");
   const [isShuffling, setIsShuffling] = useState(false);
 
   const [playerName, setPlayerName] = useState(
@@ -55,15 +47,14 @@ const ProfileSetup: React.FC = () => {
   // Sync initial avatar if state is updated
   useEffect(() => {
     if (profile.avatarId) {
-      setAvatarConfig(decodeAvatarConfig(profile.avatarId));
+      setAvatarId(profile.avatarId);
     }
   }, [profile.avatarId]);
 
   // Shuffle Avatar generator action matching Figma #1586:3066
   const handleShuffle = () => {
     setIsShuffling(true);
-    const newConfig = getRandomAvatarConfig();
-    setAvatarConfig(newConfig);
+    setAvatarId(getRandomAvatarId());
     setTimeout(() => {
       setIsShuffling(false);
     }, 400);
@@ -71,8 +62,7 @@ const ProfileSetup: React.FC = () => {
 
   const handleJoinLobby = async () => {
     setIsSaving(true);
-    const serializedAvatar = encodeAvatarConfig(avatarConfig);
-    updateProfile(playerName.trim() || "Ayoola", serializedAvatar, activeCatchphrase);
+    updateProfile(playerName.trim() || "Ayoola", avatarId, activeCatchphrase);
 
     const roomCode = state?.roomCode || "DEMO01";
     const playerId = state?.playerId || "player_" + Date.now();
@@ -83,7 +73,7 @@ const ProfileSetup: React.FC = () => {
           id: playerId,
           name: playerName.trim() || "Ayoola",
           email: state?.email || null,
-          avatarId: serializedAvatar,
+          avatarId,
           score: state?.carriedScore || 0,
           ready: true,
           isHost: false,
@@ -102,7 +92,7 @@ const ProfileSetup: React.FC = () => {
           isHost: false,
           playerName: playerName.trim() || "Ayoola",
           catchphrase: activeCatchphrase,
-          avatarId: serializedAvatar,
+          avatarId,
         },
       });
     }, 1500);
@@ -126,7 +116,7 @@ const ProfileSetup: React.FC = () => {
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-[#FF8E37]/30 animate-ping" />
             <div className="relative p-1.5 rounded-full bg-white border-2 border-black shadow-lg">
-              <Avatar config={avatarConfig} size="xl" />
+              <Avatar id={avatarId} size="xl" />
             </div>
           </div>
 
@@ -177,7 +167,7 @@ const ProfileSetup: React.FC = () => {
               isShuffling ? "rotate-[360deg] scale-110" : "hover:scale-105"
             }`}
           >
-            <Avatar config={avatarConfig} size="2xl" />
+            <Avatar id={avatarId} size="2xl" />
           </div>
 
           <div className="flex items-center gap-2 pt-1">
@@ -280,7 +270,7 @@ const ProfileSetup: React.FC = () => {
         isOpen={showAvatarPickerModal}
         onClose={() => setShowAvatarPickerModal(false)}
         onAvatarSelect={(selected) => {
-          setAvatarConfig(decodeAvatarConfig(selected));
+          setAvatarId(selected);
         }}
       />
     </div>
