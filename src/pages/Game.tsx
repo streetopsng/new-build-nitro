@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Avatar } from "../components/Avatar";
 import { useGame } from "../contexts/GameContext";
+import { useGummyGum } from "../contexts/GummyGumContext";
 import { db } from "../lib/firebase";
 import { ref, onValue, update, get } from "firebase/database";
+import { closeGummyGumSession } from "../lib/gummygumSession";
 import type { Word } from "../types";
 
 interface LocationState {
@@ -26,15 +28,19 @@ const Game: React.FC = () => {
   const navigate = useNavigate();
   const state = location.state as LocationState;
   const { wordBank } = useGame();
+  const { ggSession } = useGummyGum();
 
   const roomCode = state?.roomCode || "DEMO";
   const playerName = state?.playerName || "Ayoola";
   const playerId = state?.playerId || "player_" + Date.now();
   const isHost = state?.isHost || false;
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
 
   const [score, setScore] = useState(0);
   const [wordTimer, setWordTimer] = useState(30);
-  const [sessionTimer, setSessionTimer] = useState(300); // 5 mins
+  const [sessionTimer, setSessionTimer] = useState(300);
+  const [roundConfig, setRoundConfig] = useState<{ type: "sprint" | "count"; value: number }>({ type: "sprint", value: 5 });
+  const [wordsPlayedCount, setWordsPlayedCount] = useState(0);
   const [streak, setStreak] = useState(0);
   const [hintsLeft, setHintsLeft] = useState(5);
   const [hintActive, setHintActive] = useState(false);
@@ -58,6 +64,21 @@ const Game: React.FC = () => {
     }).catch((err) => console.error("Failed to load custom words:", err));
   }, [roomCode]);
 
+  useEffect(() => {
+    if (!roomCode || roomCode === "DEMO") return;
+    get(ref(db, `rooms/${roomCode}/settings`)).then((snapshot) => {
+      if (!snapshot.exists()) return;
+      const settings = snapshot.val();
+      if (settings.roundType === "count" && settings.roundValue) {
+        setRoundConfig({ type: "count", value: settings.roundValue });
+        setSessionTimer(30 * 60);
+      } else if (settings.roundType === "sprint" && settings.roundValue) {
+        setRoundConfig({ type: "sprint", value: settings.roundValue });
+        setSessionTimer(settings.roundValue * 60);
+      }
+    }).catch((err) => console.error("Failed to load round settings:", err));
+  }, [roomCode]);
+
   const effectiveWordBank = customWords && customWords.length > 0 ? customWords : wordBank;
 
   const rawWord = effectiveWordBank[currentWordIndex % Math.max(effectiveWordBank.length, 1)];
@@ -65,6 +86,7 @@ const Game: React.FC = () => {
     word: rawWord?.word || "TOUCHLIGHT",
     clue: rawWord?.easy || rawWord?.medium || rawWord?.hard || "A portable light you hold in your hand when it is dark.",
     theme: rawWord?.theme || "GENERAL",
+    hint: rawWord?.hint,
   };
 
   // Helper to generate hint pattern: first and last letter of each word revealed
@@ -143,6 +165,12 @@ const Game: React.FC = () => {
   }, [currentWordIndex]);
 
   const handleNextWord = () => {
+    const nextCount = wordsPlayedCount + 1;
+    setWordsPlayedCount(nextCount);
+    if (roundConfig.type === "count" && nextCount >= roundConfig.value) {
+      setShowRoundCompleteModal(true);
+      return;
+    }
     setWordTimer(30);
     setHintActive(false);
     setUserGuess("");
@@ -226,6 +254,16 @@ const Game: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 p-4 md:p-8 flex flex-col items-center justify-center select-none relative overflow-x-hidden">
+      {isHost && (
+        <button
+          onClick={() => setShowEndConfirm(true)}
+          title="End session"
+          className="absolute top-5 left-5 z-20 w-10 h-10 rounded-full bg-white border border-black/30 text-black/60 hover:text-black flex items-center justify-center font-bold cursor-pointer shadow-xs"
+        >
+          ✕
+        </button>
+      )}
+
       {/* Outer Tech Frame Container matching Figma #1563:2405 */}
       <div className="max-w-6xl w-full bg-[#FFFBF7] border-2 border-black/40 rounded-3xl p-6 md:p-10 shadow-xl relative z-10 space-y-6 animate-card-fade-in">
         <div className="absolute top-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -243,9 +281,9 @@ const Game: React.FC = () => {
           </h1>
         </div>
 
-        {/* 4 Stat Cards Bar with Progress Bar matching Figma */}
+        {/* Stat Cards Bar with Progress Bar matching Figma — participants only see what's relevant to them */}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
+          <div className={`grid gap-4 text-left ${isHost ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2"}`}>
             <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
               <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
                 <span>🏆</span> {isHost ? "PLAYERS" : "YOUR SCORE"}
@@ -264,23 +302,27 @@ const Game: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
-              <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
-                <span>🔥</span> STREAK
-              </div>
-              <div className="font-heading font-black text-3xl md:text-4xl text-black mt-1">
-                {streak}
-              </div>
-            </div>
+            {isHost && (
+              <>
+                <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
+                  <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
+                    <span>🔥</span> STREAK
+                  </div>
+                  <div className="font-heading font-black text-3xl md:text-4xl text-black mt-1">
+                    {streak}
+                  </div>
+                </div>
 
-            <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
-              <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
-                <span>💡</span> HINTS
-              </div>
-              <div className="font-heading font-black text-3xl md:text-4xl text-black mt-1">
-                {hintsLeft}
-              </div>
-            </div>
+                <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
+                  <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
+                    <span>💡</span> HINTS
+                  </div>
+                  <div className="font-heading font-black text-3xl md:text-4xl text-black mt-1">
+                    {hintsLeft}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="w-full bg-black/10 h-2 rounded-full overflow-hidden">
@@ -293,7 +335,8 @@ const Game: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        <div className={isHost ? "grid grid-cols-1 md:grid-cols-12 gap-6 items-start" : ""}>
+          {isHost && (
           <div className="md:col-span-4 bg-white border border-black/30 rounded-3xl p-5 shadow-xs text-left space-y-3">
             <div className="text-xs font-black text-[#FF8E37] uppercase tracking-wider flex items-center gap-2 mb-1">
               <span className="w-2.5 h-2.5 rounded-full bg-[#FF8E37] animate-ping" />
@@ -319,28 +362,10 @@ const Game: React.FC = () => {
                 </div>
               ))}
             </div>
-
-            {/* Current Player Indicator — host presents/moderates only, never a ranked player */}
-            {!isHost && (
-              <div className="pt-2 border-t border-black/10">
-                <div className="p-3 rounded-2xl bg-[#FFEDD5] border-2 border-[#FF8E37] flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <Avatar id="av-1" size="sm" />
-                    <div className="text-left">
-                      <div className="font-black text-xs text-black">
-                        {playerName} <span className="text-[#FF8E37]">(YOU)</span>
-                      </div>
-                      <div className="text-xs font-black text-[#FF8E37]">
-                        {score} pts
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
+          )}
 
-          <div className="md:col-span-8 bg-white border border-black/30 rounded-3xl p-6 md:p-8 text-left shadow-xs space-y-6 relative overflow-hidden">
+          <div className={`${isHost ? "md:col-span-8 " : ""}bg-white border border-black/30 rounded-3xl p-6 md:p-8 text-left shadow-xs space-y-6 relative overflow-hidden`}>
             {feedback === "correct" && (
               <div className="absolute top-4 right-6 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-400 text-emerald-800 font-black text-xs animate-bounce">
                 ✓ CORRECT! +30 PTS
@@ -367,9 +392,9 @@ const Game: React.FC = () => {
 
             {hintActive && (
               <div className="p-4 rounded-2xl bg-[#FFFBF7] border-2 border-dashed border-[#FF8E37] text-center">
-                <div className="text-xs font-black text-black/50 mb-1">REVEALED LETTERS</div>
-                <div className="font-mono font-black text-2xl tracking-[0.25em] text-black">
-                  {getHintDisplay(activeWord.word)}
+                <div className="text-xs font-black text-black/50 mb-1">{activeWord.hint ? "HINT" : "REVEALED LETTERS"}</div>
+                <div className={activeWord.hint ? "font-bold text-base text-black" : "font-mono font-black text-2xl tracking-[0.25em] text-black"}>
+                  {activeWord.hint || getHintDisplay(activeWord.word)}
                 </div>
               </div>
             )}
@@ -464,7 +489,11 @@ const Game: React.FC = () => {
         </div>
 
         <div className="text-center text-xs font-bold text-black/50">
-          Session time left: <span className="text-[#FF8E37] font-black">{formatSessionTime(sessionTimer)}</span>
+          {roundConfig.type === "count" ? (
+            <>Word <span className="text-[#FF8E37] font-black">{Math.min(wordsPlayedCount + 1, roundConfig.value)}</span> of <span className="text-[#FF8E37] font-black">{roundConfig.value}</span></>
+          ) : (
+            <>Session time left: <span className="text-[#FF8E37] font-black">{formatSessionTime(sessionTimer)}</span></>
+          )}
         </div>
       </div>
 
@@ -504,6 +533,31 @@ const Game: React.FC = () => {
             >
               View Final Results →
             </button>
+          </div>
+        </div>
+      )}
+
+      {showEndConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-card-fade-in" onClick={() => setShowEndConfirm(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center text-slate-900 shadow-2xl space-y-4">
+            <h3 className="font-heading font-black text-2xl text-black">End this session?</h3>
+            <p className="text-sm text-black/60 leading-relaxed">
+              Everyone still playing will be disconnected{ggSession ? " and this returns to GummyGum." : "."}
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowEndConfirm(false)}
+                className="flex-1 py-3 rounded-2xl bg-white border border-black/40 text-black font-bold text-sm hover:bg-slate-50 cursor-pointer"
+              >
+                Keep playing
+              </button>
+              <button
+                onClick={() => (ggSession ? closeGummyGumSession() : navigate("/home"))}
+                className="flex-1 py-3 rounded-2xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 cursor-pointer shadow-xs"
+              >
+                End session
+              </button>
+            </div>
           </div>
         </div>
       )}

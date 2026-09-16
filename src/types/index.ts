@@ -4,6 +4,7 @@ export interface Word {
   easy: string;
   medium: string;
   hard: string;
+  hint?: string;
 }
 
 export interface Theme {
