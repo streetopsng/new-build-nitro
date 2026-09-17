@@ -48,7 +48,7 @@ const Lobby: React.FC = () => {
   const queryIsHost = searchParams.get("host") === "true" || searchParams.get("isHost") === "true";
 
   const roomCode = state?.roomCode || queryRoomCode || ggSession?.roomCode || "DEFAULT";
-  const isHost = state?.isHost ?? (queryIsHost || (ggSession?.isHost ?? false));
+  const isHost = state?.isHost ?? (ggSession ? (ggSession.isHost ?? false) : queryIsHost);
   const currentUserPlayerName = state?.playerName || ggSession?.player?.name || profile.username || (isHost ? "Host Admin" : "Player");
   const currentUserId = state?.playerId || (isHost ? "host_admin" : ("player_" + (profile.username || "me")));
 
