@@ -43,15 +43,24 @@ const Results: React.FC = () => {
   const { profile } = useProfile();
   const { ggSession } = useGummyGum();
 
-  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>(DEFAULT_LEADERBOARD_LIST);
+  // A real session always carries a roomCode from Lobby/GummyGum; only a
+  // standalone page load with no session state starts from the demo list.
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>(() =>
+    state?.roomCode ? [] : DEFAULT_LEADERBOARD_LIST
+  );
   const ggReportedRef = useRef(false);
 
   const roomCode = state?.roomCode;
+  const isDemo = !roomCode;
   const userScore = state?.score ?? 780;
-  const userRank = state?.rank ?? 3;
   const userStreaks = state?.streaks ?? 3;
   const userHintsUsed = state?.hintsUsed ?? 1;
   const playerName = state?.playerName || profile.username || "Ayoola";
+
+  // Game.tsx never passes a `rank` — derive it from the actual leaderboard
+  // (real, once fetched, or the demo list) instead of hardcoding a placement.
+  const computedRank = leaderboard.findIndex((p) => p.name === playerName) + 1;
+  const userRank = state?.rank ?? (computedRank > 0 ? computedRank : 1);
 
   useEffect(() => {
     if (roomCode) {
@@ -84,10 +93,11 @@ const Results: React.FC = () => {
   }, [roomCode]);
 
   // Reports the launching player's final result back to GummyGum, once,
-  // after the real leaderboard (not the placeholder default) has loaded.
+  // after the real leaderboard has loaded (never the empty/placeholder state).
   useEffect(() => {
     if (ggReportedRef.current) return;
-    if (leaderboard === DEFAULT_LEADERBOARD_LIST) return;
+    if (isDemo && leaderboard === DEFAULT_LEADERBOARD_LIST) return;
+    if (leaderboard.length === 0) return;
     ggReportedRef.current = true;
 
     const rank = leaderboard.findIndex((p) => p.name === playerName) + 1;
@@ -101,6 +111,12 @@ const Results: React.FC = () => {
   }, [leaderboard, playerName, roomCode, userScore]);
 
   const [startingNewSession, setStartingNewSession] = useState(false);
+  const [showThanksModal, setShowThanksModal] = useState(false);
+
+  const handleParticipantLeave = () => {
+    window.close();
+    setTimeout(() => setShowThanksModal(true), 400);
+  };
 
   const handleStartNewSession = async () => {
     if (startingNewSession || !ggSession?.roomCode) return;
@@ -129,9 +145,11 @@ const Results: React.FC = () => {
     }
   };
 
-  const winner1 = leaderboard[0] || DEFAULT_LEADERBOARD_LIST[0];
-  const winner2 = leaderboard[1] || DEFAULT_LEADERBOARD_LIST[1];
-  const winner3 = leaderboard[2] || DEFAULT_LEADERBOARD_LIST[2];
+  // Demo mode may pad out a full podium; a real room only ever shows the
+  // participants that actually exist, however few — never invented ones.
+  const winner1 = leaderboard[0] || (isDemo ? DEFAULT_LEADERBOARD_LIST[0] : undefined);
+  const winner2 = leaderboard[1] || (isDemo ? DEFAULT_LEADERBOARD_LIST[1] : undefined);
+  const winner3 = leaderboard[2] || (isDemo ? DEFAULT_LEADERBOARD_LIST[2] : undefined);
 
   const lowerRanks = leaderboard.slice(3);
 
@@ -155,7 +173,13 @@ const Results: React.FC = () => {
           </p>
         </header>
 
+        {leaderboard.length === 0 ? (
+          <div className="text-center py-10 text-black/40 font-bold">
+            Loading final results…
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4 pb-2">
+          {winner2 && (
           <div className="order-2 md:order-1 bg-white border-2 border-black rounded-3xl p-6 text-center shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-full bg-slate-100 border-2 border-slate-400 text-slate-700 font-black text-lg flex items-center justify-center mx-auto">
               2
@@ -169,7 +193,9 @@ const Results: React.FC = () => {
               {winner2.score} pts
             </div>
           </div>
+          )}
 
+          {winner1 && (
           <div className="order-1 md:order-2 bg-[#FFFBF7] border-[3px] border-black rounded-3xl p-8 text-center shadow-lg space-y-4 relative -translate-y-2">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#FF8E37] text-black font-black text-xs uppercase tracking-wider border-2 border-black flex items-center gap-1.5 shadow-xs">
               <span>👑</span> 1ST PLACE
@@ -185,7 +211,9 @@ const Results: React.FC = () => {
               {winner1.score} pts
             </div>
           </div>
+          )}
 
+          {winner3 && (
           <div className="order-3 bg-white border-2 border-black rounded-3xl p-6 text-center shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-full bg-amber-100 border-2 border-amber-600 text-amber-800 font-black text-lg flex items-center justify-center mx-auto">
               3
@@ -199,7 +227,9 @@ const Results: React.FC = () => {
               {winner3.score} pts
             </div>
           </div>
+          )}
         </div>
+        )}
 
         <div className="bg-white border-2 border-black rounded-3xl p-6 shadow-xs text-left">
           <div className="text-xs font-black uppercase tracking-wider text-black/50 mb-4">
@@ -276,7 +306,7 @@ const Results: React.FC = () => {
               </>
             ) : (
               <button
-                onClick={() => navigate("/home")}
+                onClick={handleParticipantLeave}
                 className="w-full max-w-md px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>Leave Game</span>
@@ -301,6 +331,15 @@ const Results: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showThanksModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
+          <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center shadow-2xl">
+            <h3 className="font-heading font-black text-2xl text-black mb-2">Thanks for playing!</h3>
+            <p className="text-sm text-black/60">You can close this tab now.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
