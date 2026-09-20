@@ -24,6 +24,25 @@ export function getGummyGumSession(): GummyGumSession | null {
   }
 }
 
+// A single verify attempt (network error or a non-success response) — the
+// hub's launch token is safe to re-verify, so callers get one automatic
+// retry before giving up.
+async function verifyLaunchTokenOnce(ggt: string): Promise<any | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/gummygum/launch/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: ggt }),
+    });
+    const body = await res.json();
+    if (!res.ok || !body.success) return null;
+    return body;
+  } catch (err) {
+    console.error("GummyGum launch verify failed", err);
+    return null;
+  }
+}
+
 // Resolves the GummyGum hub launch token (?ggt=...) into a session, if
 // present. Never throws: on any failure (missing token, network error, bad
 // response) this resolves to null and the app proceeds exactly as it would
@@ -36,40 +55,40 @@ export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
     return getGummyGumSession();
   }
 
-  try {
-    const res = await fetch(`${API_URL}/api/gummygum/launch/verify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: ggt }),
-    });
-    const body = await res.json();
-    if (!res.ok || !body.success) return null;
-
-    const hubUrl = body.data.hubUrl || (typeof document !== "undefined" && document.referrer ? new URL(document.referrer).origin : "https://gummygum.app");
-
-    const session: GummyGumSession = {
-      sessionId: body.data.sessionId,
-      experienceId: body.data.experienceId,
-      isGuest: body.data.isGuest,
-      player: body.data.player,
-      reportToken: body.data.reportToken,
-      roomCode: body.data.roomCode || params.get("pin") || params.get("roomCode") || params.get("code") || null,
-      isHost: Boolean(body.data.isHost),
-      hubUrl,
-      round: 1,
-      reported: false,
-    };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-
-    params.delete("ggt");
-    const query = params.toString();
-    window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
-
-    return session;
-  } catch (err) {
-    console.error("GummyGum launch verify failed", err);
-    return null;
+  // The host's tab (opened via window.open from GummyGum) can take a
+  // moment to become the browser's active tab and start executing at full
+  // speed — a newly opened tab is sometimes backgrounded/throttled before
+  // it's foregrounded, which can delay this call past a transient network
+  // hiccup. One retry after a short delay lets a transient miss self-heal
+  // instead of permanently falling back to this experience's native screen.
+  let body = await verifyLaunchTokenOnce(ggt);
+  if (!body) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    body = await verifyLaunchTokenOnce(ggt);
   }
+  if (!body) return null;
+
+  const hubUrl = body.data.hubUrl || (typeof document !== "undefined" && document.referrer ? new URL(document.referrer).origin : "https://gummygum.app");
+
+  const session: GummyGumSession = {
+    sessionId: body.data.sessionId,
+    experienceId: body.data.experienceId,
+    isGuest: body.data.isGuest,
+    player: body.data.player,
+    reportToken: body.data.reportToken,
+    roomCode: body.data.roomCode || params.get("pin") || params.get("roomCode") || params.get("code") || null,
+    isHost: Boolean(body.data.isHost),
+    hubUrl,
+    round: 1,
+    reported: false,
+  };
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+
+  params.delete("ggt");
+  const query = params.toString();
+  window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
+
+  return session;
 }
 
 // Reports the launching player's final result back to the hub, if a launch
