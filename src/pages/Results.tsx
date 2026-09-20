@@ -111,6 +111,12 @@ const Results: React.FC = () => {
   }, [leaderboard, playerName, roomCode, userScore]);
 
   const [startingNewSession, setStartingNewSession] = useState(false);
+  const [showThanksModal, setShowThanksModal] = useState(false);
+
+  const handleParticipantLeave = () => {
+    window.close();
+    setTimeout(() => setShowThanksModal(true), 400);
+  };
 
   const handleStartNewSession = async () => {
     if (startingNewSession || !ggSession?.roomCode) return;
@@ -300,7 +306,7 @@ const Results: React.FC = () => {
               </>
             ) : (
               <button
-                onClick={() => navigate("/home")}
+                onClick={handleParticipantLeave}
                 className="w-full max-w-md px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>Leave Game</span>
@@ -325,6 +331,15 @@ const Results: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showThanksModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
+          <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center shadow-2xl">
+            <h3 className="font-heading font-black text-2xl text-black mb-2">Thanks for playing!</h3>
+            <p className="text-sm text-black/60">You can close this tab now.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
