@@ -5,7 +5,7 @@ import { useGame } from "../contexts/GameContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { db } from "../lib/firebase";
 import { ref, onValue, update, get } from "firebase/database";
-import { closeGummyGumSession } from "../lib/gummygumSession";
+import { closeGummyGumSession, returnToGummyGum } from "../lib/gummygumSession";
 import type { Word } from "../types";
 
 interface LocationState {
@@ -39,6 +39,8 @@ const Game: React.FC = () => {
   const playerId = state?.playerId || "player_" + Date.now();
   const isHost = state?.isHost ?? ggSession?.isHost ?? false;
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [showCancelledModal, setShowCancelledModal] = useState(false);
+  const cancelledHandledRef = useRef(false);
 
   const [score, setScore] = useState(0);
   const [wordTimer, setWordTimer] = useState(30);
@@ -140,6 +142,27 @@ const Game: React.FC = () => {
       ]);
     }
   }, [roomCode, playerName, score]);
+
+  // GummyGum-launched sessions only: the room can disappear out from under
+  // an active player if GummyGum cancels the session from its own side.
+  // Native/standalone play has no such external cancel source, so this is
+  // left a no-op when there's no ggSession.
+  useEffect(() => {
+    if (!ggSession || !roomCode || roomCode === "DEMO") return;
+
+    const roomRef = ref(db, `rooms/${roomCode}`);
+    const unsubscribe = onValue(roomRef, (snapshot) => {
+      if (snapshot.exists() || cancelledHandledRef.current) return;
+      cancelledHandledRef.current = true;
+      if (ggSession.isHost) {
+        returnToGummyGum();
+      } else {
+        window.close();
+        setTimeout(() => setShowCancelledModal(true), 400);
+      }
+    });
+    return () => unsubscribe();
+  }, [ggSession, roomCode]);
 
   useEffect(() => {
     const sessionInterval = setInterval(() => {
@@ -562,6 +585,15 @@ const Game: React.FC = () => {
                 End session
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelledModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
+          <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center shadow-2xl">
+            <h3 className="font-heading font-black text-2xl text-black mb-2">Session Cancelled</h3>
+            <p className="text-sm text-black/60">This session was cancelled by the host. You can close this tab now.</p>
           </div>
         </div>
       )}

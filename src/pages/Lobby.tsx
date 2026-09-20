@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { db } from "../lib/firebase";
 import { ref, onValue, update, remove, push } from "firebase/database";
@@ -7,6 +7,7 @@ import SoundToggle from "../components/SoundToggle";
 import { JoiningLobby } from "../components/JoiningLobby";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
+import { returnToGummyGum } from "../lib/gummygumSession";
 
 interface LocationState {
   roomCode: string;
@@ -65,6 +66,8 @@ const Lobby: React.FC = () => {
 
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showCancelledModal, setShowCancelledModal] = useState(false);
+  const cancelledHandledRef = useRef(false);
 
   useEffect(() => {
     if (!roomCode) return;
@@ -125,6 +128,18 @@ const Lobby: React.FC = () => {
           }));
           setChatMessages(rawMsgs);
         }
+      } else if (ggSession) {
+        // Room vanished mid-session — GummyGum is the source of the
+        // cancellation, so route each role back appropriately instead of
+        // falling through to the native lobby/landing screen below.
+        if (cancelledHandledRef.current) return;
+        cancelledHandledRef.current = true;
+        if (ggSession.isHost) {
+          returnToGummyGum();
+        } else {
+          window.close();
+          setTimeout(() => setShowCancelledModal(true), 400);
+        }
       } else if (isHost) {
         // Fallback local — host is never a player.
         setPlayers([]);
@@ -143,7 +158,7 @@ const Lobby: React.FC = () => {
     });
 
     return () => unsubscribe();
-  }, [roomCode, currentUserId, currentUserPlayerName, profile.avatarId, state?.catchphrase, isHost, navigate]);
+  }, [roomCode, currentUserId, currentUserPlayerName, profile.avatarId, state?.catchphrase, isHost, navigate, ggSession]);
 
   const toggleReadyState = async () => {
     const nextReady = !isSelfReady;
@@ -423,6 +438,15 @@ const Lobby: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {showCancelledModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
+            <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center shadow-2xl">
+              <h3 className="font-heading font-black text-2xl text-black mb-2">Session Cancelled</h3>
+              <p className="text-sm text-black/60">This session was cancelled by the host. You can close this tab now.</p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
