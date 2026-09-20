@@ -24,9 +24,6 @@ export function getGummyGumSession(): GummyGumSession | null {
   }
 }
 
-// A single verify attempt (network error or a non-success response) — the
-// hub's launch token is safe to re-verify, so callers get one automatic
-// retry before giving up.
 async function verifyLaunchTokenOnce(ggt: string): Promise<any | null> {
   try {
     const res = await fetch(`${API_URL}/api/gummygum/launch/verify`, {
@@ -43,10 +40,6 @@ async function verifyLaunchTokenOnce(ggt: string): Promise<any | null> {
   }
 }
 
-// Resolves the GummyGum hub launch token (?ggt=...) into a session, if
-// present. Never throws: on any failure (missing token, network error, bad
-// response) this resolves to null and the app proceeds exactly as it would
-// without the hub.
 export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
   const params = new URLSearchParams(window.location.search);
   const ggt = params.get("ggt");
@@ -55,12 +48,6 @@ export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
     return getGummyGumSession();
   }
 
-  // The host's tab (opened via window.open from GummyGum) can take a
-  // moment to become the browser's active tab and start executing at full
-  // speed — a newly opened tab is sometimes backgrounded/throttled before
-  // it's foregrounded, which can delay this call past a transient network
-  // hiccup. One retry after a short delay lets a transient miss self-heal
-  // instead of permanently falling back to this experience's native screen.
   let body = await verifyLaunchTokenOnce(ggt);
   if (!body) {
     await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -91,8 +78,6 @@ export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
   return session;
 }
 
-// Reports the launching player's final result back to the hub, if a launch
-// session is on record.
 export async function reportGummyGumResult(report: Record<string, unknown>): Promise<void> {
   const session = getGummyGumSession();
   if (!session || !session.reportToken) return;
