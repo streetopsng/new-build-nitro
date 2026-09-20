@@ -30,10 +30,14 @@ const Game: React.FC = () => {
   const { wordBank } = useGame();
   const { ggSession } = useGummyGum();
 
-  const roomCode = state?.roomCode || "DEMO";
-  const playerName = state?.playerName || "Ayoola";
+  // location.state is lost on a hard reload (common on mobile); ggSession
+  // survives it via sessionStorage, so it's checked before falling back to
+  // the literal demo room — otherwise a reload mid-real-game would fall
+  // into the demo leaderboard and its fake participants.
+  const roomCode = state?.roomCode || ggSession?.roomCode || "DEMO";
+  const playerName = state?.playerName || ggSession?.player?.name || "Ayoola";
   const playerId = state?.playerId || "player_" + Date.now();
-  const isHost = state?.isHost || false;
+  const isHost = state?.isHost ?? ggSession?.isHost ?? false;
   const [showEndConfirm, setShowEndConfirm] = useState(false);
 
   const [score, setScore] = useState(0);
