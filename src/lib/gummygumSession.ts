@@ -24,18 +24,7 @@ export function getGummyGumSession(): GummyGumSession | null {
   }
 }
 
-// Resolves the GummyGum hub launch token (?ggt=...) into a session, if
-// present. Never throws: on any failure (missing token, network error, bad
-// response) this resolves to null and the app proceeds exactly as it would
-// without the hub.
-export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
-  const params = new URLSearchParams(window.location.search);
-  const ggt = params.get("ggt");
-
-  if (!ggt) {
-    return getGummyGumSession();
-  }
-
+async function verifyLaunchTokenOnce(ggt: string): Promise<any | null> {
   try {
     const res = await fetch(`${API_URL}/api/gummygum/launch/verify`, {
       method: "POST",
@@ -44,36 +33,51 @@ export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
     });
     const body = await res.json();
     if (!res.ok || !body.success) return null;
-
-    const hubUrl = body.data.hubUrl || (typeof document !== "undefined" && document.referrer ? new URL(document.referrer).origin : "https://gummygum.app");
-
-    const session: GummyGumSession = {
-      sessionId: body.data.sessionId,
-      experienceId: body.data.experienceId,
-      isGuest: body.data.isGuest,
-      player: body.data.player,
-      reportToken: body.data.reportToken,
-      roomCode: body.data.roomCode || params.get("pin") || params.get("roomCode") || params.get("code") || null,
-      isHost: Boolean(body.data.isHost),
-      hubUrl,
-      round: 1,
-      reported: false,
-    };
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-
-    params.delete("ggt");
-    const query = params.toString();
-    window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
-
-    return session;
+    return body;
   } catch (err) {
     console.error("GummyGum launch verify failed", err);
     return null;
   }
 }
 
-// Reports the launching player's final result back to the hub, if a launch
-// session is on record.
+export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
+  const params = new URLSearchParams(window.location.search);
+  const ggt = params.get("ggt");
+
+  if (!ggt) {
+    return getGummyGumSession();
+  }
+
+  let body = await verifyLaunchTokenOnce(ggt);
+  if (!body) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    body = await verifyLaunchTokenOnce(ggt);
+  }
+  if (!body) return null;
+
+  const hubUrl = body.data.hubUrl || (typeof document !== "undefined" && document.referrer ? new URL(document.referrer).origin : "https://gummygum.app");
+
+  const session: GummyGumSession = {
+    sessionId: body.data.sessionId,
+    experienceId: body.data.experienceId,
+    isGuest: body.data.isGuest,
+    player: body.data.player,
+    reportToken: body.data.reportToken,
+    roomCode: body.data.roomCode || params.get("pin") || params.get("roomCode") || params.get("code") || null,
+    isHost: Boolean(body.data.isHost),
+    hubUrl,
+    round: 1,
+    reported: false,
+  };
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+
+  params.delete("ggt");
+  const query = params.toString();
+  window.history.replaceState({}, "", window.location.pathname + (query ? `?${query}` : ""));
+
+  return session;
+}
+
 export async function reportGummyGumResult(report: Record<string, unknown>): Promise<void> {
   const session = getGummyGumSession();
   if (!session || !session.reportToken) return;
