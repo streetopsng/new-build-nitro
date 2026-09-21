@@ -53,6 +53,9 @@ const Lobby: React.FC = () => {
   const currentUserPlayerName = state?.playerName || ggSession?.player?.name || profile.username || (isHost ? "Host Admin" : "Player");
   const currentUserId = state?.playerId || (isHost ? "host_admin" : ("player_" + (profile.username || "me")));
 
+  const queryInvited = searchParams.get("invitedCount");
+  const targetInvited = ggSession?.invitedCount || (queryInvited ? parseInt(queryInvited, 10) : null);
+
   const [players, setPlayers] = useState<Player[]>([]);
   const [lobbyTitle, setLobbyTitle] = useState(state?.lobbyName || "Onboarding Lobby");
   const [isLocked, setIsLocked] = useState(false);
@@ -330,7 +333,7 @@ const Lobby: React.FC = () => {
             <div className="md:col-span-7 card-insync bg-[#FFFBF7] p-6 shadow-xs text-left space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-black/10">
                 <h2 className="font-heading font-black text-sm uppercase tracking-wider text-black flex items-center gap-2">
-                  <span>👥</span> PLAYERS ({totalJoined})
+                  <span>👥</span> PLAYERS ({totalJoined}{targetInvited ? ` / ${targetInvited}` : ''})
                 </h2>
                 <span className="text-xs text-black/40 font-semibold">
                   Host will start the session
