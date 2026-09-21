@@ -50,12 +50,16 @@ const Results: React.FC = () => {
   );
   const ggReportedRef = useRef(false);
 
-  const roomCode = state?.roomCode;
+  // location.state is lost on a hard reload; ggSession survives it via
+  // sessionStorage, so it's checked before treating this as a demo/standalone
+  // load — otherwise a reload on the results screen mid-real-session would
+  // fall into the placeholder leaderboard instead of the real room's scores.
+  const roomCode = state?.roomCode || ggSession?.roomCode;
   const isDemo = !roomCode;
   const userScore = state?.score ?? 780;
   const userStreaks = state?.streaks ?? 3;
   const userHintsUsed = state?.hintsUsed ?? 1;
-  const playerName = state?.playerName || profile.username || "Ayoola";
+  const playerName = state?.playerName || ggSession?.player?.name || profile.username || "Ayoola";
 
   // Game.tsx never passes a `rank` — derive it from the actual leaderboard
   // (real, once fetched, or the demo list) instead of hardcoding a placement.
