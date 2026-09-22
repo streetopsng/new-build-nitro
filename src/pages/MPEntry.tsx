@@ -9,20 +9,55 @@ const MPEntry: React.FC = () => {
   const { ggSession, ggAccessState } = useGummyGum();
 
   // When launched from GummyGum with a roomCode:
-  // - Participants go straight to /mp-join
+  // - Participants who already joined or have saved avatar/name go straight to /lobby
+  // - First-time participants go straight to /profile-setup (skipping manual code entry / mp-join)
   // - Hosts go straight to /lobby
   useEffect(() => {
-    if (ggSession && !ggSession.isHost && ggSession.roomCode) {
-      navigate("/mp-join", { replace: true });
-    } else if (ggSession && ggSession.isHost && ggSession.roomCode) {
+    if (!ggSession || !ggSession.roomCode) return;
+    const roomCode = ggSession.roomCode;
+    const email = (ggSession.player?.email || "").toLowerCase().trim();
+
+    if (ggSession.isHost) {
       navigate("/lobby", {
         replace: true,
         state: {
-          roomCode: ggSession.roomCode,
+          roomCode,
           playerId: "host_" + Date.now(),
           isHost: true,
           playerName: ggSession.player?.name || "Host",
           lobbyName: `${ggSession.player?.name || "Insync"} session`,
+        },
+      });
+      return;
+    }
+
+    // Participant flow
+    const savedAvatar = email ? localStorage.getItem(`nitro_avatar_${email}`) : null;
+    const savedName = (email ? localStorage.getItem(`nitro_name_${email}`) : null) || ggSession.player?.name;
+    const alreadyJoined = email ? localStorage.getItem(`nitro_joined_${roomCode}_${email}`) === "true" : false;
+    const savedPlayerId = email ? localStorage.getItem(`nitro_player_id_${roomCode}_${email}`) : null;
+
+    if (alreadyJoined && savedAvatar) {
+      navigate("/lobby", {
+        replace: true,
+        state: {
+          roomCode,
+          playerId: savedPlayerId || "player_" + Date.now(),
+          isHost: false,
+          playerName: savedName || "Contestant",
+          avatarId: savedAvatar,
+          email,
+          lobbyName: `${savedName || "Insync"} session`,
+        },
+      });
+    } else {
+      navigate("/profile-setup", {
+        replace: true,
+        state: {
+          roomCode,
+          playerName: savedName || "Contestant",
+          email,
+          playerId: savedPlayerId || "player_" + Date.now(),
         },
       });
     }

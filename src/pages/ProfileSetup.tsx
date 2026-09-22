@@ -44,12 +44,19 @@ const ProfileSetup: React.FC = () => {
 
   const activeCatchphrase = customCatchphrase.trim() || selectedCatchphrase;
 
-  // Sync initial avatar if state is updated
+  const email = (state?.email || "").toLowerCase().trim();
+
+  // Sync initial avatar from profile or localStorage for this email
   useEffect(() => {
     if (profile.avatarId) {
       setAvatarId(profile.avatarId);
+    } else if (email) {
+      const savedAv = localStorage.getItem(`nitro_avatar_${email}`);
+      if (savedAv) setAvatarId(savedAv);
+      const savedName = localStorage.getItem(`nitro_name_${email}`);
+      if (savedName && !state?.playerName) setPlayerName(savedName);
     }
-  }, [profile.avatarId]);
+  }, [profile.avatarId, email, state?.playerName]);
 
   // Shuffle Avatar generator action matching Figma #1586:3066
   const handleShuffle = () => {
@@ -62,16 +69,26 @@ const ProfileSetup: React.FC = () => {
 
   const handleJoinLobby = async () => {
     setIsSaving(true);
-    updateProfile(playerName.trim() || "Ayoola", avatarId, activeCatchphrase);
+    const finalName = playerName.trim() || "Ayoola";
+    updateProfile(finalName, avatarId, activeCatchphrase);
 
     const roomCode = state?.roomCode || "DEMO01";
     const playerId = state?.playerId || "player_" + Date.now();
+
+    if (email) {
+      localStorage.setItem(`nitro_avatar_${email}`, avatarId);
+      localStorage.setItem(`nitro_name_${email}`, finalName);
+      if (roomCode) {
+        localStorage.setItem(`nitro_joined_${roomCode}_${email}`, "true");
+        localStorage.setItem(`nitro_player_id_${roomCode}_${email}`, playerId);
+      }
+    }
 
     try {
       if (state?.roomCode) {
         await update(ref(db, `rooms/${roomCode}/players/${playerId}`), {
           id: playerId,
-          name: playerName.trim() || "Ayoola",
+          name: finalName,
           email: state?.email || null,
           avatarId,
           score: state?.carriedScore || 0,
@@ -90,9 +107,10 @@ const ProfileSetup: React.FC = () => {
           roomCode,
           playerId,
           isHost: false,
-          playerName: playerName.trim() || "Ayoola",
+          playerName: finalName,
           catchphrase: activeCatchphrase,
           avatarId,
+          email: state?.email || null,
         },
       });
     }, 1500);

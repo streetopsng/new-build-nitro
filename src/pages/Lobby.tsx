@@ -70,6 +70,7 @@ const Lobby: React.FC = () => {
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showCancelledModal, setShowCancelledModal] = useState(false);
+  const [showHostCancelModal, setShowHostCancelModal] = useState(false);
   const cancelledHandledRef = useRef(false);
 
   useEffect(() => {
@@ -276,8 +277,9 @@ const Lobby: React.FC = () => {
           <div className="flex items-center justify-between pb-4 border-b border-black/10">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate("/home")}
+                onClick={() => (ggSession ? returnToGummyGum() : navigate("/home"))}
                 className="w-10 h-10 rounded-full bg-white border border-black/30 text-black flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
+                title={ggSession ? "Back to GummyGum" : "Go Home"}
               >
                 ←
               </button>
@@ -296,7 +298,15 @@ const Lobby: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => returnToGummyGum()}
+                className="px-4 py-2 rounded-full bg-white border border-black/30 hover:bg-slate-50 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                title="Back to GummyGum"
+              >
+                <span>← Back to GummyGum</span>
+              </button>
               <div className="px-5 py-2 rounded-full bg-white border border-black/30 font-bold text-xs text-black flex items-center gap-2 shadow-xs">
                 <span className="text-[#FF8E37]">🕒</span> {statusText}
               </div>
@@ -462,8 +472,15 @@ const Lobby: React.FC = () => {
         <div className="flex items-center justify-between pb-4 border-b border-black/10">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/home")}
+              onClick={() => {
+                if (ggSession) {
+                  setShowHostCancelModal(true);
+                } else {
+                  navigate("/home");
+                }
+              }}
               className="w-10 h-10 rounded-full bg-white border border-black/30 text-black flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
+              title={ggSession ? "Back to GummyGum" : "Go Home"}
             >
               ←
             </button>
@@ -478,6 +495,14 @@ const Lobby: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowHostCancelModal(true)}
+              className="px-4 py-2 rounded-full bg-white border border-black/30 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+              title="Leave Session & Return to GummyGum"
+            >
+              <span>← Back to GummyGum</span>
+            </button>
             <SoundToggle className="p-2 bg-white rounded-full border border-black/30 text-black cursor-pointer shadow-xs" />
           </div>
         </div>
@@ -695,6 +720,38 @@ const Lobby: React.FC = () => {
                 className="flex-1 py-3 rounded-2xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 cursor-pointer shadow-xs"
               >
                 Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showHostCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-5">
+          <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-7 text-center shadow-2xl">
+            <h3 className="font-heading font-black text-2xl text-black mb-2">Leave Session?</h3>
+            <p className="text-sm text-black/60 mb-6">
+              Leaving will close the session lobby for all joined contestants and return you to GummyGum.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowHostCancelModal(false)}
+                className="flex-1 py-3 rounded-2xl bg-white border border-black/30 font-bold text-black cursor-pointer hover:bg-slate-50"
+              >
+                Stay
+              </button>
+              <button
+                onClick={async () => {
+                  setShowHostCancelModal(false);
+                  try {
+                    if (roomCode) {
+                      await update(ref(db, `rooms/${roomCode}`), { locked: true, cancelled: true });
+                    }
+                  } catch {}
+                  returnToGummyGum();
+                }}
+                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold shadow-md cursor-pointer hover:bg-red-600"
+              >
+                Exit to Hub
               </button>
             </div>
           </div>
