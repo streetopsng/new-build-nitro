@@ -29,7 +29,7 @@ interface LeaderboardUser {
 const DEFAULT_LEADERBOARD_LIST: LeaderboardUser[] = [
   { id: "p-1", name: "Chidi", avatarId: "av-2", catchphrase: "Locked in paa..", score: 960 },
   { id: "p-2", name: "Blessing", avatarId: "av-6", catchphrase: "Probably the smartest 😒", score: 780 },
-  { id: "p-3", name: "Ayoola", avatarId: "av-1", catchphrase: "Probably the smartest 😒", score: 720 },
+  { id: "p-3", name: "Sam", avatarId: "av-1", catchphrase: "Probably the smartest 😒", score: 720 },
   { id: "p-4", name: "Tope", avatarId: "av-9", catchphrase: "Unstoppable energy", score: 620 },
   { id: "p-5", name: "Mercy", avatarId: "av-5", catchphrase: "I am here to WIN", score: 580 },
   { id: "p-6", name: "Ope", avatarId: "av-4", catchphrase: "Force of nature", score: 540 },
@@ -59,7 +59,7 @@ const Results: React.FC = () => {
   const userScore = state?.score ?? 780;
   const userStreaks = state?.streaks ?? 3;
   const userHintsUsed = state?.hintsUsed ?? 1;
-  const playerName = state?.playerName || ggSession?.player?.name || profile.username || "Ayoola";
+  const playerName = state?.playerName || ggSession?.player?.name || profile.username || "Player";
 
   // Game.tsx never passes a `rank` — derive it from the actual leaderboard
   // (real, once fetched, or the demo list) instead of hardcoding a placement.

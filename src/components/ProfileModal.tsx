@@ -14,7 +14,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
   const { profile, updateProfile } = useProfile();
 
   const [selectedAvatarId, setSelectedAvatarId] = useState(profile.avatarId || "av-1");
-  const [username, setUsername] = useState(profile.username || "Ayoola");
+  const [username, setUsername] = useState(profile.username || "");
   const [isSpinning, setIsSpinning] = useState(false);
 
   if (!isOpen) return null;
