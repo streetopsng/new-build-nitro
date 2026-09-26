@@ -313,7 +313,7 @@ const Results: React.FC = () => {
                 onClick={handleParticipantLeave}
                 className="w-full max-w-md px-8 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>← Back to GummyGum</span>
+                <span>Close Tab</span>
               </button>
             )}
           </div>

@@ -5,6 +5,7 @@ import { ref, onValue, update, remove, push } from "firebase/database";
 import { Avatar } from "../components/Avatar";
 import SoundToggle from "../components/SoundToggle";
 import { JoiningLobby } from "../components/JoiningLobby";
+import { SessionExpiredModal } from "../components/SessionExpiredModal";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { returnToGummyGum } from "../lib/gummygumSession";
@@ -71,7 +72,18 @@ const Lobby: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showCancelledModal, setShowCancelledModal] = useState(false);
   const [showHostCancelModal, setShowHostCancelModal] = useState(false);
+  const [isSessionExpired, setIsSessionExpired] = useState(false);
+  const roomCreatedAtRef = useRef<number | null>(null);
   const cancelledHandledRef = useRef(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (roomCreatedAtRef.current && Date.now() - roomCreatedAtRef.current >= 20 * 60 * 1000) {
+        setIsSessionExpired(true);
+      }
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!roomCode) return;
@@ -80,6 +92,24 @@ const Lobby: React.FC = () => {
     const unsubscribe = onValue(roomRef, (snapshot) => {
       if (snapshot.exists()) {
         const room = snapshot.val();
+        if (room.createdAt) {
+          roomCreatedAtRef.current = room.createdAt;
+        }
+
+        // Real-time idle lobby expiration check (20 mins idle in lobby)
+        if (room.status === "expired") {
+          setIsSessionExpired(true);
+          return;
+        }
+        if (
+          (room.status === "lobby" || !room.status || room.status === "waiting") &&
+          room.createdAt &&
+          Date.now() - room.createdAt >= 20 * 60 * 1000
+        ) {
+          setIsSessionExpired(true);
+          return;
+        }
+
         setLobbyTitle(room.name || "Onboarding Lobby");
         setIsLocked(!!room.locked);
 
@@ -276,13 +306,15 @@ const Lobby: React.FC = () => {
         <div className="max-w-6xl w-full z-10 space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-black/10">
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => (ggSession ? returnToGummyGum() : navigate("/home"))}
-                className="w-10 h-10 rounded-full bg-white border border-black/30 text-black flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
-                title={ggSession ? "Back to GummyGum" : "Go Home"}
-              >
-                ←
-              </button>
+              {!ggSession && (
+                <button
+                  onClick={() => navigate("/home")}
+                  className="w-10 h-10 rounded-xl bg-white border border-black/30 text-black flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
+                  title="Go Home"
+                >
+                  ←
+                </button>
+              )}
               <div className="text-left">
                 <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
                   LOBBY
@@ -292,25 +324,17 @@ const Lobby: React.FC = () => {
                 </h1>
               </div>
               {isLocked && (
-                <span className="px-3 py-1 rounded-full bg-orange-100 text-[#FF8E37] font-bold text-xs flex items-center gap-1.5 border border-[#FF8E37]">
+                <span className="px-3 py-1 rounded-xl bg-orange-100 text-[#FF8E37] font-bold text-xs flex items-center gap-1.5 border border-[#FF8E37]">
                   <span>🔒</span> Lobby locked
                 </span>
               )}
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => returnToGummyGum()}
-                className="px-4 py-2 rounded-full bg-white border border-black/30 hover:bg-slate-50 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
-                title="Back to GummyGum"
-              >
-                <span>← Back to GummyGum</span>
-              </button>
-              <div className="px-5 py-2 rounded-full bg-white border border-black/30 font-bold text-xs text-black flex items-center gap-2 shadow-xs">
+              <div className="px-5 py-2 rounded-xl bg-white border border-black/30 font-bold text-xs text-black flex items-center gap-2 shadow-xs">
                 <span className="text-[#FF8E37]">🕒</span> {statusText}
               </div>
-              <SoundToggle className="p-2 bg-white rounded-full border border-black/30 text-black cursor-pointer shadow-xs" />
+              <SoundToggle className="p-2 bg-white rounded-xl border border-black/30 text-black cursor-pointer shadow-xs" />
             </div>
           </div>
 
@@ -460,6 +484,8 @@ const Lobby: React.FC = () => {
             </div>
           </div>
         )}
+
+        {isSessionExpired && <SessionExpiredModal isHost={false} />}
       </div>
     );
   }
@@ -479,7 +505,7 @@ const Lobby: React.FC = () => {
                   navigate("/home");
                 }
               }}
-              className="w-10 h-10 rounded-full bg-white border border-black/30 text-black flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
+              className="w-10 h-10 rounded-xl bg-white border border-black/30 text-black flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
               title={ggSession ? "Back to GummyGum" : "Go Home"}
             >
               ←
@@ -498,12 +524,12 @@ const Lobby: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowHostCancelModal(true)}
-              className="px-4 py-2 rounded-full bg-white border border-black/30 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-white border border-black/30 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
               title="Leave Session & Return to GummyGum"
             >
               <span>← Back to GummyGum</span>
             </button>
-            <SoundToggle className="p-2 bg-white rounded-full border border-black/30 text-black cursor-pointer shadow-xs" />
+            <SoundToggle className="p-2 bg-white rounded-xl border border-black/30 text-black cursor-pointer shadow-xs" />
           </div>
         </div>
 
@@ -757,6 +783,7 @@ const Lobby: React.FC = () => {
           </div>
         </div>
       )}
+      {isSessionExpired && <SessionExpiredModal isHost={true} />}
     </div>
   );
 };
