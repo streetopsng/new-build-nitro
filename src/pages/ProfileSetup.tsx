@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useProfile } from "../contexts/ProfileContext";
+import { useGummyGum } from "../contexts/GummyGumContext";
 import { Avatar, getRandomAvatarId } from "../components/Avatar";
 import { ProfileModal } from "../components/ProfileModal";
 import { ref, update } from "firebase/database";
@@ -28,12 +29,13 @@ const ProfileSetup: React.FC = () => {
   const location = useLocation();
   const state = location.state as LocationState;
   const { profile, updateProfile } = useProfile();
+  const { ggSession } = useGummyGum();
 
   const [avatarId, setAvatarId] = useState(profile.avatarId || "av-1");
   const [isShuffling, setIsShuffling] = useState(false);
 
   const [playerName, setPlayerName] = useState(
-    state?.playerName || profile.username || "Ayoola"
+    state?.playerName || ggSession?.player?.name || profile.username || ""
   );
   const [selectedCatchphrase, setSelectedCatchphrase] = useState(
     profile.catchphrase || "Probably the smartest 😒"
@@ -69,7 +71,7 @@ const ProfileSetup: React.FC = () => {
 
   const handleJoinLobby = async () => {
     setIsSaving(true);
-    const finalName = playerName.trim() || "Ayoola";
+    const finalName = playerName.trim() || ggSession?.player?.name || "Player";
     updateProfile(finalName, avatarId, activeCatchphrase);
 
     const roomCode = state?.roomCode || "DEMO01";
@@ -221,7 +223,7 @@ const ProfileSetup: React.FC = () => {
               type="text"
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="e.g. Ayoola"
+              placeholder="Enter your name"
               maxLength={20}
               className="w-full bg-white border border-black/30 focus:border-[#FF8E37] rounded-2xl pl-11 pr-4 py-3.5 text-base text-black font-semibold focus:outline-none transition-colors"
             />

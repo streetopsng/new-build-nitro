@@ -10,8 +10,8 @@ export interface AvatarOption {
 export const AVATAR_OPTIONS: AvatarOption[] = [
   {
     id: "avatar_1",
-    name: "Ayoola",
-    url: "https://api.dicebear.com/7.x/bottts/svg?seed=Ayoola",
+    name: "Bot-1",
+    url: "https://api.dicebear.com/7.x/bottts/svg?seed=Bot1",
     color: "#7c3aed",
   },
   {
@@ -84,14 +84,14 @@ interface ProfileContextType {
 }
 
 const DEFAULT_PROFILE: UserProfile = {
-  username: "Ayus",
+  username: "",
   avatarId: "av-1",
   avatarUrl: "",
   catchphrase: "Probably the smartest 😒",
-  level: 10,
-  gamesPlayed: 9,
-  totalScore: 726,
-  isProfileSet: true,
+  level: 1,
+  gamesPlayed: 0,
+  totalScore: 0,
+  isProfileSet: false,
 };
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
