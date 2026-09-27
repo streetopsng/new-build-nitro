@@ -4,6 +4,7 @@ import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { Avatar, getRandomAvatarId } from "../components/Avatar";
 import { ProfileModal } from "../components/ProfileModal";
+import { GameRulesModal } from "../components/GameRulesModal";
 import { ref, update } from "firebase/database";
 import { db } from "../lib/firebase";
 
@@ -42,6 +43,7 @@ const ProfileSetup: React.FC = () => {
   );
   const [customCatchphrase, setCustomCatchphrase] = useState("");
   const [showAvatarPickerModal, setShowAvatarPickerModal] = useState(false);
+  const [showRulesModal, setShowRulesModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const activeCatchphrase = customCatchphrase.trim() || selectedCatchphrase;
@@ -276,7 +278,7 @@ const ProfileSetup: React.FC = () => {
         <div className="pt-2">
           <button
             type="button"
-            onClick={handleJoinLobby}
+            onClick={() => setShowRulesModal(true)}
             disabled={!playerName.trim()}
             className="w-full sm:w-auto px-10 py-4 bg-[#FF8E37] hover:bg-[#EA580C] disabled:opacity-50 text-black font-heading font-black text-xl border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-3 mx-auto"
           >
@@ -285,6 +287,15 @@ const ProfileSetup: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <GameRulesModal
+        isOpen={showRulesModal}
+        playerName={playerName.trim()}
+        onConfirm={() => {
+          setShowRulesModal(false);
+          handleJoinLobby();
+        }}
+      />
 
       <ProfileModal
         isOpen={showAvatarPickerModal}
