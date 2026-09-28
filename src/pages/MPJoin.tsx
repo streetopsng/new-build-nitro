@@ -6,6 +6,7 @@ import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 import { JoiningLobby } from "../components/JoiningLobby";
+import { IconClose, IconLock } from "../components/icons";
 
 const MPJoin: React.FC = () => {
   const navigate = useNavigate();
@@ -162,9 +163,9 @@ const MPJoin: React.FC = () => {
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
       <button
         onClick={() => navigate("/home")}
-        className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
+        className="absolute top-6 left-6 text-black/60 hover:text-black cursor-pointer z-20"
       >
-        ✕
+        <IconClose className="w-6 h-6" />
       </button>
 
       {/* Main Center Modal Container matching Figma #1494:3626 */}
@@ -241,10 +242,10 @@ const MPJoin: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-3xl bg-white border border-black/40 p-8 text-center text-slate-900 shadow-2xl space-y-4"
+            className="w-full max-w-sm rounded-3xl bg-white border border-black/40 p-8 text-center text-slate-900 space-y-4"
           >
-            <div className="w-16 h-16 rounded-full bg-orange-100 text-[#FF8E37] flex items-center justify-center text-3xl mx-auto">
-              🔒
+            <div className="w-16 h-16 rounded-full bg-orange-100 text-[#FF8E37] flex items-center justify-center mx-auto">
+              <IconLock className="w-7 h-7" />
             </div>
             <h3 className="font-heading font-black text-2xl text-black">
               This lobby is locked

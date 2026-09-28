@@ -4,6 +4,7 @@ import BackgroundAudio from "../components/BackgroundAudio";
 import SoundToggle from "../components/SoundToggle";
 import { ProfileModal } from "../components/ProfileModal";
 import { useProfile } from "../contexts/ProfileContext";
+import { IconArrowRight, IconZap } from "../components/icons";
 const Splash: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useProfile();
@@ -74,15 +75,16 @@ const Splash: React.FC = () => {
         </div>
 
         <div className="text-sm font-semibold text-slate-800 flex items-center justify-center gap-1.5 mb-8">
-          <span className="text-[#FF8E37]">⚡</span> Powered By Gummy Gum
+          <IconZap className="w-3.5 h-3.5 text-[#FF8E37]" /> Powered By Gummy Gum
         </div>
 
         {progress >= 100 && (
           <button
             onClick={handleStart}
-            className="px-8 py-3.5 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-extrabold text-base tracking-wide border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer animate-slide-in"
+            className="px-8 py-3.5 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-extrabold text-base tracking-wide border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer animate-slide-in flex items-center justify-center gap-2"
           >
-            Enter Session →
+            <span>Enter Session</span>
+            <IconArrowRight className="w-4 h-4" />
           </button>
         )}
       </div>

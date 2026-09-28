@@ -9,7 +9,6 @@ import { SessionExpiredModal } from "../components/SessionExpiredModal";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { returnToGummyGum } from "../lib/gummygumSession";
-
 interface LocationState {
   roomCode: string;
   playerId: string;

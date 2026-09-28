@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 import { JoiningLobby } from "../components/JoiningLobby";
+import { IconArrowRight, IconClock, IconUsers, IconCrown } from "../components/icons";
 
 const MPEntry: React.FC = () => {
   const navigate = useNavigate();
@@ -192,19 +193,19 @@ const MPEntry: React.FC = () => {
         {/* 2 Sub-Pill Badges matching Screenshot EXACTLY */}
         <div className="flex items-center gap-3 mb-10">
           <div className="px-3.5 py-1.5 rounded-full bg-white border border-slate-300 text-slate-700 font-bold text-xs flex items-center gap-1.5 shadow-2xs">
-            <span>🕒</span> ~5 min sessions
+            <IconClock className="w-3.5 h-3.5" /> ~5 min sessions
           </div>
           <div className="px-3.5 py-1.5 rounded-full bg-white border border-slate-300 text-slate-700 font-bold text-xs flex items-center gap-1.5 shadow-2xs">
-            <span>👥</span> up to 200 players
+            <IconUsers className="w-3.5 h-3.5" /> up to 200 players
           </div>
         </div>
 
         {/* 2 Action Cards matching Screenshot EXACTLY */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-          <div className="rounded-3xl bg-white border border-slate-300 p-6 md:p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+          <div className="rounded-3xl bg-white border border-slate-300 p-6 md:p-8 shadow-sm hover:border-slate-500 transition-colors flex flex-col justify-between">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/80 text-[#f97316] font-extrabold text-[10px] uppercase tracking-wider mb-4 border border-orange-200">
-                <span>👑</span> FOR HOST / ADMIN
+                <IconCrown className="w-3 h-3" /> FOR HOST / ADMIN
               </div>
 
               <h2 className="font-heading font-extrabold text-xl text-black mb-2">
@@ -217,16 +218,17 @@ const MPEntry: React.FC = () => {
 
             <button
               onClick={() => navigate("/mp-create")}
-              className="w-full py-3.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center"
+              className="w-full py-3.5 rounded-xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer text-center flex items-center justify-center gap-2"
             >
-              Create new lobby →
+              <span>Create new lobby</span>
+              <IconArrowRight className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="rounded-3xl bg-white border border-slate-300 p-6 md:p-8 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+          <div className="rounded-3xl bg-white border border-slate-300 p-6 md:p-8 shadow-sm hover:border-slate-500 transition-colors flex flex-col justify-between">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-extrabold text-[10px] uppercase tracking-wider mb-4 border border-slate-200">
-                <span>👥</span> FOR EMPLOYEES
+                <IconUsers className="w-3 h-3" /> FOR EMPLOYEES
               </div>
 
               <h2 className="font-heading font-extrabold text-xl text-black mb-2">
@@ -239,9 +241,10 @@ const MPEntry: React.FC = () => {
 
             <button
               onClick={() => navigate("/mp-join")}
-              className="w-full py-3.5 rounded-xl bg-white hover:bg-slate-50 text-[#f97316] font-extrabold text-sm border-2 border-[#f97316] shadow-2xs transition-all cursor-pointer text-center"
+              className="w-full py-3.5 rounded-xl bg-white hover:bg-slate-50 text-[#f97316] font-extrabold text-sm border-2 border-[#f97316] shadow-2xs transition-all cursor-pointer text-center flex items-center justify-center gap-2"
             >
-              Join lobby →
+              <span>Join lobby</span>
+              <IconArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { IconClose, IconPlay, IconStar } from "../components/icons";
 
 const SoloSetup: React.FC = () => {
   const navigate = useNavigate();
@@ -23,13 +24,13 @@ const SoloSetup: React.FC = () => {
         <div className="card-insync bg-[#FFFBF7] p-6 md:p-8 shadow-sm relative space-y-6 text-left">
           <button
             onClick={() => navigate("/home")}
-            className="absolute top-5 right-5 text-black/50 hover:text-black text-xl font-bold cursor-pointer"
+            className="absolute top-5 right-5 text-black/50 hover:text-black cursor-pointer"
           >
-            ✕
+            <IconClose className="w-5 h-5" />
           </button>
 
-          <div className="w-12 h-12 rounded-2xl bg-orange-100 border border-orange-200 text-[#FF8E37] flex items-center justify-center text-2xl font-black">
-            ▷
+          <div className="w-12 h-12 rounded-2xl bg-orange-100 border border-orange-200 text-[#FF8E37] flex items-center justify-center">
+            <IconPlay className="w-5 h-5" />
           </div>
 
           <div>
@@ -76,9 +77,9 @@ const SoloSetup: React.FC = () => {
             </label>
             <div className="grid grid-cols-3 gap-2.5">
               {[
-                { id: "easy", label: "★ Easy", time: "30s" },
-                { id: "medium", label: "★★ Medium", time: "20s" },
-                { id: "hard", label: "★★★ Hard", time: "10s" },
+                { id: "easy", stars: 1, label: "Easy", time: "30s" },
+                { id: "medium", stars: 2, label: "Medium", time: "20s" },
+                { id: "hard", stars: 3, label: "Hard", time: "10s" },
               ].map((diff) => {
                 const isSelected = difficulty === diff.id;
                 return (
@@ -92,7 +93,14 @@ const SoloSetup: React.FC = () => {
                         : "border-black/20 bg-white text-black hover:bg-slate-50"
                     }`}
                   >
-                    <div className="font-black text-xs">{diff.label}</div>
+                    <div className="font-black text-xs flex items-center justify-center gap-1">
+                      <span className="flex items-center">
+                        {Array.from({ length: diff.stars }).map((_, i) => (
+                          <IconStar key={i} className="w-3 h-3" />
+                        ))}
+                      </span>
+                      {diff.label}
+                    </div>
                     <div className="text-[10px] text-black/50 font-semibold mt-0.5">{diff.time}</div>
                   </button>
                 );
@@ -103,9 +111,10 @@ const SoloSetup: React.FC = () => {
           <div className="pt-4">
             <button
               onClick={handleStartSolo}
-              className="w-full py-4 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+              className="w-full py-4 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              Start Solo Game ▷
+              <span>Start Solo Game</span>
+              <IconPlay className="w-4 h-4" />
             </button>
           </div>
         </div>
