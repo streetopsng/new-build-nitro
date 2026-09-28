@@ -188,3 +188,10 @@ export const IconPlay: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
     <polygon points="6 3 20 12 6 21 6 3" />
   </svg>
 );
+
+export const IconPowerOff: React.FC<IconProps> = ({ className = "w-4 h-4" }) => (
+  <svg className={className} viewBox="0 0 24 24" {...strokeProps}>
+    <path d="M12 2v10" />
+    <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
+  </svg>
+);

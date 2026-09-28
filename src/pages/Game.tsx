@@ -51,7 +51,6 @@ const Game: React.FC = () => {
   const playerId = state?.playerId || "player_" + Date.now();
   const isHost = state?.isHost ?? ggSession?.isHost ?? false;
   const [showEndConfirm, setShowEndConfirm] = useState(false);
-  const [showCancelledModal, setShowCancelledModal] = useState(false);
   const cancelledHandledRef = useRef(false);
 
   const [score, setScore] = useState(0);
@@ -164,17 +163,18 @@ const Game: React.FC = () => {
 
     const roomRef = ref(db, `rooms/${roomCode}`);
     const unsubscribe = onValue(roomRef, (snapshot) => {
-      if (snapshot.exists() || cancelledHandledRef.current) return;
+      if (cancelledHandledRef.current) return;
+      const cancelled = !snapshot.exists() || !!snapshot.val()?.cancelled;
+      if (!cancelled) return;
       cancelledHandledRef.current = true;
       if (ggSession.isHost) {
         returnToGummyGum();
       } else {
-        window.close();
-        setTimeout(() => setShowCancelledModal(true), 400);
+        navigate("/session-ended");
       }
     });
     return () => unsubscribe();
-  }, [ggSession, roomCode]);
+  }, [ggSession, roomCode, navigate]);
 
   useEffect(() => {
     const sessionInterval = setInterval(() => {
@@ -598,14 +598,6 @@ const Game: React.FC = () => {
         </div>
       )}
 
-      {showCancelledModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
-          <div className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center shadow-xl">
-            <h3 className="font-heading font-black text-xl text-black mb-2">Session Cancelled</h3>
-            <p className="text-sm text-black/60">This session was cancelled by the host. You can close this tab now.</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

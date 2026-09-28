@@ -21,6 +21,7 @@ import MPJoin from "./pages/MPJoin";
 import Lobby from "./pages/Lobby";
 import Game from "./pages/Game";
 import Results from "./pages/Results";
+import SessionEnded from "./pages/SessionEnded";
 
 import "./index.css";
 
@@ -45,6 +46,7 @@ function App() {
                   <Route path="/lobby" element={<Lobby />} />
                   <Route path="/game" element={<Game />} />
                   <Route path="/results" element={<Results />} />
+                  <Route path="/session-ended" element={<SessionEnded />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </ProfileProvider>

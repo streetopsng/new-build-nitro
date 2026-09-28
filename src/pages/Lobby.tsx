@@ -82,7 +82,6 @@ const Lobby: React.FC = () => {
 
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [showCancelledModal, setShowCancelledModal] = useState(false);
   const [showHostCancelModal, setShowHostCancelModal] = useState(false);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const roomCreatedAtRef = useRef<number | null>(null);
@@ -108,6 +107,16 @@ const Lobby: React.FC = () => {
         const room = snapshot.val();
         if (room.createdAt) {
           roomCreatedAtRef.current = room.createdAt;
+        }
+
+        // Host cancelled from the lobby (Exit to Hub) — the room stays but is
+        // flagged rather than deleted, so this has to be checked explicitly.
+        if (room.cancelled && ggSession && !ggSession.isHost) {
+          if (!cancelledHandledRef.current) {
+            cancelledHandledRef.current = true;
+            navigate("/session-ended");
+          }
+          return;
         }
 
         // Real-time idle lobby expiration check (20 mins idle in lobby)
@@ -188,8 +197,7 @@ const Lobby: React.FC = () => {
         if (ggSession.isHost) {
           returnToGummyGum();
         } else {
-          window.close();
-          setTimeout(() => setShowCancelledModal(true), 400);
+          navigate("/session-ended");
         }
       } else if (isHost) {
         // Fallback local — host is never a player.
@@ -497,15 +505,6 @@ const Lobby: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {showCancelledModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
-            <div className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center shadow-xl">
-              <h3 className="font-heading font-black text-xl text-black mb-2">Session Cancelled</h3>
-              <p className="text-sm text-black/60">This session was cancelled by the host. You can close this tab now.</p>
-            </div>
-          </div>
-        )}
 
         {wasRemoved && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
