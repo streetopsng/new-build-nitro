@@ -6,6 +6,7 @@ import { useGummyGum } from "../contexts/GummyGumContext";
 import { db } from "../lib/firebase";
 import { ref, onValue, update, get } from "firebase/database";
 import { closeGummyGumSession, returnToGummyGum } from "../lib/gummygumSession";
+import { SessionExpiredModal } from "../components/SessionExpiredModal";
 import type { Word } from "../types";
 import {
   IconArrowLeft,
@@ -35,6 +36,11 @@ interface LeaderboardEntry {
   score: number;
 }
 
+// A room stuck on "playing" with no connected client for this long is
+// abandoned, not just a long-running game — hours, not the lobby's 20 min.
+const ABANDON_THRESHOLD_MS = 3 * 60 * 60 * 1000;
+const HEARTBEAT_INTERVAL_MS = 60 * 1000;
+
 const Game: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -56,6 +62,9 @@ const Game: React.FC = () => {
   const [score, setScore] = useState(0);
   const [wordTimer, setWordTimer] = useState(30);
   const [sessionTimer, setSessionTimer] = useState(300);
+  const [sessionDurationSec, setSessionDurationSec] = useState(300);
+  const [roundStartedAt, setRoundStartedAt] = useState<number | null>(null);
+  const [isSessionAbandoned, setIsSessionAbandoned] = useState(false);
   const [roundConfig, setRoundConfig] = useState<{ type: "sprint" | "count"; value: number }>({ type: "sprint", value: 5 });
   const [wordsPlayedCount, setWordsPlayedCount] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -88,12 +97,61 @@ const Game: React.FC = () => {
       const settings = snapshot.val();
       if (settings.roundType === "count" && settings.roundValue) {
         setRoundConfig({ type: "count", value: settings.roundValue });
-        setSessionTimer(30 * 60);
+        setSessionDurationSec(30 * 60);
       } else if (settings.roundType === "sprint" && settings.roundValue) {
         setRoundConfig({ type: "sprint", value: settings.roundValue });
-        setSessionTimer(settings.roundValue * 60);
+        setSessionDurationSec(settings.roundValue * 60);
       }
     }).catch((err) => console.error("Failed to load round settings:", err));
+  }, [roomCode]);
+
+  // Refresh-safe session clock: the countdown is derived from the room's
+  // persisted start timestamp (written when the host starts the game), not
+  // from local state, so reloading the tab doesn't reset elapsed time back
+  // to the full duration.
+  //
+  // This same mount also doubles as abandonment detection for an in-game
+  // room: if nobody has been connected (no heartbeat) for ABANDON_THRESHOLD_MS
+  // while status is still "playing", the room is stale — mark it expired
+  // instead of leaving it to look "live" forever. The check runs once up
+  // front, before this client's own heartbeat starts, so it can't mask a
+  // genuinely abandoned room with its own first write.
+  useEffect(() => {
+    if (!roomCode || roomCode === "DEMO") return;
+    const roomRef = ref(db, `rooms/${roomCode}`);
+    let heartbeatInterval: ReturnType<typeof setInterval> | undefined;
+
+    get(roomRef).then((snapshot) => {
+      if (!snapshot.exists()) return;
+      const room = snapshot.val();
+      const lastActivity = room.lastActivity || room.startTime || room.createdAt;
+
+      if (
+        room.status === "playing" &&
+        lastActivity &&
+        Date.now() - lastActivity >= ABANDON_THRESHOLD_MS
+      ) {
+        update(roomRef, { status: "expired", abandoned: true }).catch(() => {});
+        setIsSessionAbandoned(true);
+        return;
+      }
+
+      if (room.startTime) {
+        setRoundStartedAt(room.startTime);
+      } else {
+        const now = Date.now();
+        setRoundStartedAt(now);
+        update(roomRef, { startTime: now }).catch(() => {});
+      }
+
+      const beat = () => update(roomRef, { lastActivity: Date.now() }).catch(() => {});
+      beat();
+      heartbeatInterval = setInterval(beat, HEARTBEAT_INTERVAL_MS);
+    }).catch((err) => console.error("Failed to load session activity:", err));
+
+    return () => {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+    };
   }, [roomCode]);
 
   const effectiveWordBank = customWords && customWords.length > 0 ? customWords : wordBank;
@@ -177,18 +235,27 @@ const Game: React.FC = () => {
   }, [ggSession, roomCode, navigate]);
 
   useEffect(() => {
-    const sessionInterval = setInterval(() => {
+    const tick = () => {
+      if (roomCode !== "DEMO" && roundStartedAt) {
+        const elapsed = Math.floor((Date.now() - roundStartedAt) / 1000);
+        const remaining = Math.max(sessionDurationSec - elapsed, 0);
+        setSessionTimer(remaining);
+        if (remaining <= 0) setShowRoundCompleteModal(true);
+        return;
+      }
+      // DEMO room, or the real room's start timestamp hasn't loaded yet.
       setSessionTimer((prev) => {
         if (prev <= 1) {
-          clearInterval(sessionInterval);
           setShowRoundCompleteModal(true);
           return 0;
         }
         return prev - 1;
       });
-    }, 1000);
+    };
+    tick();
+    const sessionInterval = setInterval(tick, 1000);
     return () => clearInterval(sessionInterval);
-  }, []);
+  }, [roomCode, roundStartedAt, sessionDurationSec]);
 
   useEffect(() => {
     const wordInterval = setInterval(() => {
@@ -597,6 +664,8 @@ const Game: React.FC = () => {
           </div>
         </div>
       )}
+
+      {isSessionAbandoned && <SessionExpiredModal isHost={isHost} context="game" />}
 
     </div>
   );
