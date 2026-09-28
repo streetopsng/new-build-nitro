@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import SoundToggle from "../components/SoundToggle";
 import BackgroundAudio from "../components/BackgroundAudio";
+import { IconArrowRight, IconZap } from "../components/icons";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -69,7 +70,7 @@ const Home: React.FC = () => {
 
         {/* 2 Big Action Cards matching Figma #1480:2238 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
-          <div className="card-insync bg-white p-8 md:p-12 border border-black/50 rounded-3xl flex flex-col justify-between hover:shadow-lg transition-shadow">
+          <div className="card-insync bg-white p-8 md:p-12 border border-black/50 rounded-3xl flex flex-col justify-between hover:border-black transition-colors">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FBE6D5] text-[#FF8E37] text-sm font-normal">
                 <svg className="w-4 h-4 text-[#FF8E37]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -95,12 +96,12 @@ const Home: React.FC = () => {
                 className="w-full sm:w-auto px-8 py-4 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg md:text-xl border-[2px_5px_5px_2px] border-black rounded-2xl flex items-center justify-center gap-4 active:translate-x-0.5 active:translate-y-0.5 shadow-xs transition-all cursor-pointer"
               >
                 <span>Create new lobby</span>
-                <span className="text-xl">➔</span>
+                <IconArrowRight className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          <div className="card-insync bg-white p-8 md:p-12 border border-black/50 rounded-3xl flex flex-col justify-between hover:shadow-lg transition-shadow">
+          <div className="card-insync bg-white p-8 md:p-12 border border-black/50 rounded-3xl flex flex-col justify-between hover:border-black transition-colors">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E6E6E6] text-black text-sm font-normal">
                 <svg className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -128,7 +129,7 @@ const Home: React.FC = () => {
                 className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-orange-50/50 text-[#FF8E37] font-heading font-black text-lg md:text-xl border-[2px_5px_5px_2px] border-[#FF8E37] rounded-2xl flex items-center justify-center gap-4 active:translate-x-0.5 active:translate-y-0.5 shadow-xs transition-all cursor-pointer"
               >
                 <span>Join lobby</span>
-                <span className="text-xl">➔</span>
+                <IconArrowRight className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -142,8 +143,8 @@ const Home: React.FC = () => {
         >
           Rules & Guidelines
         </button>
-        <span className="flex items-center gap-1">
-          <span className="text-[#FF8E37]">⚡</span> Powered By Gummy Gum
+        <span className="flex items-center gap-1.5">
+          <IconZap className="w-3.5 h-3.5 text-[#FF8E37]" /> Powered By Gummy Gum
         </span>
       </footer>
 

@@ -303,6 +303,7 @@ const ProfileSetup: React.FC = () => {
         onAvatarSelect={(selected) => {
           setAvatarId(selected);
         }}
+        hideNameField
       />
     </div>
   );

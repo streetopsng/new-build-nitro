@@ -6,11 +6,12 @@ interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAvatarSelect?: (avatarId: string) => void;
+  hideNameField?: boolean;
 }
 
 const TAKEN_USERNAMES = ["dodge_insync", "admin", "nitro", "host", "taken_user"];
 
-export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onAvatarSelect }) => {
+export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onAvatarSelect, hideNameField }) => {
   const { profile, updateProfile } = useProfile();
 
   const [selectedAvatarId, setSelectedAvatarId] = useState(profile.avatarId || "av-1");
@@ -20,7 +21,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
   if (!isOpen) return null;
 
   const isTaken = TAKEN_USERNAMES.includes(username.trim().toLowerCase());
-  const isValid = username.trim().length >= 2 && !isTaken;
+  const isValid = hideNameField ? true : username.trim().length >= 2 && !isTaken;
 
   const handleShuffle = () => {
     setIsSpinning(true);
@@ -97,34 +98,36 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onA
           </div>
         </div>
 
-        <div className="text-left space-y-1">
-          <label className="block text-[11px] font-black uppercase tracking-wider text-black">
-            YOUR NAME
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your name"
-              className={`w-full bg-white border rounded-2xl px-4 py-2.5 text-sm text-black font-medium focus:outline-none transition-colors ${
-                isTaken
-                  ? "border-red-500 focus:border-red-500"
-                  : "border-black/30 focus:border-[#FF8E37]"
-              }`}
-            />
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-bold">
-              {isTaken ? (
-                <span className="text-red-500">✕</span>
-              ) : username.trim().length >= 2 ? (
-                <span className="text-emerald-500">✓</span>
-              ) : null}
+        {!hideNameField && (
+          <div className="text-left space-y-1">
+            <label className="block text-[11px] font-black uppercase tracking-wider text-black">
+              YOUR NAME
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your name"
+                className={`w-full bg-white border rounded-2xl px-4 py-2.5 text-sm text-black font-medium focus:outline-none transition-colors ${
+                  isTaken
+                    ? "border-red-500 focus:border-red-500"
+                    : "border-black/30 focus:border-[#FF8E37]"
+                }`}
+              />
+              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-bold">
+                {isTaken ? (
+                  <span className="text-red-500">✕</span>
+                ) : username.trim().length >= 2 ? (
+                  <span className="text-emerald-500">✓</span>
+                ) : null}
+              </div>
             </div>
+            {isTaken && (
+              <div className="text-xs text-red-500 font-bold">Username already taken</div>
+            )}
           </div>
-          {isTaken && (
-            <div className="text-xs text-red-500 font-bold">Username already taken</div>
-          )}
-        </div>
+        )}
 
         <div className="pt-1">
           <button

@@ -5,6 +5,7 @@ import { db } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
+import { IconClose, IconStar, IconArrowRight } from "../components/icons";
 
 interface ThemeOption {
   id: string;
@@ -126,6 +127,7 @@ const MPCreate: React.FC = () => {
           hostEmail: ggSession.player?.email || null,
           status: "waiting",
           locked: false,
+          createdAt: Date.now(),
           settings: { difficulty, themes: selectedThemes, maxPlayers: 200 },
         });
         navigate("/lobby", { state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
@@ -140,6 +142,7 @@ const MPCreate: React.FC = () => {
         hostName,
         status: "waiting",
         locked: false,
+        createdAt: Date.now(),
         settings: { difficulty, themes: selectedThemes, maxPlayers: 200 },
       });
       navigate("/lobby", { state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
@@ -158,9 +161,9 @@ const MPCreate: React.FC = () => {
       {/* Top Left Close Icon matching Figma #1487:2494 */}
       <button
         onClick={() => navigate("/home")}
-        className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
+        className="absolute top-6 left-6 text-black/60 hover:text-black cursor-pointer z-20"
       >
-        ✕
+        <IconClose className="w-6 h-6" />
       </button>
 
       {/* Main Admin Setup Container matching Figma #1428:2411 */}
@@ -202,7 +205,7 @@ const MPCreate: React.FC = () => {
                   : "bg-white border-black/40 text-black hover:bg-slate-50"
               }`}
             >
-              <span>★</span>
+              <IconStar className="w-4 h-4" />
               <span>Easy</span>
             </button>
 
@@ -215,7 +218,7 @@ const MPCreate: React.FC = () => {
                   : "bg-white border-black/40 text-black hover:bg-slate-50"
               }`}
             >
-              <span>★★</span>
+              <span className="flex items-center gap-0.5"><IconStar className="w-4 h-4" /><IconStar className="w-4 h-4" /></span>
               <span>Medium</span>
             </button>
 
@@ -228,7 +231,7 @@ const MPCreate: React.FC = () => {
                   : "bg-white border-black/40 text-black hover:bg-slate-50"
               }`}
             >
-              <span>★★★</span>
+              <span className="flex items-center gap-0.5"><IconStar className="w-4 h-4" /><IconStar className="w-4 h-4" /><IconStar className="w-4 h-4" /></span>
               <span>Hard</span>
             </button>
           </div>
@@ -280,8 +283,8 @@ const MPCreate: React.FC = () => {
               Write custom clues tailored to your team
             </p>
           </div>
-          <div className="w-10 h-10 rounded-full border border-[#FF8E37] text-[#FF8E37] flex items-center justify-center text-lg font-black">
-            ➔
+          <div className="w-10 h-10 rounded-full border border-[#FF8E37] text-[#FF8E37] flex items-center justify-center">
+            <IconArrowRight className="w-4 h-4" />
           </div>
         </div>
 

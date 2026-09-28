@@ -9,7 +9,6 @@ import { SessionExpiredModal } from "../components/SessionExpiredModal";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { returnToGummyGum } from "../lib/gummygumSession";
-
 interface LocationState {
   roomCode: string;
   playerId: string;
@@ -75,6 +74,8 @@ const Lobby: React.FC = () => {
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const roomCreatedAtRef = useRef<number | null>(null);
   const cancelledHandledRef = useRef(false);
+  const hasSeenSelfRef = useRef(false);
+  const [wasRemoved, setWasRemoved] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -138,6 +139,9 @@ const Lobby: React.FC = () => {
           const me = playerList.find((p) => p.id === currentUserId || p.name === currentUserPlayerName);
           if (me) {
             setIsSelfReady(me.ready !== false);
+            hasSeenSelfRef.current = true;
+          } else if (!isHost && hasSeenSelfRef.current) {
+            setWasRemoved(true);
           }
         } else if (isHost) {
           setPlayers([]);
@@ -353,7 +357,7 @@ const Lobby: React.FC = () => {
             <div className="flex items-center gap-8 font-heading">
               <div className="text-right">
                 <div className="text-xs font-semibold text-black/50">Total Joined</div>
-                <div className="font-black text-2xl text-black">{totalJoined} / 200</div>
+                <div className="font-black text-2xl text-black">{totalJoined}{targetInvited ? ` / ${targetInvited}` : ''}</div>
               </div>
               <div className="h-8 w-px bg-black/20" />
               <div className="text-left">
@@ -485,6 +489,26 @@ const Lobby: React.FC = () => {
           </div>
         )}
 
+        {wasRemoved && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
+            <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center shadow-2xl">
+              <h3 className="font-heading font-black text-2xl text-black mb-2">Removed from lobby</h3>
+              <p className="text-sm text-black/60 mb-6">The host has removed you from this session.</p>
+              {ggSession ? (
+                <button
+                  type="button"
+                  onClick={() => returnToGummyGum()}
+                  className="w-full py-3.5 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-base border-2 border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                >
+                  Return to GummyGum
+                </button>
+              ) : (
+                <p className="text-xs text-black/40">You can close this tab now.</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {isSessionExpired && <SessionExpiredModal isHost={false} />}
       </div>
     );
@@ -540,7 +564,9 @@ const Lobby: React.FC = () => {
             </div>
             <div className="font-heading font-black text-3xl text-black mt-1 flex items-baseline gap-1.5">
               <span className="text-[#FF8E37]">👥 {totalJoined}</span>
-              <span className="text-sm text-black/40 font-normal">/ 200</span>
+              {targetInvited ? (
+                <span className="text-sm text-black/40 font-normal">/ {targetInvited}</span>
+              ) : null}
             </div>
           </div>
 

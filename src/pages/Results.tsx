@@ -140,6 +140,7 @@ const Results: React.FC = () => {
         hostEmail: ggSession.player?.email || null,
         status: "waiting",
         locked: false,
+        createdAt: Date.now(),
         settings: { difficulty: "easy", themes: ["General", "Corporate"], maxPlayers: 200 },
       });
       navigate("/lobby", { state: { roomCode: code, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
