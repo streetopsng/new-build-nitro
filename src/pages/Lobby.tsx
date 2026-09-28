@@ -352,7 +352,7 @@ const Lobby: React.FC = () => {
             <div className="flex items-center gap-8 font-heading">
               <div className="text-right">
                 <div className="text-xs font-semibold text-black/50">Total Joined</div>
-                <div className="font-black text-2xl text-black">{totalJoined} / 200</div>
+                <div className="font-black text-2xl text-black">{totalJoined}{targetInvited ? ` / ${targetInvited}` : ''}</div>
               </div>
               <div className="h-8 w-px bg-black/20" />
               <div className="text-left">
@@ -539,7 +539,9 @@ const Lobby: React.FC = () => {
             </div>
             <div className="font-heading font-black text-3xl text-black mt-1 flex items-baseline gap-1.5">
               <span className="text-[#FF8E37]">👥 {totalJoined}</span>
-              <span className="text-sm text-black/40 font-normal">/ 200</span>
+              {targetInvited ? (
+                <span className="text-sm text-black/40 font-normal">/ {targetInvited}</span>
+              ) : null}
             </div>
           </div>
 
