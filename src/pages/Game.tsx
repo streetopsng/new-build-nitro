@@ -7,6 +7,18 @@ import { db } from "../lib/firebase";
 import { ref, onValue, update, get } from "firebase/database";
 import { closeGummyGumSession, returnToGummyGum } from "../lib/gummygumSession";
 import type { Word } from "../types";
+import {
+  IconArrowLeft,
+  IconArrowRight,
+  IconCheck,
+  IconClock,
+  IconFlame,
+  IconLightbulb,
+  IconTrophy,
+  IconUsers,
+  IconClose,
+  IconStar,
+} from "../components/icons";
 
 interface LocationState {
   roomCode?: string;
@@ -284,67 +296,64 @@ const Game: React.FC = () => {
       {isHost && (
         <button
           onClick={() => setShowEndConfirm(true)}
-          title="End session"
-          className="absolute top-5 left-5 z-20 w-10 h-10 rounded-full bg-white border border-black/30 text-black/60 hover:text-black flex items-center justify-center font-bold cursor-pointer shadow-xs"
+          className="absolute top-5 left-5 z-20 px-4 py-2 rounded-xl bg-white border border-black/20 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+          title="Leave Session & Return to GummyGum"
         >
-          ✕
+          <IconArrowLeft className="w-3.5 h-3.5" />
+          <span>{ggSession ? "Back to GummyGum" : "End Session"}</span>
         </button>
       )}
 
       {/* Outer Tech Frame Container matching Figma #1563:2405 */}
-      <div className="max-w-6xl w-full bg-[#FFFBF7] border-2 border-black/40 rounded-3xl p-6 md:p-10 shadow-xl relative z-10 space-y-6 animate-card-fade-in">
-        <div className="absolute top-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
-          <div className="w-4 h-1.5 bg-[#FF8E37] rounded-full" />
-          <div className="w-4 h-1.5 bg-[#FF8E37] rounded-full" />
-          <div className="w-4 h-1.5 bg-[#FF8E37] rounded-full" />
-        </div>
-
-        <div className="text-center pt-2">
-          <div className="text-[11px] font-black uppercase tracking-widest text-black/50">
-            SESSION
+      <div className="max-w-6xl w-full bg-[#FFFBF7] border border-black/20 rounded-3xl p-6 md:p-10 shadow-lg relative z-10 space-y-5 animate-card-fade-in">
+        {/* Primary heading: live status + session name */}
+        <div className="text-center pt-1 pb-3 border-b border-black/10">
+          <div className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-widest text-[#FF8E37]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FF8E37] animate-pulse" />
+            Live Session
           </div>
-          <h1 className="font-heading font-black text-2xl text-black flex items-center justify-center gap-2 mt-0.5">
-            <span className="text-[#FF8E37]">•</span> Q3 New Hire Batch <span className="text-[#FF8E37]">•</span>
+          <h1 className="font-heading font-black text-2xl md:text-3xl text-black mt-1">
+            Q3 New Hire Batch
           </h1>
         </div>
 
-        {/* Stat Cards Bar with Progress Bar matching Figma — participants only see what's relevant to them */}
-        <div className="space-y-3">
-          <div className={`grid gap-4 text-left ${isHost ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2"}`}>
-            <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
-              <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
-                <span>🏆</span> {isHost ? "PLAYERS" : "YOUR SCORE"}
+        {/* Stat Cards Bar with Progress Bar — secondary to the heading above; participants only see what's relevant to them */}
+        <div className="space-y-2.5">
+          <div className={`grid gap-3 text-left ${isHost ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2"}`}>
+            <div className="bg-white border border-black/15 rounded-xl p-3 shadow-2xs">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-black/45 flex items-center gap-1.5">
+                {isHost ? <IconUsers className="w-3 h-3" /> : <IconTrophy className="w-3 h-3" />} {isHost ? "PLAYERS" : "YOUR SCORE"}
               </div>
-              <div className="font-heading font-black text-3xl md:text-4xl text-[#FF8E37] mt-1">
+              <div className="font-heading font-black text-2xl md:text-3xl text-[#FF8E37] mt-0.5">
                 {isHost ? leaderboard.length : score}
               </div>
             </div>
 
-            <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
-              <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
-                <span>🕒</span> TIME
+            <div className="bg-white border border-black/15 rounded-xl p-3 shadow-2xs">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-black/45 flex items-center gap-1.5">
+                <IconClock className="w-3 h-3" /> TIME
               </div>
-              <div className={`font-heading font-black text-3xl md:text-4xl mt-1 ${wordTimer <= 5 ? "text-red-500 animate-pulse" : "text-black"}`}>
+              <div className={`font-heading font-black text-2xl md:text-3xl mt-0.5 ${wordTimer <= 5 ? "text-red-500 animate-pulse" : "text-black"}`}>
                 {wordTimer}s
               </div>
             </div>
 
             {isHost && (
               <>
-                <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
-                  <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
-                    <span>🔥</span> STREAK
+                <div className="bg-white border border-black/15 rounded-xl p-3 shadow-2xs">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-black/45 flex items-center gap-1.5">
+                    <IconFlame className="w-3 h-3" /> STREAK
                   </div>
-                  <div className="font-heading font-black text-3xl md:text-4xl text-black mt-1">
+                  <div className="font-heading font-black text-2xl md:text-3xl text-black mt-0.5">
                     {streak}
                   </div>
                 </div>
 
-                <div className="bg-white border border-black/20 rounded-2xl p-4 shadow-2xs">
-                  <div className="text-[11px] font-black uppercase tracking-wider text-black/50 flex items-center gap-1.5">
-                    <span>💡</span> HINTS
+                <div className="bg-white border border-black/15 rounded-xl p-3 shadow-2xs">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-black/45 flex items-center gap-1.5">
+                    <IconLightbulb className="w-3 h-3" /> HINTS
                   </div>
-                  <div className="font-heading font-black text-3xl md:text-4xl text-black mt-1">
+                  <div className="font-heading font-black text-2xl md:text-3xl text-black mt-0.5">
                     {hintsLeft}
                   </div>
                 </div>
@@ -352,7 +361,7 @@ const Game: React.FC = () => {
             )}
           </div>
 
-          <div className="w-full bg-black/10 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-black/10 h-1.5 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-300 ${
                 wordTimer <= 5 ? "bg-red-500 animate-pulse" : "bg-[#FF8E37]"
@@ -364,9 +373,9 @@ const Game: React.FC = () => {
 
         <div className={isHost ? "grid grid-cols-1 md:grid-cols-12 gap-6 items-start" : ""}>
           {isHost && (
-          <div className="md:col-span-4 bg-white border border-black/30 rounded-3xl p-5 shadow-xs text-left space-y-3">
+          <div className="md:col-span-4 bg-white border border-black/15 rounded-2xl p-5 shadow-xs text-left space-y-3">
             <div className="text-xs font-black text-[#FF8E37] uppercase tracking-wider flex items-center gap-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#FF8E37] animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-[#FF8E37] animate-pulse" />
               <span>LIVE RANKINGS</span>
             </div>
 
@@ -374,7 +383,7 @@ const Game: React.FC = () => {
               {sidebarLeaderboard.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-2xl bg-[#FF8E37] text-black border-2 border-black flex items-center justify-between shadow-xs font-heading font-black"
+                  className="p-3 rounded-xl bg-[#FF8E37] text-black border border-black/15 flex items-center justify-between shadow-xs font-heading font-black"
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-full bg-white text-black font-black text-xs flex items-center justify-center shadow-xs">
@@ -392,24 +401,24 @@ const Game: React.FC = () => {
           </div>
           )}
 
-          <div className={`${isHost ? "md:col-span-8 " : ""}bg-white border border-black/30 rounded-3xl p-6 md:p-8 text-left shadow-xs space-y-6 relative overflow-hidden`}>
+          <div className={`${isHost ? "md:col-span-8 " : ""}bg-white border border-black/15 rounded-2xl p-6 md:p-8 text-left shadow-xs space-y-6 relative overflow-hidden`}>
             {feedback === "correct" && (
-              <div className="absolute top-4 right-6 px-4 py-1.5 rounded-full bg-emerald-100 border border-emerald-400 text-emerald-800 font-black text-xs animate-bounce">
-                ✓ CORRECT! +30 PTS
+              <div className="absolute top-4 right-6 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-400 text-emerald-800 font-black text-xs flex items-center gap-1.5 animate-bounce">
+                <IconCheck className="w-3.5 h-3.5" /> CORRECT! +30 PTS
               </div>
             )}
             {feedback === "streak" && (
-              <div className="absolute top-4 right-6 px-4 py-1.5 rounded-full bg-orange-100 border-2 border-[#FF8E37] text-[#FF8E37] font-black text-xs animate-bounce">
-                🔥 STREAK BONUS! +60 PTS
+              <div className="absolute top-4 right-6 px-4 py-1.5 rounded-full bg-orange-50 border border-[#FF8E37] text-[#FF8E37] font-black text-xs flex items-center gap-1.5 animate-bounce">
+                <IconFlame className="w-3.5 h-3.5" /> STREAK BONUS! +60 PTS
               </div>
             )}
             {feedback === "incorrect" && (
-              <div className="absolute top-4 right-6 px-4 py-1.5 rounded-full bg-red-100 border border-red-400 text-red-800 font-black text-xs animate-pulse">
-                ✕ INCORRECT! TRY AGAIN
+              <div className="absolute top-4 right-6 px-4 py-1.5 rounded-full bg-red-50 border border-red-400 text-red-800 font-black text-xs flex items-center gap-1.5 animate-pulse">
+                <IconClose className="w-3.5 h-3.5" /> INCORRECT! TRY AGAIN
               </div>
             )}
 
-            <div className="inline-block px-3.5 py-1 rounded-full border-2 border-[#FF8E37] bg-orange-50 text-[#FF8E37] font-black text-xs uppercase tracking-wider">
+            <div className="inline-block px-3.5 py-1 rounded-full border border-[#FF8E37] bg-orange-50 text-[#FF8E37] font-black text-xs uppercase tracking-wider">
               {activeWord.theme}
             </div>
 
@@ -418,7 +427,7 @@ const Game: React.FC = () => {
             </h2>
 
             {hintActive && (
-              <div className="p-4 rounded-2xl bg-[#FFFBF7] border-2 border-dashed border-[#FF8E37] text-center">
+              <div className="p-4 rounded-2xl bg-[#FFFBF7] border border-dashed border-[#FF8E37] text-center">
                 <div className="text-xs font-black text-black/50 mb-1">{activeWord.hint ? "HINT" : "REVEALED LETTERS"}</div>
                 <div className={activeWord.hint ? "font-bold text-base text-black" : "font-mono font-black text-2xl tracking-[0.25em] text-black"}>
                   {activeWord.hint || getHintDisplay(activeWord.word)}
@@ -444,7 +453,7 @@ const Game: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="border-2 border-dashed border-black/20 rounded-2xl p-3 max-h-56 overflow-y-auto space-y-2">
+                <div className="border border-dashed border-black/20 rounded-2xl p-3 max-h-56 overflow-y-auto space-y-2">
                   {totalPlayers === 0 ? (
                     <div className="text-center text-sm font-bold text-black/40 py-4">Waiting for players to join…</div>
                   ) : (
@@ -475,7 +484,7 @@ const Game: React.FC = () => {
                 onChange={(e) => setUserGuess(e.target.value)}
                 placeholder="Type your guess..."
                 autoFocus
-                className={`w-full bg-white border-2 rounded-2xl px-5 py-4 text-lg text-black font-semibold focus:outline-none transition-colors ${
+                className={`w-full bg-white border rounded-2xl px-5 py-4 text-lg text-black font-semibold focus:outline-none transition-colors ${
                   feedback === "incorrect"
                     ? "border-red-500"
                     : feedback === "correct"
@@ -490,24 +499,24 @@ const Game: React.FC = () => {
                   type="button"
                   onClick={handleHint}
                   disabled={hintsLeft <= 0 || hintActive}
-                  className="flex-1 min-w-[120px] py-3.5 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-black font-black text-sm border-2 border-black shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 min-w-[120px] py-3.5 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-black font-black text-sm border border-black/20 shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>💡</span> Hint ({hintsLeft})
+                  <IconLightbulb className="w-4 h-4" /> Hint ({hintsLeft})
                 </button>
 
                 <button
                   type="button"
                   onClick={handleSkip}
-                  className="flex-1 min-w-[120px] py-3.5 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-black font-black text-sm border-2 border-black shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 min-w-[120px] py-3.5 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-black font-black text-sm border border-black/20 shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <span>▷</span> Skip
+                  <IconArrowRight className="w-4 h-4" /> Skip
                 </button>
 
                 <button
                   type="submit"
-                  className="flex-1 min-w-[140px] py-3.5 px-8 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-base border-[2px_5px_5px_2px] border-black shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                  className="flex-1 min-w-[140px] py-3.5 px-8 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-base border border-black/20 shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
-                  Submit ➔
+                  Submit <IconArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </form>
@@ -532,11 +541,11 @@ const Game: React.FC = () => {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center text-slate-900 shadow-2xl relative space-y-4"
+            className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-8 text-center text-slate-900 shadow-xl relative space-y-4"
           >
-            <span className="absolute top-4 left-6 text-[#FF8E37] text-2xl animate-bounce">★</span>
-            <span className="absolute top-6 right-6 text-[#FF8E37] text-3xl animate-pulse">★</span>
-            <span className="absolute bottom-6 left-8 text-[#FF8E37] text-xl">★</span>
+            <span className="absolute top-4 left-6 text-[#FF8E37] animate-bounce"><IconStar className="w-5 h-5" /></span>
+            <span className="absolute top-6 right-6 text-[#FF8E37] animate-pulse"><IconStar className="w-6 h-6" /></span>
+            <span className="absolute bottom-6 left-8 text-[#FF8E37]"><IconStar className="w-4 h-4" /></span>
 
             <h2 className="font-heading font-black text-3xl text-black tracking-tight">
               ROUND COMPLETE!
@@ -556,9 +565,9 @@ const Game: React.FC = () => {
 
             <button
               onClick={handleProceedToResults}
-              className="w-full py-4 rounded-2xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black shadow-xs cursor-pointer"
+              className="w-full py-3.5 rounded-xl bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border border-black/20 shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
             >
-              View Final Results →
+              View Final Results <IconArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -566,21 +575,21 @@ const Game: React.FC = () => {
 
       {showEndConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-card-fade-in" onClick={() => setShowEndConfirm(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center text-slate-900 shadow-2xl space-y-4">
-            <h3 className="font-heading font-black text-2xl text-black">End this session?</h3>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center text-slate-900 shadow-xl space-y-4">
+            <h3 className="font-heading font-black text-xl text-black">End this session?</h3>
             <p className="text-sm text-black/60 leading-relaxed">
               Everyone still playing will be disconnected{ggSession ? " and this returns to GummyGum." : "."}
             </p>
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setShowEndConfirm(false)}
-                className="flex-1 py-3 rounded-2xl bg-white border border-black/40 text-black font-bold text-sm hover:bg-slate-50 cursor-pointer"
+                className="flex-1 py-3 rounded-xl bg-white border border-black/20 text-black font-bold text-sm hover:bg-slate-50 cursor-pointer"
               >
                 Keep playing
               </button>
               <button
                 onClick={() => (ggSession ? closeGummyGumSession() : navigate("/home"))}
-                className="flex-1 py-3 rounded-2xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 cursor-pointer shadow-xs"
+                className="flex-1 py-3 rounded-xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 cursor-pointer shadow-xs"
               >
                 End session
               </button>
@@ -591,8 +600,8 @@ const Game: React.FC = () => {
 
       {showCancelledModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
-          <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center shadow-2xl">
-            <h3 className="font-heading font-black text-2xl text-black mb-2">Session Cancelled</h3>
+          <div className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center shadow-xl">
+            <h3 className="font-heading font-black text-xl text-black mb-2">Session Cancelled</h3>
             <p className="text-sm text-black/60">This session was cancelled by the host. You can close this tab now.</p>
           </div>
         </div>
