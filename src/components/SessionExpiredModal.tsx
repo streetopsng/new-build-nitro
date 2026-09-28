@@ -3,9 +3,12 @@ import { returnToGummyGum } from "../lib/gummygumSession";
 
 interface SessionExpiredModalProps {
   isHost: boolean;
+  // "lobby": idle in the waiting room. "game": abandoned mid-play with
+  // nobody connected for a sustained period. Each needs its own copy.
+  context?: "lobby" | "game";
 }
 
-export const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({ isHost }) => {
+export const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({ isHost, context = "lobby" }) => {
   const handleHostRehost = () => {
     returnToGummyGum();
   };
@@ -28,7 +31,11 @@ export const SessionExpiredModal: React.FC<SessionExpiredModalProps> = ({ isHost
           Session Expired
         </h3>
         <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed mb-6">
-          {isHost
+          {context === "game"
+            ? isHost
+              ? "This session was abandoned mid-game with nobody connected for several hours, so it's been ended. You can return to GummyGum to launch a fresh session."
+              : "This session was ended after being abandoned for several hours. Thank you for being here — you can safely close this tab now."
+            : isHost
             ? "This session was inactive in the lobby for more than 20 minutes and has expired. You can return to GummyGum to launch a fresh session."
             : "This session has expired due to inactivity. Thank you for being here — you can safely close this tab now."}
         </p>
