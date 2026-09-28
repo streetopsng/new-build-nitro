@@ -127,6 +127,7 @@ const MPCreate: React.FC = () => {
           hostEmail: ggSession.player?.email || null,
           status: "waiting",
           locked: false,
+          createdAt: Date.now(),
           settings: { difficulty, themes: selectedThemes, maxPlayers: 200 },
         });
         navigate("/lobby", { state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
@@ -141,6 +142,7 @@ const MPCreate: React.FC = () => {
         hostName,
         status: "waiting",
         locked: false,
+        createdAt: Date.now(),
         settings: { difficulty, themes: selectedThemes, maxPlayers: 200 },
       });
       navigate("/lobby", { state: { roomCode, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
