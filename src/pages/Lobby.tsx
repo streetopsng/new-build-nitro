@@ -9,6 +9,19 @@ import { SessionExpiredModal } from "../components/SessionExpiredModal";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { returnToGummyGum } from "../lib/gummygumSession";
+import {
+  IconArrowLeft,
+  IconCheck,
+  IconClock,
+  IconLock,
+  IconUsers,
+  IconChat,
+  IconChevronRight,
+  IconClose,
+  IconUserX,
+  IconInfo,
+  IconPlay,
+} from "../components/icons";
 interface LocationState {
   roomCode: string;
   playerId: string;
@@ -69,7 +82,6 @@ const Lobby: React.FC = () => {
 
   const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [showCancelledModal, setShowCancelledModal] = useState(false);
   const [showHostCancelModal, setShowHostCancelModal] = useState(false);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const roomCreatedAtRef = useRef<number | null>(null);
@@ -95,6 +107,16 @@ const Lobby: React.FC = () => {
         const room = snapshot.val();
         if (room.createdAt) {
           roomCreatedAtRef.current = room.createdAt;
+        }
+
+        // Host cancelled from the lobby (Exit to Hub) — the room stays but is
+        // flagged rather than deleted, so this has to be checked explicitly.
+        if (room.cancelled && ggSession && !ggSession.isHost) {
+          if (!cancelledHandledRef.current) {
+            cancelledHandledRef.current = true;
+            navigate("/session-ended");
+          }
+          return;
         }
 
         // Real-time idle lobby expiration check (20 mins idle in lobby)
@@ -175,8 +197,7 @@ const Lobby: React.FC = () => {
         if (ggSession.isHost) {
           returnToGummyGum();
         } else {
-          window.close();
-          setTimeout(() => setShowCancelledModal(true), 400);
+          navigate("/session-ended");
         }
       } else if (isHost) {
         // Fallback local — host is never a player.
@@ -262,7 +283,7 @@ const Lobby: React.FC = () => {
     }
 
     setPlayers((prev) => prev.filter((p) => p.id !== playerToRemove.id));
-    setToastMessage(`✓ ${playerToRemove.name} removed`);
+    setToastMessage(`${playerToRemove.name} removed`);
     setPlayerToRemove(null);
     setTimeout(() => setToastMessage(null), 3000);
   };
@@ -308,15 +329,15 @@ const Lobby: React.FC = () => {
     return (
       <div className="min-h-screen bg-white text-slate-900 p-6 md:px-12 md:py-8 flex flex-col items-center select-none relative overflow-x-hidden">
         <div className="max-w-6xl w-full z-10 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-black/10">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between pb-3 border-b border-black/10">
+            <div className="flex items-center gap-3">
               {!ggSession && (
                 <button
                   onClick={() => navigate("/home")}
-                  className="w-10 h-10 rounded-xl bg-white border border-black/30 text-black flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
+                  className="w-10 h-10 rounded-xl bg-white border border-black/20 text-black flex items-center justify-center hover:bg-slate-50 cursor-pointer shadow-xs"
                   title="Go Home"
                 >
-                  ←
+                  <IconArrowLeft className="w-4 h-4" />
                 </button>
               )}
               <div className="text-left">
@@ -328,30 +349,31 @@ const Lobby: React.FC = () => {
                 </h1>
               </div>
               {isLocked && (
-                <span className="px-3 py-1 rounded-xl bg-orange-100 text-[#FF8E37] font-bold text-xs flex items-center gap-1.5 border border-[#FF8E37]">
-                  <span>🔒</span> Lobby locked
+                <span className="px-3 py-1 rounded-lg bg-orange-50 text-[#FF8E37] font-bold text-xs flex items-center gap-1.5 border border-[#FF8E37]/40">
+                  <IconLock className="w-3.5 h-3.5" /> Lobby locked
                 </span>
               )}
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="px-5 py-2 rounded-xl bg-white border border-black/30 font-bold text-xs text-black flex items-center gap-2 shadow-xs">
-                <span className="text-[#FF8E37]">🕒</span> {statusText}
+              <div className="px-4 py-2 rounded-xl bg-white border border-black/20 font-bold text-xs text-black flex items-center gap-2 shadow-xs">
+                <IconClock className="w-3.5 h-3.5 text-[#FF8E37]" /> {statusText}
               </div>
-              <SoundToggle className="p-2 bg-white rounded-xl border border-black/30 text-black cursor-pointer shadow-xs" />
+              <SoundToggle className="p-2 bg-white rounded-xl border border-black/20 text-black cursor-pointer shadow-xs" />
             </div>
           </div>
 
-          <div className="card-insync bg-[#FFFBF7] p-6 shadow-xs flex flex-wrap items-center justify-between gap-4">
+          <div className="card-insync bg-[#FFFBF7] p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
             <button
               onClick={toggleReadyState}
-              className={`px-8 py-3.5 rounded-2xl font-heading font-black text-lg border-[2px_5px_5px_2px] border-black transition-all cursor-pointer flex items-center gap-2.5 shadow-xs active:translate-x-0.5 active:translate-y-0.5 ${
+              className={`px-7 py-3 rounded-xl font-heading font-black text-base border transition-colors cursor-pointer flex items-center gap-2 shadow-xs ${
                 isSelfReady
-                  ? "bg-[#FF8E37] text-black"
-                  : "bg-white text-black/60 hover:bg-slate-50"
+                  ? "bg-[#FF8E37] border-[#FF8E37] text-black"
+                  : "bg-white border-black/20 text-black/60 hover:bg-slate-50"
               }`}
             >
-              <span>{isSelfReady ? "✓ Ready" : "Click to Ready"}</span>
+              {isSelfReady && <IconCheck className="w-4 h-4" />}
+              <span>{isSelfReady ? "Ready" : "Click to Ready"}</span>
             </button>
 
             <div className="flex items-center gap-8 font-heading">
@@ -371,7 +393,7 @@ const Lobby: React.FC = () => {
             <div className="md:col-span-7 card-insync bg-[#FFFBF7] p-6 shadow-xs text-left space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-black/10">
                 <h2 className="font-heading font-black text-sm uppercase tracking-wider text-black flex items-center gap-2">
-                  <span>👥</span> PLAYERS ({totalJoined}{targetInvited ? ` / ${targetInvited}` : ''})
+                  <IconUsers className="w-4 h-4 text-[#FF8E37]" /> PLAYERS ({totalJoined}{targetInvited ? ` / ${targetInvited}` : ''})
                 </h2>
                 <span className="text-xs text-black/40 font-semibold">
                   Host will start the session
@@ -406,9 +428,13 @@ const Lobby: React.FC = () => {
 
                       <div className="mb-1 text-xs">
                         {isReady ? (
-                          <span className="text-emerald-600 font-black">✓ Ready</span>
+                          <span className="text-emerald-600 font-black flex items-center gap-1">
+                            <IconCheck className="w-3 h-3" /> Ready
+                          </span>
                         ) : (
-                          <span className="text-black/40 font-semibold">⌛ Waiting</span>
+                          <span className="text-black/40 font-semibold flex items-center gap-1">
+                            <IconClock className="w-3 h-3" /> Waiting
+                          </span>
                         )}
                       </div>
                     </div>
@@ -433,14 +459,14 @@ const Lobby: React.FC = () => {
             <div className="md:col-span-5 card-insync bg-[#FFFBF7] p-6 shadow-xs text-left flex flex-col h-[500px]">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-black/10">
                 <h2 className="font-heading font-black text-sm uppercase tracking-wider text-black flex items-center gap-2">
-                  <span>💬</span> CHAT
+                  <IconChat className="w-4 h-4 text-[#FF8E37]" /> CHAT
                 </h2>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                 {chatMessages.length === 0 ? (
                   <div className="text-xs text-black/40 italic text-center py-12">
-                    No messages yet. Say hi to your team! 👋
+                    No messages yet. Say hi to your team!
                   </div>
                 ) : (
                   chatMessages.map((msg) => (
@@ -480,25 +506,16 @@ const Lobby: React.FC = () => {
           </div>
         </div>
 
-        {showCancelledModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
-            <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center shadow-2xl">
-              <h3 className="font-heading font-black text-2xl text-black mb-2">Session Cancelled</h3>
-              <p className="text-sm text-black/60">This session was cancelled by the host. You can close this tab now.</p>
-            </div>
-          </div>
-        )}
-
         {wasRemoved && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">
-            <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-8 text-center shadow-2xl">
-              <h3 className="font-heading font-black text-2xl text-black mb-2">Removed from lobby</h3>
+            <div className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center shadow-xl">
+              <h3 className="font-heading font-black text-xl text-black mb-2">Removed from lobby</h3>
               <p className="text-sm text-black/60 mb-6">The host has removed you from this session.</p>
               {ggSession ? (
                 <button
                   type="button"
                   onClick={() => returnToGummyGum()}
-                  className="w-full py-3.5 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-base border-2 border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
+                  className="w-full py-3 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-base border border-black/20 rounded-xl shadow-xs transition-colors cursor-pointer"
                 >
                   Return to GummyGum
                 </button>
@@ -519,8 +536,8 @@ const Lobby: React.FC = () => {
     <div className="min-h-screen bg-white text-slate-900 p-6 md:px-12 md:py-8 flex flex-col items-center select-none relative overflow-x-hidden">
       <div className="max-w-6xl w-full z-10 space-y-6">
         {/* Top Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-black/10">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between pb-3 border-b border-black/10">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => {
                 if (ggSession) {
@@ -529,10 +546,10 @@ const Lobby: React.FC = () => {
                   navigate("/home");
                 }
               }}
-              className="w-10 h-10 rounded-xl bg-white border border-black/30 text-black flex items-center justify-center font-bold hover:bg-slate-50 cursor-pointer shadow-xs"
+              className="w-10 h-10 rounded-xl bg-white border border-black/20 text-black flex items-center justify-center hover:bg-slate-50 cursor-pointer shadow-xs"
               title={ggSession ? "Back to GummyGum" : "Go Home"}
             >
-              ←
+              <IconArrowLeft className="w-4 h-4" />
             </button>
             <div className="text-left">
               <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
@@ -548,12 +565,13 @@ const Lobby: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowHostCancelModal(true)}
-              className="px-4 py-2 rounded-xl bg-white border border-black/30 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-white border border-black/20 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
               title="Leave Session & Return to GummyGum"
             >
-              <span>← Back to GummyGum</span>
+              <IconArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to GummyGum</span>
             </button>
-            <SoundToggle className="p-2 bg-white rounded-xl border border-black/30 text-black cursor-pointer shadow-xs" />
+            <SoundToggle className="p-2 bg-white rounded-xl border border-black/20 text-black cursor-pointer shadow-xs" />
           </div>
         </div>
 
@@ -563,7 +581,7 @@ const Lobby: React.FC = () => {
               TOTAL JOINED
             </div>
             <div className="font-heading font-black text-3xl text-black mt-1 flex items-baseline gap-1.5">
-              <span className="text-[#FF8E37]">👥 {totalJoined}</span>
+              <span className="text-[#FF8E37] flex items-center gap-1.5"><IconUsers className="w-5 h-5" /> {totalJoined}</span>
               {targetInvited ? (
                 <span className="text-sm text-black/40 font-normal">/ {targetInvited}</span>
               ) : null}
@@ -575,7 +593,7 @@ const Lobby: React.FC = () => {
               MARKED READY
             </div>
             <div className="font-heading font-black text-3xl text-[#FF8E37] mt-1 flex items-center gap-1.5">
-              <span>✓</span> {markedReady}
+              <IconCheck className="w-5 h-5" /> {markedReady}
             </div>
           </div>
 
@@ -593,14 +611,15 @@ const Lobby: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
           <div className="md:col-span-7 card-insync bg-[#FFFBF7] p-6 shadow-xs text-left space-y-4">
             {toastMessage && (
-              <div className="px-4 py-2.5 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center gap-2 animate-slide-in">
+              <div className="px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 font-bold text-xs flex items-center gap-2 animate-slide-in">
+                <IconCheck className="w-3.5 h-3.5" />
                 <span>{toastMessage}</span>
               </div>
             )}
 
             <div className="flex items-center justify-between pb-3 border-b border-black/10">
               <h2 className="font-heading font-black text-sm uppercase tracking-wider text-black flex items-center gap-2">
-                <span>👥</span> PARTICIPANTS ({totalJoined})
+                <IconUsers className="w-4 h-4 text-[#FF8E37]" /> PARTICIPANTS ({totalJoined})
               </h2>
               <span className="text-xs text-black/40 font-semibold">
                 {totalJoined} Active
@@ -627,12 +646,12 @@ const Lobby: React.FC = () => {
 
                   <div className="flex items-center gap-3">
                     {player.ready !== false ? (
-                      <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center gap-1 border border-emerald-200">
-                        <span>✓</span> Ready
+                      <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs flex items-center gap-1 border border-emerald-200">
+                        <IconCheck className="w-3 h-3" /> Ready
                       </span>
                     ) : (
-                      <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-500 font-bold text-xs flex items-center gap-1 border border-slate-200">
-                        <span>⏳</span> Waiting
+                      <span className="px-3 py-1 rounded-full bg-slate-50 text-slate-500 font-bold text-xs flex items-center gap-1 border border-slate-200">
+                        <IconClock className="w-3 h-3" /> Waiting
                       </span>
                     )}
 
@@ -640,9 +659,9 @@ const Lobby: React.FC = () => {
                       <button
                         onClick={() => setPlayerToRemove(player)}
                         title="Remove player"
-                        className="p-1.5 rounded-full hover:bg-red-100 text-black/40 hover:text-red-600 transition-colors cursor-pointer text-xs font-bold"
+                        className="p-1.5 rounded-full hover:bg-red-100 text-black/40 hover:text-red-600 transition-colors cursor-pointer"
                       >
-                        ✕
+                        <IconClose className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -663,14 +682,14 @@ const Lobby: React.FC = () => {
                   className="p-4 rounded-2xl border border-black/20 hover:border-[#FF8E37] bg-white flex items-center justify-between cursor-pointer transition-colors shadow-2xs"
                 >
                   <div className="flex items-center gap-2 text-sm font-bold text-black">
-                    <span>💬</span> View chat ({chatMessages.length})
+                    <IconChat className="w-4 h-4 text-[#FF8E37]" /> View chat ({chatMessages.length})
                   </div>
-                  <span className="text-black/40 text-sm">➔</span>
+                  <IconChevronRight className="w-4 h-4 text-black/40" />
                 </div>
 
                 <div className="p-4 rounded-2xl border border-black/20 bg-white flex items-center justify-between shadow-2xs">
                   <div className="flex items-center gap-2 text-sm font-bold text-black">
-                    <span>🔒</span> Lock lobby
+                    <IconLock className="w-4 h-4 text-[#FF8E37]" /> Lock lobby
                   </div>
                   <button
                     type="button"
@@ -691,12 +710,16 @@ const Lobby: React.FC = () => {
                   <button
                     onClick={handleStartGame}
                     disabled={isStarting}
-                    className="w-full py-4 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-xl border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border border-black/20 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
                   >
-                    {isStarting ? "Starting..." : "Start Game ▷"}
+                    {isStarting ? "Starting..." : (
+                      <>
+                        Start Game <IconPlay className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
-                  <div className="text-xs text-black/40 font-semibold text-center">
-                    ⓘ HOST RUNS THE SESSION (NO PARTICIPATION)
+                  <div className="text-xs text-black/40 font-semibold text-center flex items-center justify-center gap-1.5">
+                    <IconInfo className="w-3.5 h-3.5" /> HOST RUNS THE SESSION (NO PARTICIPATION)
                   </div>
                 </div>
               </div>
@@ -707,7 +730,7 @@ const Lobby: React.FC = () => {
                     onClick={() => setShowChat(false)}
                     className="flex items-center gap-1.5 text-xs font-bold text-black hover:text-[#FF8E37] cursor-pointer"
                   >
-                    <span>←</span> 💬 CHAT PANEL
+                    <IconArrowLeft className="w-3.5 h-3.5" /> <IconChat className="w-3.5 h-3.5" /> CHAT PANEL
                   </button>
                 </div>
 
@@ -749,11 +772,11 @@ const Lobby: React.FC = () => {
       {/* Remove Player Modal matching Figma #1493:2980 */}
       {playerToRemove && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-card-fade-in">
-          <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border border-black/40 p-8 text-center text-slate-900 shadow-2xl space-y-4">
-            <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 border border-red-200 flex items-center justify-center text-2xl mx-auto">
-              👤×
+          <div className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center text-slate-900 shadow-xl space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 border border-red-200 flex items-center justify-center mx-auto">
+              <IconUserX className="w-6 h-6" />
             </div>
-            <h3 className="font-heading font-black text-2xl text-black">
+            <h3 className="font-heading font-black text-xl text-black">
               Remove {playerToRemove.name}?
             </h3>
             <p className="text-sm text-black/60 leading-relaxed">
@@ -763,13 +786,13 @@ const Lobby: React.FC = () => {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setPlayerToRemove(null)}
-                className="flex-1 py-3 rounded-2xl bg-white border border-black/40 text-black font-bold text-sm hover:bg-slate-50 cursor-pointer"
+                className="flex-1 py-3 rounded-xl bg-white border border-black/20 text-black font-bold text-sm hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmRemovePlayer}
-                className="flex-1 py-3 rounded-2xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 cursor-pointer shadow-xs"
+                className="flex-1 py-3 rounded-xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 cursor-pointer shadow-xs"
               >
                 Remove
               </button>
@@ -779,15 +802,15 @@ const Lobby: React.FC = () => {
       )}
       {showHostCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-5">
-          <div className="w-full max-w-sm rounded-3xl bg-[#FFFBF7] border-2 border-black p-7 text-center shadow-2xl">
-            <h3 className="font-heading font-black text-2xl text-black mb-2">Leave Session?</h3>
+          <div className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center shadow-xl">
+            <h3 className="font-heading font-black text-xl text-black mb-2">Leave Session?</h3>
             <p className="text-sm text-black/60 mb-6">
               Leaving will close the session lobby for all joined contestants and return you to GummyGum.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowHostCancelModal(false)}
-                className="flex-1 py-3 rounded-2xl bg-white border border-black/30 font-bold text-black cursor-pointer hover:bg-slate-50"
+                className="flex-1 py-3 rounded-xl bg-white border border-black/20 font-bold text-black cursor-pointer hover:bg-slate-50"
               >
                 Stay
               </button>
@@ -801,7 +824,7 @@ const Lobby: React.FC = () => {
                   } catch {}
                   returnToGummyGum();
                 }}
-                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold shadow-md cursor-pointer hover:bg-red-600"
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold shadow-xs cursor-pointer hover:bg-red-600"
               >
                 Exit to Hub
               </button>

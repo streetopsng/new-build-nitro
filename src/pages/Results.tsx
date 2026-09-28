@@ -4,8 +4,8 @@ import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { Avatar } from "../components/Avatar";
 import { db } from "../lib/firebase";
-import { ref, get, set } from "firebase/database";
-import { reportGummyGumResult, closeGummyGumSession, startNextRoundGummyGum } from "../lib/gummygumSession";
+import { ref, get, set, onValue } from "firebase/database";
+import { reportGummyGumResult, closeGummyGumSession, startNextRoundGummyGum, returnToGummyGum } from "../lib/gummygumSession";
 
 interface LocationState {
   score?: number;
@@ -95,6 +95,27 @@ const Results: React.FC = () => {
       fetchFinalScores();
     }
   }, [roomCode]);
+
+  // A GummyGum dashboard force-end can still land while a participant is
+  // lingering on the final leaderboard, same room-cancel signal as Lobby/Game.
+  const cancelledHandledRef = useRef(false);
+  useEffect(() => {
+    if (!ggSession || !roomCode) return;
+
+    const roomRef = ref(db, `rooms/${roomCode}`);
+    const unsubscribe = onValue(roomRef, (snapshot) => {
+      if (cancelledHandledRef.current) return;
+      const cancelled = !snapshot.exists() || !!snapshot.val()?.cancelled;
+      if (!cancelled) return;
+      cancelledHandledRef.current = true;
+      if (ggSession.isHost) {
+        returnToGummyGum();
+      } else {
+        navigate("/session-ended");
+      }
+    });
+    return () => unsubscribe();
+  }, [ggSession, roomCode, navigate]);
 
   // Reports the launching player's final result back to GummyGum, once,
   // after the real leaderboard has loaded (never the empty/placeholder state).
