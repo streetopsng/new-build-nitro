@@ -8,8 +8,10 @@ import { JoiningLobby } from "../components/JoiningLobby";
 import { SessionExpiredModal } from "../components/SessionExpiredModal";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
-import { returnToGummyGum } from "../lib/gummygumSession";
+import { closeGummyGumSession, returnToGummyGum } from "../lib/gummygumSession";
+import { isRoomEnded, markRoomEnded } from "../lib/roomStatus";
 import {
+  IconPowerOff,
   IconArrowLeft,
   IconCheck,
   IconClock,
@@ -86,6 +88,9 @@ const Lobby: React.FC = () => {
   const [isSessionExpired, setIsSessionExpired] = useState(false);
   const roomCreatedAtRef = useRef<number | null>(null);
   const cancelledHandledRef = useRef(false);
+  const roomExistedRef = useRef(false);
+  const hostExitInProgressRef = useRef(false);
+  const [isEndingSession, setIsEndingSession] = useState(false);
   const hasSeenSelfRef = useRef(false);
   const [wasRemoved, setWasRemoved] = useState(false);
 
@@ -102,20 +107,27 @@ const Lobby: React.FC = () => {
     if (!roomCode) return;
 
     const roomRef = ref(db, `rooms/${roomCode}`);
+    const handleRoomEnded = (completed: boolean) => {
+      if (cancelledHandledRef.current || hostExitInProgressRef.current) return;
+      cancelledHandledRef.current = true;
+      if (isHost) {
+        if (ggSession) returnToGummyGum();
+        else navigate("/home", { replace: true });
+      } else {
+        navigate("/session-ended", { replace: true, state: { completed } });
+      }
+    };
+
     const unsubscribe = onValue(roomRef, (snapshot) => {
       if (snapshot.exists()) {
+        roomExistedRef.current = true;
         const room = snapshot.val();
         if (room.createdAt) {
           roomCreatedAtRef.current = room.createdAt;
         }
 
-        // Host cancelled from the lobby (Exit to Hub) — the room stays but is
-        // flagged rather than deleted, so this has to be checked explicitly.
-        if (room.cancelled && ggSession && !ggSession.isHost) {
-          if (!cancelledHandledRef.current) {
-            cancelledHandledRef.current = true;
-            navigate("/session-ended");
-          }
+        if (isRoomEnded(room)) {
+          handleRoomEnded(!!room.completed);
           return;
         }
 
@@ -188,17 +200,11 @@ const Lobby: React.FC = () => {
           }));
           setChatMessages(rawMsgs);
         }
-      } else if (ggSession) {
-        // Room vanished mid-session — GummyGum is the source of the
-        // cancellation, so route each role back appropriately instead of
-        // falling through to the native lobby/landing screen below.
-        if (cancelledHandledRef.current) return;
-        cancelledHandledRef.current = true;
-        if (ggSession.isHost) {
-          returnToGummyGum();
-        } else {
-          navigate("/session-ended");
-        }
+      } else if (roomExistedRef.current || (!isHost && roomCode !== "DEFAULT")) {
+        // Deleted (GummyGum dashboard force-end). A participant only reaches the
+        // lobby after the join flow saw the room, so a missing room is never the
+        // host-creation race for them.
+        handleRoomEnded(false);
       } else if (isHost) {
         // Fallback local — host is never a player.
         setPlayers([]);
@@ -219,7 +225,10 @@ const Lobby: React.FC = () => {
     return () => unsubscribe();
   }, [roomCode, currentUserId, currentUserPlayerName, profile.avatarId, state?.catchphrase, isHost, navigate, ggSession]);
 
+  const sessionEnded = () => cancelledHandledRef.current || hostExitInProgressRef.current;
+
   const toggleReadyState = async () => {
+    if (sessionEnded()) return;
     const nextReady = !isSelfReady;
     setIsSelfReady(nextReady);
 
@@ -235,6 +244,7 @@ const Lobby: React.FC = () => {
   };
 
   const toggleLockLobby = async () => {
+    if (sessionEnded()) return;
     const newLockState = !isLocked;
     setIsLocked(newLockState);
     if (roomCode && roomCode !== "DEFAULT") {
@@ -243,7 +253,7 @@ const Lobby: React.FC = () => {
   };
 
   const handleStartGame = async () => {
-    if (isStarting) return;
+    if (isStarting || sessionEnded()) return;
     setIsStarting(true);
     setStatusText("Game is starting...");
 
@@ -272,7 +282,7 @@ const Lobby: React.FC = () => {
   };
 
   const confirmRemovePlayer = async () => {
-    if (!playerToRemove) return;
+    if (!playerToRemove || sessionEnded()) return;
 
     if (roomCode && roomCode !== "DEFAULT") {
       try {
@@ -290,7 +300,7 @@ const Lobby: React.FC = () => {
 
   const sendChatMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || sessionEnded()) return;
 
     const msgText = chatInput.trim();
     setChatInput("");
@@ -538,19 +548,15 @@ const Lobby: React.FC = () => {
         {/* Top Header */}
         <div className="flex items-center justify-between pb-3 border-b border-black/10">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                if (ggSession) {
-                  setShowHostCancelModal(true);
-                } else {
-                  navigate("/home");
-                }
-              }}
-              className="w-10 h-10 rounded-xl bg-white border border-black/20 text-black flex items-center justify-center hover:bg-slate-50 cursor-pointer shadow-xs"
-              title={ggSession ? "Back to GummyGum" : "Go Home"}
-            >
-              <IconArrowLeft className="w-4 h-4" />
-            </button>
+            {!ggSession && (
+              <button
+                onClick={() => navigate("/home")}
+                className="w-10 h-10 rounded-xl bg-white border border-black/20 text-black flex items-center justify-center hover:bg-slate-50 cursor-pointer shadow-xs"
+                title="Go Home"
+              >
+                <IconArrowLeft className="w-4 h-4" />
+              </button>
+            )}
             <div className="text-left">
               <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
                 HOSTING
@@ -566,10 +572,10 @@ const Lobby: React.FC = () => {
               type="button"
               onClick={() => setShowHostCancelModal(true)}
               className="px-4 py-2 rounded-xl bg-white border border-black/20 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
-              title="Leave Session & Return to GummyGum"
+              title="End session"
             >
-              <IconArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to GummyGum</span>
+              <IconPowerOff className="w-3.5 h-3.5" />
+              <span>End session</span>
             </button>
             <SoundToggle className="p-2 bg-white rounded-xl border border-black/20 text-black cursor-pointer shadow-xs" />
           </div>
@@ -803,30 +809,40 @@ const Lobby: React.FC = () => {
       {showHostCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-5">
           <div className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center shadow-xl">
-            <h3 className="font-heading font-black text-xl text-black mb-2">Leave Session?</h3>
+            <h3 className="font-heading font-black text-xl text-black mb-2">End this session?</h3>
             <p className="text-sm text-black/60 mb-6">
-              Leaving will close the session lobby for all joined contestants and return you to GummyGum.
+              Everyone will be removed{ggSession ? " and the session will close in GummyGum." : "."}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowHostCancelModal(false)}
-                className="flex-1 py-3 rounded-xl bg-white border border-black/20 font-bold text-black cursor-pointer hover:bg-slate-50"
+                disabled={isEndingSession}
+                className="flex-1 py-3 rounded-xl bg-white border border-black/20 font-bold text-black cursor-pointer hover:bg-slate-50 disabled:opacity-50"
               >
                 Stay
               </button>
               <button
                 onClick={async () => {
-                  setShowHostCancelModal(false);
-                  try {
-                    if (roomCode) {
-                      await update(ref(db, `rooms/${roomCode}`), { locked: true, cancelled: true });
+                  if (hostExitInProgressRef.current) return;
+                  hostExitInProgressRef.current = true;
+                  setIsEndingSession(true);
+                  if (roomCode && roomCode !== "DEFAULT") {
+                    try {
+                      await markRoomEnded(roomCode);
+                    } catch (err) {
+                      console.error("Failed to mark room ended:", err);
                     }
-                  } catch {}
-                  returnToGummyGum();
+                  }
+                  if (ggSession) {
+                    await closeGummyGumSession();
+                  } else {
+                    navigate("/home");
+                  }
                 }}
-                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold shadow-xs cursor-pointer hover:bg-red-600"
+                disabled={isEndingSession}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold shadow-xs cursor-pointer hover:bg-red-600 disabled:opacity-60"
               >
-                Exit to Hub
+                {isEndingSession ? "Ending…" : "End session"}
               </button>
             </div>
           </div>

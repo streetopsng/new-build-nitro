@@ -87,6 +87,7 @@ export async function reportGummyGumResult(report: Record<string, unknown>): Pro
   try {
     await fetch(`${API_URL}/api/gummygum/launch/report`, {
       method: "POST",
+      keepalive: true,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reportToken: session.reportToken, report }),
     });
@@ -114,6 +115,7 @@ export async function closeGummyGumSession(finalReport?: Record<string, unknown>
   try {
     await fetch(`${API_URL}/api/gummygum/launch/close`, {
       method: "POST",
+      keepalive: true,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reportToken: session.reportToken, report: finalReport }),
     });

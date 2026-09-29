@@ -6,6 +6,8 @@ import { Avatar } from "../components/Avatar";
 import { db } from "../lib/firebase";
 import { ref, get, set, onValue } from "firebase/database";
 import { reportGummyGumResult, closeGummyGumSession, startNextRoundGummyGum, returnToGummyGum } from "../lib/gummygumSession";
+import { isRoomEnded, markRoomEnded } from "../lib/roomStatus";
+import { IconPowerOff } from "../components/icons";
 
 interface LocationState {
   score?: number;
@@ -96,26 +98,44 @@ const Results: React.FC = () => {
     }
   }, [roomCode]);
 
-  // A GummyGum dashboard force-end can still land while a participant is
-  // lingering on the final leaderboard, same room-cancel signal as Lobby/Game.
+  // The host ending from here, or a GummyGum dashboard force-end, can land
+  // while a participant is lingering on the final leaderboard.
   const cancelledHandledRef = useRef(false);
+  const hostExitInProgressRef = useRef(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [isEndingSession, setIsEndingSession] = useState(false);
+  const isSessionHost = !!ggSession?.isHost;
   useEffect(() => {
-    if (!ggSession || !roomCode) return;
+    if (!roomCode) return;
 
     const roomRef = ref(db, `rooms/${roomCode}`);
     const unsubscribe = onValue(roomRef, (snapshot) => {
-      if (cancelledHandledRef.current) return;
-      const cancelled = !snapshot.exists() || !!snapshot.val()?.cancelled;
-      if (!cancelled) return;
+      if (cancelledHandledRef.current || hostExitInProgressRef.current) return;
+      const room = snapshot.val();
+      if (snapshot.exists() && !isRoomEnded(room)) return;
       cancelledHandledRef.current = true;
-      if (ggSession.isHost) {
+      if (isSessionHost) {
         returnToGummyGum();
       } else {
-        navigate("/session-ended");
+        navigate("/session-ended", { replace: true, state: { completed: !!room?.completed } });
       }
     });
     return () => unsubscribe();
-  }, [ggSession, roomCode, navigate]);
+  }, [isSessionHost, roomCode, navigate]);
+
+  const handleHostEndSession = async () => {
+    if (hostExitInProgressRef.current) return;
+    hostExitInProgressRef.current = true;
+    setIsEndingSession(true);
+    if (roomCode) {
+      try {
+        await markRoomEnded(roomCode, true);
+      } catch (err) {
+        console.error("Failed to mark room ended:", err);
+      }
+    }
+    await closeGummyGumSession();
+  };
 
   // Reports the launching player's final result back to GummyGum, once,
   // after the real leaderboard has loaded (never the empty/placeholder state).
@@ -144,7 +164,7 @@ const Results: React.FC = () => {
   };
 
   const handleStartNewSession = async () => {
-    if (startingNewSession || !ggSession?.roomCode) return;
+    if (startingNewSession || !ggSession?.roomCode || hostExitInProgressRef.current) return;
     setStartingNewSession(true);
     const code = ggSession.roomCode;
     const hostName = ggSession.player?.name || profile.username || "Host Admin";
@@ -324,10 +344,11 @@ const Results: React.FC = () => {
                   <span>{startingNewSession ? "Starting…" : "Start New Session"}</span>
                 </button>
                 <button
-                  onClick={() => closeGummyGumSession()}
+                  onClick={() => setShowEndConfirm(true)}
                   className="w-full max-w-md px-8 py-3.5 rounded-2xl bg-[#f97316] hover:bg-[#ea580c] text-black font-extrabold text-sm border-2 border-black shadow-[2px_2px_0px_#000000] transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <span>Close Session & Return to GummyGum</span> →
+                  <IconPowerOff className="w-4 h-4" />
+                  <span>End session</span>
                 </button>
               </>
             ) : (
@@ -357,6 +378,33 @@ const Results: React.FC = () => {
           </div>
         )}
       </div>
+
+      {showEndConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs" onClick={() => !isEndingSession && setShowEndConfirm(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center text-slate-900 shadow-xl space-y-4">
+            <h3 className="font-heading font-black text-xl text-black">End this session?</h3>
+            <p className="text-sm text-black/60 leading-relaxed">
+              Everyone will be removed and the session will close in GummyGum.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setShowEndConfirm(false)}
+                disabled={isEndingSession}
+                className="flex-1 py-3 rounded-xl bg-white border border-black/20 text-black font-bold text-sm hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleHostEndSession}
+                disabled={isEndingSession}
+                className="flex-1 py-3 rounded-xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 disabled:opacity-60 cursor-pointer shadow-xs"
+              >
+                {isEndingSession ? "Ending…" : "End session"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showThanksModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs px-5">

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, get } from "firebase/database";
 import { db } from "../lib/firebase";
+import { isRoomEnded } from "../lib/roomStatus";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
@@ -81,6 +82,12 @@ const MPJoin: React.FC = () => {
       }
 
       const room = snapshot.val();
+
+      if (isRoomEnded(room)) {
+        setIsJoining(false);
+        navigate("/session-ended", { replace: true, state: { completed: !!room.completed } });
+        return;
+      }
 
       if (room.locked) {
         setIsJoining(false);

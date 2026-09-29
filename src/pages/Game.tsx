@@ -6,10 +6,11 @@ import { useGummyGum } from "../contexts/GummyGumContext";
 import { db } from "../lib/firebase";
 import { ref, onValue, update, get } from "firebase/database";
 import { closeGummyGumSession, returnToGummyGum } from "../lib/gummygumSession";
+import { isRoomEnded, markRoomEnded } from "../lib/roomStatus";
 import { SessionExpiredModal } from "../components/SessionExpiredModal";
 import type { Word } from "../types";
 import {
-  IconArrowLeft,
+  IconPowerOff,
   IconArrowRight,
   IconCheck,
   IconClock,
@@ -58,6 +59,9 @@ const Game: React.FC = () => {
   const isHost = state?.isHost ?? ggSession?.isHost ?? false;
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const cancelledHandledRef = useRef(false);
+  const roomEndedRef = useRef(false);
+  const hostExitInProgressRef = useRef(false);
+  const [isEndingSession, setIsEndingSession] = useState(false);
 
   const [score, setScore] = useState(0);
   const [wordTimer, setWordTimer] = useState(30);
@@ -124,6 +128,7 @@ const Game: React.FC = () => {
     get(roomRef).then((snapshot) => {
       if (!snapshot.exists()) return;
       const room = snapshot.val();
+      if (isRoomEnded(room)) return;
       const lastActivity = room.lastActivity || room.startTime || room.createdAt;
 
       if (
@@ -144,7 +149,11 @@ const Game: React.FC = () => {
         update(roomRef, { startTime: now }).catch(() => {});
       }
 
-      const beat = () => update(roomRef, { lastActivity: Date.now() }).catch(() => {});
+      // A write to a deleted room would resurrect it, hiding the end from everyone else.
+      const beat = () => {
+        if (roomEndedRef.current) return;
+        update(roomRef, { lastActivity: Date.now() }).catch(() => {});
+      };
       beat();
       heartbeatInterval = setInterval(beat, HEARTBEAT_INTERVAL_MS);
     }).catch((err) => console.error("Failed to load session activity:", err));
@@ -212,27 +221,46 @@ const Game: React.FC = () => {
     }
   }, [roomCode, playerName, score]);
 
-  // GummyGum-launched sessions only: the room can disappear out from under
-  // an active player if GummyGum cancels the session from its own side.
-  // Native/standalone play has no such external cancel source, so this is
-  // left a no-op when there's no ggSession.
+  // Not gated on ggSession: it resolves async after mount, and a participant
+  // must be stopped the moment the host ends (room marked ended) or GummyGum
+  // force-ends (room deleted) — a room always exists by the time play starts.
   useEffect(() => {
-    if (!ggSession || !roomCode || roomCode === "DEMO") return;
+    if (!roomCode || roomCode === "DEMO") return;
 
     const roomRef = ref(db, `rooms/${roomCode}`);
     const unsubscribe = onValue(roomRef, (snapshot) => {
-      if (cancelledHandledRef.current) return;
-      const cancelled = !snapshot.exists() || !!snapshot.val()?.cancelled;
-      if (!cancelled) return;
+      if (cancelledHandledRef.current || hostExitInProgressRef.current) return;
+      const room = snapshot.val();
+      if (snapshot.exists() && !isRoomEnded(room)) return;
+      roomEndedRef.current = true;
       cancelledHandledRef.current = true;
-      if (ggSession.isHost) {
-        returnToGummyGum();
+      if (isHost) {
+        if (ggSession) returnToGummyGum();
+        else navigate("/home", { replace: true });
       } else {
-        navigate("/session-ended");
+        navigate("/session-ended", { replace: true, state: { completed: !!room?.completed } });
       }
     });
     return () => unsubscribe();
-  }, [ggSession, roomCode, navigate]);
+  }, [ggSession, roomCode, isHost, navigate]);
+
+  const handleHostEndSession = async () => {
+    if (hostExitInProgressRef.current) return;
+    hostExitInProgressRef.current = true;
+    setIsEndingSession(true);
+    if (roomCode !== "DEMO") {
+      try {
+        await markRoomEnded(roomCode);
+      } catch (err) {
+        console.error("Failed to mark room ended:", err);
+      }
+    }
+    if (ggSession) {
+      await closeGummyGumSession();
+    } else {
+      navigate("/home");
+    }
+  };
 
   useEffect(() => {
     const tick = () => {
@@ -271,6 +299,7 @@ const Game: React.FC = () => {
   }, [currentWordIndex]);
 
   const handleNextWord = () => {
+    if (roomEndedRef.current) return;
     const nextCount = wordsPlayedCount + 1;
     setWordsPlayedCount(nextCount);
     if (roundConfig.type === "count" && nextCount >= roundConfig.value) {
@@ -286,7 +315,7 @@ const Game: React.FC = () => {
   const handleGuessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanGuess = userGuess.trim().toUpperCase();
-    if (!cleanGuess || isHost) return;
+    if (!cleanGuess || isHost || roomEndedRef.current) return;
 
     if (cleanGuess === activeWord.word.toUpperCase()) {
       const basePoints = hintActive ? 18 : 30;
@@ -302,7 +331,7 @@ const Game: React.FC = () => {
       setFeedback(newStreak >= 3 ? "streak" : "correct");
       setTimeout(() => setFeedback(null), 1400);
 
-      if (roomCode && roomCode !== "DEMO") {
+      if (roomCode && roomCode !== "DEMO" && !roomEndedRef.current) {
         try {
           await update(ref(db, `rooms/${roomCode}/players/${playerId}`), {
             score: newScore,
@@ -323,13 +352,14 @@ const Game: React.FC = () => {
   };
 
   const handleHint = () => {
-    if (hintsLeft > 0 && !hintActive) {
+    if (hintsLeft > 0 && !hintActive && !roomEndedRef.current) {
       setHintsLeft((prev) => prev - 1);
       setHintActive(true);
     }
   };
 
   const handleSkip = () => {
+    if (roomEndedRef.current) return;
     setStreak(0);
     handleNextWord();
   };
@@ -364,10 +394,10 @@ const Game: React.FC = () => {
         <button
           onClick={() => setShowEndConfirm(true)}
           className="absolute top-5 left-5 z-20 px-4 py-2 rounded-xl bg-white border border-black/20 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-xs font-bold text-black flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
-          title="Leave Session & Return to GummyGum"
+          title="End session"
         >
-          <IconArrowLeft className="w-3.5 h-3.5" />
-          <span>{ggSession ? "Back to GummyGum" : "End Session"}</span>
+          <IconPowerOff className="w-3.5 h-3.5" />
+          <span>End session</span>
         </button>
       )}
 
@@ -645,20 +675,22 @@ const Game: React.FC = () => {
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-[#FFFBF7] border border-black/15 p-7 text-center text-slate-900 shadow-xl space-y-4">
             <h3 className="font-heading font-black text-xl text-black">End this session?</h3>
             <p className="text-sm text-black/60 leading-relaxed">
-              Everyone still playing will be disconnected{ggSession ? " and this returns to GummyGum." : "."}
+              Everyone will be removed{ggSession ? " and the session will close in GummyGum." : "."}
             </p>
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setShowEndConfirm(false)}
-                className="flex-1 py-3 rounded-xl bg-white border border-black/20 text-black font-bold text-sm hover:bg-slate-50 cursor-pointer"
+                disabled={isEndingSession}
+                className="flex-1 py-3 rounded-xl bg-white border border-black/20 text-black font-bold text-sm hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
               >
                 Keep playing
               </button>
               <button
-                onClick={() => (ggSession ? closeGummyGumSession() : navigate("/home"))}
-                className="flex-1 py-3 rounded-xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 cursor-pointer shadow-xs"
+                onClick={handleHostEndSession}
+                disabled={isEndingSession}
+                className="flex-1 py-3 rounded-xl bg-[#EF4444] text-white font-bold text-sm hover:bg-red-600 disabled:opacity-60 cursor-pointer shadow-xs"
               >
-                End session
+                {isEndingSession ? "Ending…" : "End session"}
               </button>
             </div>
           </div>
