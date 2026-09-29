@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_GUMMYGUM_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_GUMMYGUM_API_URL || (import.meta.env.DEV ? "http://localhost:8000" : "https://paige-server.onrender.com");
 const STORAGE_KEY = "gummygum_launch_session";
 
 export interface GummyGumSession {
@@ -10,6 +10,7 @@ export interface GummyGumSession {
   roomCode: string | null;
   isHost: boolean;
   invitedCount?: number | null;
+  hostedSessionId?: string | null;
   hubUrl: string;
   round: number;
   reported: boolean;
@@ -67,6 +68,7 @@ export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
     roomCode: body.data.roomCode || params.get("pin") || params.get("roomCode") || params.get("code") || null,
     isHost: Boolean(body.data.isHost),
     invitedCount: body.data.invitedCount || null,
+    hostedSessionId: params.get("sessionId") || null,
     hubUrl,
     round: 1,
     reported: false,
@@ -87,6 +89,7 @@ export async function reportGummyGumResult(report: Record<string, unknown>): Pro
   try {
     await fetch(`${API_URL}/api/gummygum/launch/report`, {
       method: "POST",
+      keepalive: true,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reportToken: session.reportToken, report }),
     });
@@ -114,6 +117,7 @@ export async function closeGummyGumSession(finalReport?: Record<string, unknown>
   try {
     await fetch(`${API_URL}/api/gummygum/launch/close`, {
       method: "POST",
+      keepalive: true,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reportToken: session.reportToken, report: finalReport }),
     });

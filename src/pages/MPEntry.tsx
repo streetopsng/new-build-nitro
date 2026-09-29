@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 import { JoiningLobby } from "../components/JoiningLobby";
+import { launchRoomKey, prepareHostRoom } from "../lib/roomStatus";
 import { IconArrowRight, IconClock, IconUsers, IconCrown } from "../components/icons";
 
 const MPEntry: React.FC = () => {
@@ -19,24 +20,34 @@ const MPEntry: React.FC = () => {
     const email = (ggSession.player?.email || "").toLowerCase().trim();
 
     if (ggSession.isHost) {
-      navigate("/lobby", {
-        replace: true,
-        state: {
-          roomCode,
-          playerId: "host_" + Date.now(),
-          isHost: true,
-          playerName: ggSession.player?.name || "Host",
-          lobbyName: `${ggSession.player?.name || "Insync"} session`,
-        },
-      });
-      return;
+      let cancelled = false;
+      const hostName = ggSession.player?.name || "Host";
+      prepareHostRoom(roomCode, ggSession.hostedSessionId, { name: hostName, email: ggSession.player?.email || null })
+        .catch((err) => console.error("Failed to prepare room:", err))
+        .then(() => {
+          if (cancelled) return;
+          navigate("/lobby", {
+            replace: true,
+            state: {
+              roomCode,
+              playerId: "host_" + Date.now(),
+              isHost: true,
+              playerName: hostName,
+              lobbyName: `${ggSession.player?.name || "Insync"} session`,
+            },
+          });
+        });
+      return () => {
+        cancelled = true;
+      };
     }
 
     // Participant flow
     const savedAvatar = email ? localStorage.getItem(`nitro_avatar_${email}`) : null;
     const savedName = (email ? localStorage.getItem(`nitro_name_${email}`) : null) || ggSession.player?.name;
-    const alreadyJoined = email ? localStorage.getItem(`nitro_joined_${roomCode}_${email}`) === "true" : false;
-    const savedPlayerId = email ? localStorage.getItem(`nitro_player_id_${roomCode}_${email}`) : null;
+    const roomKey = launchRoomKey(roomCode, ggSession.hostedSessionId);
+    const alreadyJoined = email ? localStorage.getItem(`nitro_joined_${roomKey}_${email}`) === "true" : false;
+    const savedPlayerId = email ? localStorage.getItem(`nitro_player_id_${roomKey}_${email}`) : null;
 
     if (alreadyJoined && savedAvatar) {
       navigate("/lobby", {
