@@ -5,8 +5,10 @@ import { useGummyGum } from "../contexts/GummyGumContext";
 import { Avatar, getRandomAvatarId } from "../components/Avatar";
 import { ProfileModal } from "../components/ProfileModal";
 import { GameRulesModal } from "../components/GameRulesModal";
-import { ref, update } from "firebase/database";
+import { ref, update, get } from "firebase/database";
 import { db } from "../lib/firebase";
+import { isRoomReadyForLaunch, launchRoomKey, waitForLaunchRoom } from "../lib/roomStatus";
+import { JoiningLobby } from "../components/JoiningLobby";
 
 interface LocationState {
   roomCode?: string;
@@ -45,6 +47,7 @@ const ProfileSetup: React.FC = () => {
   const [showAvatarPickerModal, setShowAvatarPickerModal] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isWaitingForHost, setIsWaitingForHost] = useState(false);
 
   const activeCatchphrase = customCatchphrase.trim() || selectedCatchphrase;
 
@@ -78,13 +81,29 @@ const ProfileSetup: React.FC = () => {
 
     const roomCode = state?.roomCode || "DEMO01";
     const playerId = state?.playerId || "player_" + Date.now();
+    const hostedSessionId = ggSession?.hostedSessionId;
+
+    // Joining a room still left over from an earlier run of this PIN would be wiped when the host resets it.
+    if (state?.roomCode && hostedSessionId) {
+      try {
+        const snapshot = await get(ref(db, `rooms/${roomCode}`));
+        if (!isRoomReadyForLaunch(snapshot.val(), hostedSessionId)) {
+          setIsWaitingForHost(true);
+          await waitForLaunchRoom(roomCode, hostedSessionId);
+          setIsWaitingForHost(false);
+        }
+      } catch (err) {
+        console.warn("Could not check room status on Firebase:", err);
+      }
+    }
 
     if (email) {
       localStorage.setItem(`nitro_avatar_${email}`, avatarId);
       localStorage.setItem(`nitro_name_${email}`, finalName);
       if (roomCode) {
-        localStorage.setItem(`nitro_joined_${roomCode}_${email}`, "true");
-        localStorage.setItem(`nitro_player_id_${roomCode}_${email}`, playerId);
+        const roomKey = launchRoomKey(roomCode, hostedSessionId);
+        localStorage.setItem(`nitro_joined_${roomKey}_${email}`, "true");
+        localStorage.setItem(`nitro_player_id_${roomKey}_${email}`, playerId);
       }
     }
 
@@ -119,6 +138,10 @@ const ProfileSetup: React.FC = () => {
       });
     }, 1500);
   };
+
+  if (isWaitingForHost) {
+    return <JoiningLobby message="Waiting for the host to open the session..." />;
+  }
 
   // Step 2: Saving / Identity Transition Screen from node #1586:3066
   if (isSaving) {

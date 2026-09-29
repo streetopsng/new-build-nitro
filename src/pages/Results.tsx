@@ -176,6 +176,7 @@ const Results: React.FC = () => {
       await set(ref(db, `rooms/${code}`), {
         name: lobbyName,
         code,
+        hostedSessionId: ggSession.hostedSessionId || null,
         hostId,
         hostName,
         hostEmail: ggSession.player?.email || null,

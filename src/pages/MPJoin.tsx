@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, get } from "firebase/database";
 import { db } from "../lib/firebase";
-import { isRoomEnded } from "../lib/roomStatus";
+import { isRoomEnded, isRoomReadyForLaunch } from "../lib/roomStatus";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
@@ -73,6 +73,15 @@ const MPJoin: React.FC = () => {
           await new Promise((r) => setTimeout(r, 2000));
           snapshot = await get(roomRef);
         }
+      }
+
+      // A room from an earlier run of this PIN (or none yet) is not final; profile setup waits for the host.
+      if (ggSession?.hostedSessionId && !isRoomReadyForLaunch(snapshot.val(), ggSession.hostedSessionId)) {
+        setIsJoining(false);
+        navigate("/profile-setup", {
+          state: { roomCode: fullCode, playerName: nameToUse, email: ggEmail || null },
+        });
+        return;
       }
 
       if (!snapshot.exists()) {

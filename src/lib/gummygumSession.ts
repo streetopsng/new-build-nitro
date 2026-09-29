@@ -10,6 +10,7 @@ export interface GummyGumSession {
   roomCode: string | null;
   isHost: boolean;
   invitedCount?: number | null;
+  hostedSessionId?: string | null;
   hubUrl: string;
   round: number;
   reported: boolean;
@@ -67,6 +68,7 @@ export async function resolveGummyGumLaunch(): Promise<GummyGumSession | null> {
     roomCode: body.data.roomCode || params.get("pin") || params.get("roomCode") || params.get("code") || null,
     isHost: Boolean(body.data.isHost),
     invitedCount: body.data.invitedCount || null,
+    hostedSessionId: params.get("sessionId") || null,
     hubUrl,
     round: 1,
     reported: false,
