@@ -44,7 +44,7 @@ const MPEntry: React.FC = () => {
 
     // Participant flow
     const savedAvatar = email ? localStorage.getItem(`nitro_avatar_${email}`) : null;
-    const savedName = (email ? localStorage.getItem(`nitro_name_${email}`) : null) || ggSession.player?.name;
+    const savedName = ggSession.player?.name || (email ? localStorage.getItem(`nitro_name_${email}`) : null);
     const roomKey = launchRoomKey(roomCode, ggSession.hostedSessionId);
     const alreadyJoined = email ? localStorage.getItem(`nitro_joined_${roomKey}_${email}`) === "true" : false;
     const savedPlayerId = email ? localStorage.getItem(`nitro_player_id_${roomKey}_${email}`) : null;
