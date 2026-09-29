@@ -7,7 +7,7 @@ import { ProfileModal } from "../components/ProfileModal";
 import { GameRulesModal } from "../components/GameRulesModal";
 import { ref, update, get } from "firebase/database";
 import { db } from "../lib/firebase";
-import { isRoomReadyForLaunch, launchRoomKey, waitForLaunchRoom } from "../lib/roomStatus";
+import { findPlayerByEmail, isRoomReadyForLaunch, launchRoomKey, waitForLaunchRoom } from "../lib/roomStatus";
 import { JoiningLobby } from "../components/JoiningLobby";
 import { IconLock } from "../components/icons";
 
@@ -82,7 +82,7 @@ const ProfileSetup: React.FC = () => {
     updateProfile(finalName, avatarId, activeCatchphrase);
 
     const roomCode = state?.roomCode || "DEMO01";
-    const playerId = state?.playerId || "player_" + Date.now();
+    let playerId = state?.playerId || "player_" + Date.now();
     const hostedSessionId = ggSession?.hostedSessionId;
 
     // Joining a room still left over from an earlier run of this PIN would be wiped when the host resets it.
@@ -96,6 +96,16 @@ const ProfileSetup: React.FC = () => {
         }
       } catch (err) {
         console.warn("Could not check room status on Firebase:", err);
+      }
+    }
+
+    let existing: any = null;
+    if (state?.roomCode && email) {
+      try {
+        existing = findPlayerByEmail((await get(ref(db, `rooms/${roomCode}/players`))).val(), email);
+        if (existing) playerId = existing.id;
+      } catch (err) {
+        console.warn("Could not look up an existing player for this invite:", err);
       }
     }
 
@@ -116,7 +126,7 @@ const ProfileSetup: React.FC = () => {
           name: finalName,
           email: state?.email || null,
           avatarId,
-          score: state?.carriedScore || 0,
+          score: existing ? existing.score || 0 : state?.carriedScore || 0,
           ready: true,
           isHost: false,
           catchphrase: activeCatchphrase,

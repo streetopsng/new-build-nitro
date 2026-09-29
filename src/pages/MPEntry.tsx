@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 import { JoiningLobby } from "../components/JoiningLobby";
-import { launchRoomKey, prepareHostRoom } from "../lib/roomStatus";
+import { findPlayerByEmail, isRoomReadyForLaunch, launchRoomKey, prepareHostRoom } from "../lib/roomStatus";
+import { ref, get } from "firebase/database";
+import { db } from "../lib/firebase";
 import { IconArrowRight, IconClock, IconUsers, IconCrown } from "../components/icons";
 
 const MPEntry: React.FC = () => {
@@ -49,30 +51,68 @@ const MPEntry: React.FC = () => {
     const alreadyJoined = email ? localStorage.getItem(`nitro_joined_${roomKey}_${email}`) === "true" : false;
     const savedPlayerId = email ? localStorage.getItem(`nitro_player_id_${roomKey}_${email}`) : null;
 
-    if (alreadyJoined && savedAvatar) {
-      navigate("/lobby", {
-        replace: true,
-        state: {
-          roomCode,
-          playerId: savedPlayerId || "player_" + Date.now(),
-          isHost: false,
-          playerName: savedName || "Contestant",
-          avatarId: savedAvatar,
-          email,
-          lobbyName: `${savedName || "Insync"} session`,
-        },
-      });
-    } else {
-      navigate("/profile-setup", {
-        replace: true,
-        state: {
-          roomCode,
-          playerName: savedName || "Contestant",
-          email,
-          playerId: savedPlayerId || "player_" + Date.now(),
-        },
-      });
-    }
+    let cancelled = false;
+    (async () => {
+      if (email) {
+        try {
+          const room = (await get(ref(db, `rooms/${roomCode}`))).val();
+          const existing = isRoomReadyForLaunch(room, ggSession.hostedSessionId) ? findPlayerByEmail(room?.players, email) : null;
+          if (cancelled) return;
+          if (existing) {
+            const name = existing.name || savedName || "Contestant";
+            const avatarId = existing.avatarId || savedAvatar || "av-1";
+            localStorage.setItem(`nitro_joined_${roomKey}_${email}`, "true");
+            localStorage.setItem(`nitro_player_id_${roomKey}_${email}`, existing.id);
+            localStorage.setItem(`nitro_avatar_${email}`, avatarId);
+            localStorage.setItem(`nitro_name_${email}`, name);
+            navigate("/lobby", {
+              replace: true,
+              state: {
+                roomCode,
+                playerId: existing.id,
+                isHost: false,
+                playerName: name,
+                avatarId,
+                catchphrase: existing.catchphrase,
+                email,
+                lobbyName: `${name} session`,
+              },
+            });
+            return;
+          }
+        } catch (err) {
+          console.warn("Could not look up an existing player for this invite:", err);
+        }
+      }
+      if (cancelled) return;
+      if (alreadyJoined && savedAvatar) {
+        navigate("/lobby", {
+          replace: true,
+          state: {
+            roomCode,
+            playerId: savedPlayerId || "player_" + Date.now(),
+            isHost: false,
+            playerName: savedName || "Contestant",
+            avatarId: savedAvatar,
+            email,
+            lobbyName: `${savedName || "Insync"} session`,
+          },
+        });
+      } else {
+        navigate("/profile-setup", {
+          replace: true,
+          state: {
+            roomCode,
+            playerName: savedName || "Contestant",
+            email,
+            playerId: savedPlayerId || "player_" + Date.now(),
+          },
+        });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [ggSession, navigate]);
 
   if (ggAccessState === "checking") {

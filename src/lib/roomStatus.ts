@@ -79,6 +79,13 @@ export async function prepareHostRoom(
   });
 }
 
+// The GummyGum invite email is a participant's identity, so a rejoin from any device reclaims the same slot.
+export function findPlayerByEmail(players: Record<string, any> | null | undefined, email?: string | null): any | null {
+  const target = (email || "").toLowerCase().trim();
+  if (!target || !players) return null;
+  return Object.values(players).find((p: any) => p?.id && (p.email || "").toLowerCase().trim() === target) || null;
+}
+
 // Per-hosted-session key so "already joined" flags from an earlier run of the same PIN don't carry over.
 export function launchRoomKey(roomCode: string, hostedSessionId?: string | null): string {
   return hostedSessionId ? `${roomCode}_${hostedSessionId}` : roomCode;
