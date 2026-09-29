@@ -7,8 +7,9 @@ import { ProfileModal } from "../components/ProfileModal";
 import { GameRulesModal } from "../components/GameRulesModal";
 import { ref, update, get } from "firebase/database";
 import { db } from "../lib/firebase";
-import { isRoomReadyForLaunch, launchRoomKey, waitForLaunchRoom } from "../lib/roomStatus";
+import { findPlayerByEmail, isRoomReadyForLaunch, launchRoomKey, waitForLaunchRoom } from "../lib/roomStatus";
 import { JoiningLobby } from "../components/JoiningLobby";
+import { IconLock } from "../components/icons";
 
 interface LocationState {
   roomCode?: string;
@@ -37,8 +38,9 @@ const ProfileSetup: React.FC = () => {
   const [avatarId, setAvatarId] = useState(profile.avatarId || "av-1");
   const [isShuffling, setIsShuffling] = useState(false);
 
+  const lockedName = (ggSession?.player?.name || "").trim();
   const [playerName, setPlayerName] = useState(
-    state?.playerName || ggSession?.player?.name || profile.username || ""
+    lockedName || state?.playerName || profile.username || ""
   );
   const [selectedCatchphrase, setSelectedCatchphrase] = useState(
     profile.catchphrase || "Probably the smartest 😒"
@@ -61,9 +63,9 @@ const ProfileSetup: React.FC = () => {
       const savedAv = localStorage.getItem(`nitro_avatar_${email}`);
       if (savedAv) setAvatarId(savedAv);
       const savedName = localStorage.getItem(`nitro_name_${email}`);
-      if (savedName && !state?.playerName) setPlayerName(savedName);
+      if (savedName && !state?.playerName && !lockedName) setPlayerName(savedName);
     }
-  }, [profile.avatarId, email, state?.playerName]);
+  }, [profile.avatarId, email, state?.playerName, lockedName]);
 
   // Shuffle Avatar generator action matching Figma #1586:3066
   const handleShuffle = () => {
@@ -76,11 +78,11 @@ const ProfileSetup: React.FC = () => {
 
   const handleJoinLobby = async () => {
     setIsSaving(true);
-    const finalName = playerName.trim() || ggSession?.player?.name || "Player";
+    const finalName = lockedName || playerName.trim() || "Player";
     updateProfile(finalName, avatarId, activeCatchphrase);
 
     const roomCode = state?.roomCode || "DEMO01";
-    const playerId = state?.playerId || "player_" + Date.now();
+    let playerId = state?.playerId || "player_" + Date.now();
     const hostedSessionId = ggSession?.hostedSessionId;
 
     // Joining a room still left over from an earlier run of this PIN would be wiped when the host resets it.
@@ -94,6 +96,16 @@ const ProfileSetup: React.FC = () => {
         }
       } catch (err) {
         console.warn("Could not check room status on Firebase:", err);
+      }
+    }
+
+    let existing: any = null;
+    if (state?.roomCode && email) {
+      try {
+        existing = findPlayerByEmail((await get(ref(db, `rooms/${roomCode}/players`))).val(), email);
+        if (existing) playerId = existing.id;
+      } catch (err) {
+        console.warn("Could not look up an existing player for this invite:", err);
       }
     }
 
@@ -114,7 +126,7 @@ const ProfileSetup: React.FC = () => {
           name: finalName,
           email: state?.email || null,
           avatarId,
-          score: state?.carriedScore || 0,
+          score: existing ? existing.score || 0 : state?.carriedScore || 0,
           ready: true,
           isHost: false,
           catchphrase: activeCatchphrase,
@@ -184,13 +196,15 @@ const ProfileSetup: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
-      <button
-        onClick={() => navigate(-1)}
-        className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
-        title="Back"
-      >
-        ←
-      </button>
+      {!ggSession && (
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
+          title="Back"
+        >
+          ←
+        </button>
+      )}
 
       <div className="w-full max-w-xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-6 sm:p-10 shadow-sm relative text-center space-y-7 z-10 animate-card-fade-in">
         {/* Title Header matching node 1586:3066 */}
@@ -238,21 +252,34 @@ const ProfileSetup: React.FC = () => {
 
         <div className="text-left space-y-2">
           <label className="block text-xs font-black uppercase tracking-wider text-black">
-            ENTER YOUR NAME
+            {lockedName ? "YOUR NAME" : "ENTER YOUR NAME"}
           </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40 text-base">
-              👤
-            </span>
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="Enter your name"
-              maxLength={20}
-              className="w-full bg-white border border-black/30 focus:border-[#FF8E37] rounded-2xl pl-11 pr-4 py-3.5 text-base text-black font-semibold focus:outline-none transition-colors"
-            />
-          </div>
+          {lockedName ? (
+            <>
+              <div
+                aria-readonly="true"
+                className="w-full bg-black/[0.03] border border-black/15 rounded-2xl pl-4 pr-4 py-3.5 flex items-center gap-3 text-base text-black/80 font-semibold"
+              >
+                <IconLock className="w-4 h-4 text-black/40 shrink-0" />
+                <span className="truncate">{lockedName}</span>
+              </div>
+              <p className="text-[11px] text-black/50 font-medium">Set by your GummyGum invite</p>
+            </>
+          ) : (
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40 text-base">
+                👤
+              </span>
+              <input
+                type="text"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Enter your name"
+                maxLength={20}
+                className="w-full bg-white border border-black/30 focus:border-[#FF8E37] rounded-2xl pl-11 pr-4 py-3.5 text-base text-black font-semibold focus:outline-none transition-colors"
+              />
+            </div>
+          )}
         </div>
 
         <div className="text-left space-y-2.5">
