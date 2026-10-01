@@ -68,34 +68,23 @@ const Results: React.FC = () => {
   const computedRank = leaderboard.findIndex((p) => p.name === playerName) + 1;
   const userRank = state?.rank ?? (computedRank > 0 ? computedRank : 1);
 
+  // Live, so scores of players still finishing their last word keep landing here.
   useEffect(() => {
-    if (roomCode) {
-      const fetchFinalScores = async () => {
-        try {
-          const snapshot = await get(ref(db, `rooms/${roomCode}/players`));
-          if (snapshot.exists()) {
-            const rawPlayers = snapshot.val();
-            const list: LeaderboardUser[] = Object.values(rawPlayers).map((p: any) => ({
-              id: p.id || p.name,
-              name: p.name,
-              avatarId: p.avatarId,
-              catchphrase: p.catchphrase || "Ready and prepared",
-              score: p.score || 0,
-              isHost: Boolean(p.isHost),
-            }));
-
-            list.sort((a, b) => b.score - a.score);
-            if (list.length > 0) {
-              setLeaderboard(list);
-            }
-          }
-        } catch (err) {
-          console.error("Failed to fetch room results:", err);
-        }
-      };
-
-      fetchFinalScores();
-    }
+    if (!roomCode) return;
+    const unsubscribe = onValue(ref(db, `rooms/${roomCode}/players`), (snapshot) => {
+      if (!snapshot.exists()) return;
+      const list: LeaderboardUser[] = Object.values(snapshot.val()).map((p: any) => ({
+        id: p.id || p.name,
+        name: p.name,
+        avatarId: p.avatarId,
+        catchphrase: p.catchphrase || "Ready and prepared",
+        score: p.score || 0,
+        isHost: Boolean(p.isHost),
+      }));
+      list.sort((a, b) => b.score - a.score);
+      if (list.length > 0) setLeaderboard(list);
+    }, (err) => console.error("Failed to fetch room results:", err));
+    return () => unsubscribe();
   }, [roomCode]);
 
   // The host ending from here, or a GummyGum dashboard force-end, can land
@@ -134,26 +123,32 @@ const Results: React.FC = () => {
         console.error("Failed to mark room ended:", err);
       }
     }
-    await closeGummyGumSession();
+    await closeGummyGumSession(ggReportedRef.current || leaderboardRef.current.length === 0 ? undefined : buildReport());
   };
 
-  // Reports the launching player's final result back to GummyGum, once,
-  // after the real leaderboard has loaded (never the empty/placeholder state).
+  const leaderboardRef = useRef(leaderboard);
   useEffect(() => {
-    if (ggReportedRef.current) return;
-    if (isDemo && leaderboard === DEFAULT_LEADERBOARD_LIST) return;
-    if (leaderboard.length === 0) return;
-    ggReportedRef.current = true;
+    leaderboardRef.current = leaderboard;
+  }, [leaderboard]);
+  const buildReport = () => ({
+    roomCode,
+    totalPlayers: leaderboardRef.current.length,
+    leaderboard: leaderboardRef.current.map((p) => ({ name: p.name, score: p.score, isHost: p.isHost })),
+  });
 
-    const rank = leaderboard.findIndex((p) => p.name === playerName) + 1;
-    reportGummyGumResult({
-      roomCode,
-      finalScore: userScore,
-      placement: rank || null,
-      totalPlayers: leaderboard.length,
-      leaderboard: leaderboard.map((p) => ({ name: p.name, score: p.score, isHost: p.isHost })),
-    });
-  }, [leaderboard, playerName, roomCode, userScore]);
+  // Only the host reports: the backend records whichever report lands first, and a participant
+  // finishing early would lock in everyone else's partial scores. The short wait lets last guesses land.
+  const hasLeaderboard = leaderboard.length > 0 && !isDemo;
+  useEffect(() => {
+    if (!isSessionHost || !hasLeaderboard || ggReportedRef.current) return;
+    const timer = setTimeout(() => {
+      if (ggReportedRef.current || hostExitInProgressRef.current) return;
+      ggReportedRef.current = true;
+      reportGummyGumResult(buildReport());
+    }, 3000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSessionHost, hasLeaderboard]);
 
   const [startingNewSession, setStartingNewSession] = useState(false);
   const [showThanksModal, setShowThanksModal] = useState(false);
@@ -172,7 +167,8 @@ const Results: React.FC = () => {
     try {
       await startNextRoundGummyGum();
       const existing = await get(ref(db, `rooms/${code}`));
-      const lobbyName = existing.exists() ? existing.val().name : "Insync session";
+      const previous = existing.val();
+      const lobbyName = previous?.name || "Insync session";
       await set(ref(db, `rooms/${code}`), {
         name: lobbyName,
         code,
@@ -183,7 +179,8 @@ const Results: React.FC = () => {
         status: "waiting",
         locked: false,
         createdAt: Date.now(),
-        settings: { difficulty: "easy", themes: ["General", "Corporate"], maxPlayers: 200 },
+        settings: previous?.settings || { difficulty: "easy", themes: ["General", "Corporate"], maxPlayers: 200 },
+        ...(previous?.customWords ? { customWords: previous.customWords } : {}),
       });
       navigate("/lobby", { state: { roomCode: code, playerId: hostId, isHost: true, playerName: hostName, lobbyName } });
     } catch (err) {
