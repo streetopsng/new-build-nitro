@@ -94,11 +94,23 @@ const Game: React.FC = () => {
     }).catch((err) => console.error("Failed to load custom words:", err));
   }, [roomCode]);
 
+  const [sessionName, setSessionName] = useState("Q3 New Hire Batch");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
+  const [themeFilter, setThemeFilter] = useState<string[]>([]);
+
   useEffect(() => {
     if (!roomCode || roomCode === "DEMO") return;
     get(ref(db, `rooms/${roomCode}/settings`)).then((snapshot) => {
       if (!snapshot.exists()) return;
       const settings = snapshot.val();
+      if (["easy", "medium", "hard"].includes(settings.difficulty)) setDifficulty(settings.difficulty);
+      // Setup theme labels ("Family & Friends") vs word bank keys ("family").
+      if (Array.isArray(settings.themes)) {
+        setThemeFilter(settings.themes.flatMap((t: string) => {
+          const lower = String(t).toLowerCase().trim();
+          return [lower, lower.split(/[\s&]+/)[0]];
+        }));
+      }
       if (settings.roundType === "count" && settings.roundValue) {
         setRoundConfig({ type: "count", value: settings.roundValue });
         setSessionDurationSec(30 * 60);
@@ -128,6 +140,12 @@ const Game: React.FC = () => {
     get(roomRef).then((snapshot) => {
       if (!snapshot.exists()) return;
       const room = snapshot.val();
+      if (room.name) setSessionName(room.name);
+      // A reload resumes the stored score and word progress instead of restarting the round.
+      const saved = room.players?.[playerId];
+      if (typeof saved?.score === "number") setScore((prev) => Math.max(prev, saved.score));
+      if (typeof saved?.wordsPlayed === "number") setWordsPlayedCount(saved.wordsPlayed);
+      if (typeof saved?.wordIndex === "number") setCurrentWordIndex(saved.wordIndex);
       if (isRoomEnded(room)) return;
       const lastActivity = room.lastActivity || room.startTime || room.createdAt;
 
@@ -163,12 +181,17 @@ const Game: React.FC = () => {
     };
   }, [roomCode]);
 
-  const effectiveWordBank = customWords && customWords.length > 0 ? customWords : wordBank;
+  const themedWordBank = themeFilter.length > 0
+    ? wordBank.filter((w) => themeFilter.includes(String(w.theme || "").toLowerCase()))
+    : wordBank;
+  const effectiveWordBank = customWords && customWords.length > 0
+    ? customWords
+    : themedWordBank.length > 0 ? themedWordBank : wordBank;
 
   const rawWord = effectiveWordBank[currentWordIndex % Math.max(effectiveWordBank.length, 1)];
   const activeWord = {
     word: rawWord?.word || "TOUCHLIGHT",
-    clue: rawWord?.easy || rawWord?.medium || rawWord?.hard || "A portable light you hold in your hand when it is dark.",
+    clue: rawWord?.[difficulty] || rawWord?.easy || rawWord?.medium || rawWord?.hard || "A portable light you hold in your hand when it is dark.",
     theme: rawWord?.theme || "GENERAL",
     hint: rawWord?.hint,
   };
@@ -301,7 +324,11 @@ const Game: React.FC = () => {
   const handleNextWord = () => {
     if (roomEndedRef.current) return;
     const nextCount = wordsPlayedCount + 1;
+    const nextIndex = (currentWordIndex + 1) % Math.max(effectiveWordBank.length, 1);
     setWordsPlayedCount(nextCount);
+    if (!isHost && roomCode !== "DEMO") {
+      update(ref(db, `rooms/${roomCode}/players/${playerId}`), { wordsPlayed: nextCount, wordIndex: nextIndex }).catch(() => {});
+    }
     if (roundConfig.type === "count" && nextCount >= roundConfig.value) {
       setShowRoundCompleteModal(true);
       return;
@@ -309,7 +336,7 @@ const Game: React.FC = () => {
     setWordTimer(30);
     setHintActive(false);
     setUserGuess("");
-    setCurrentWordIndex((prev) => (prev + 1) % Math.max(effectiveWordBank.length, 1));
+    setCurrentWordIndex(nextIndex);
   };
 
   const handleGuessSubmit = async (e: React.FormEvent) => {
@@ -410,7 +437,7 @@ const Game: React.FC = () => {
             Live Session
           </div>
           <h1 className="font-heading font-black text-2xl md:text-3xl text-black mt-1">
-            Q3 New Hire Batch
+            {sessionName}
           </h1>
         </div>
 
@@ -631,7 +658,7 @@ const Game: React.FC = () => {
       </div>
 
       {/* ROUND COMPLETE Celebration Overlay Modal matching Figma #1608:1175 */}
-      {showRoundCompleteModal && (
+      {(showRoundCompleteModal || (roundConfig.type === "count" && wordsPlayedCount >= roundConfig.value)) && (
         <div
           onClick={handleProceedToResults}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-card-fade-in cursor-pointer"
