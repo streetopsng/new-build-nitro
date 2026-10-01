@@ -253,7 +253,7 @@ const Lobby: React.FC = () => {
   };
 
   const handleStartGame = async () => {
-    if (isStarting || sessionEnded()) return;
+    if (isStarting || !canStart || sessionEnded()) return;
     setIsStarting(true);
     setStatusText("Game is starting...");
 
@@ -327,6 +327,9 @@ const Lobby: React.FC = () => {
   };
 
   const totalJoined = players.length;
+  const MIN_PARTICIPANTS = 2;
+  const participantCount = players.filter((p) => !p.isHost).length;
+  const canStart = participantCount >= MIN_PARTICIPANTS;
   const markedReady = players.filter((p) => (p.id === currentUserId ? isSelfReady : p.ready !== false)).length;
 
   // LOADING TRANSITION: Game start loading screen matching Figma #1375:3083
@@ -715,8 +718,8 @@ const Lobby: React.FC = () => {
                 <div className="pt-2 space-y-2">
                   <button
                     onClick={handleStartGame}
-                    disabled={isStarting}
-                    className="w-full py-3.5 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border border-black/20 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-2"
+                    disabled={isStarting || !canStart}
+                    className={`w-full py-3.5 bg-[#FF8E37] text-black font-heading font-black text-lg border border-black/20 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 ${canStart ? "hover:bg-[#EA580C] cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
                   >
                     {isStarting ? "Starting..." : (
                       <>
@@ -724,6 +727,11 @@ const Lobby: React.FC = () => {
                       </>
                     )}
                   </button>
+                  {!canStart && (
+                    <div className="text-xs text-black/60 font-semibold text-center">
+                      Waiting for at least {MIN_PARTICIPANTS} participants ({participantCount} joined)
+                    </div>
+                  )}
                   <div className="text-xs text-black/40 font-semibold text-center flex items-center justify-center gap-1.5">
                     <IconInfo className="w-3.5 h-3.5" /> HOST RUNS THE SESSION (NO PARTICIPATION)
                   </div>
