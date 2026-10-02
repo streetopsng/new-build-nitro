@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { db } from "../lib/firebase";
-import { ref, onValue, update, remove, push } from "firebase/database";
+import { db, ref, onValue, update, remove, push } from "../lib/firebase";
 import { Avatar } from "../components/Avatar";
 import SoundToggle from "../components/SoundToggle";
 import { JoiningLobby } from "../components/JoiningLobby";

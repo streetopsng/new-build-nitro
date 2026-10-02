@@ -4,8 +4,7 @@ import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";
 import { JoiningLobby } from "../components/JoiningLobby";
 import { findPlayerByEmail, isRoomReadyForLaunch, launchRoomKey, prepareHostRoom } from "../lib/roomStatus";
-import { ref, get } from "firebase/database";
-import { db } from "../lib/firebase";
+import { db, ref, get } from "../lib/firebase";
 import { IconArrowRight, IconClock, IconUsers, IconCrown } from "../components/icons";
 
 const MPEntry: React.FC = () => {

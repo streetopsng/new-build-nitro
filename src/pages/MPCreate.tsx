@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, set, get } from "firebase/database";
-import { db } from "../lib/firebase";
+import { db, ref, set, get } from "../lib/firebase";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";
 import { GummyGumLockedScreen } from "../components/GummyGumGateModal";

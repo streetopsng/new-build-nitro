@@ -5,8 +5,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
-import { ref, get } from "firebase/database";
-import { db } from "../lib/firebase";
+import { db, ref, get } from "../lib/firebase";
 import type { GameState, Theme, Word } from "../types";
 
 interface GameContextType {
