@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ref, get } from "firebase/database";
-import { db } from "../lib/firebase";
+import { db, ref, get } from "../lib/firebase";
 import { isRoomEnded, isRoomReadyForLaunch } from "../lib/roomStatus";
 import { useProfile } from "../contexts/ProfileContext";
 import { useGummyGum } from "../contexts/GummyGumContext";

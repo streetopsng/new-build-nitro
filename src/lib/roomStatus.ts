@@ -1,5 +1,4 @@
-import { ref, update, get, set, onValue } from "firebase/database";
-import { db } from "./firebase";
+import { db, ref, update, get, set, onValue } from "./firebase";
 
 const LOBBY_IDLE_MS = 20 * 60 * 1000;
 
