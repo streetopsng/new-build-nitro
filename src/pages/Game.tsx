@@ -168,7 +168,7 @@ const Game: React.FC = () => {
 
       // A write to a deleted room would resurrect it, hiding the end from everyone else.
       const beat = () => {
-        if (roomEndedRef.current) return;
+        if (roomEndedRef.current || !isHost) return;
         update(roomRef, { lastActivity: Date.now() }).catch(() => {});
       };
       beat();
@@ -333,6 +333,22 @@ const Game: React.FC = () => {
     setCurrentWordIndex(nextIndex);
   };
 
+  // Scores are absolute, so a retry only runs while it still carries the latest score.
+  const latestScoreRef = useRef(0);
+  const saveScore = async (value: number) => {
+    latestScoreRef.current = value;
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      if (latestScoreRef.current !== value || roomEndedRef.current) return;
+      try {
+        await update(ref(db, `rooms/${roomCode}/players/${playerId}`), { score: value });
+        return;
+      } catch (err) {
+        console.error("Failed to update score:", err);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  };
+
   const handleGuessSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanGuess = userGuess.trim().toUpperCase();
@@ -352,15 +368,7 @@ const Game: React.FC = () => {
       setFeedback(newStreak >= 3 ? "streak" : "correct");
       setTimeout(() => setFeedback(null), 1400);
 
-      if (roomCode && roomCode !== "DEMO" && !roomEndedRef.current) {
-        try {
-          await update(ref(db, `rooms/${roomCode}/players/${playerId}`), {
-            score: newScore,
-          });
-        } catch (err) {
-          console.error("Failed to update score:", err);
-        }
-      }
+      if (roomCode && roomCode !== "DEMO" && !roomEndedRef.current) saveScore(newScore);
 
       handleNextWord();
     } else {

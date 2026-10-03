@@ -246,7 +246,12 @@ const Lobby: React.FC = () => {
     const newLockState = !isLocked;
     setIsLocked(newLockState);
     if (roomCode && roomCode !== "DEFAULT") {
-      await update(ref(db, `rooms/${roomCode}`), { locked: newLockState });
+      try {
+        await update(ref(db, `rooms/${roomCode}`), { locked: newLockState });
+      } catch (err) {
+        console.error("Failed to update lobby lock:", err);
+        setIsLocked(!newLockState);
+      }
     }
   };
 
@@ -256,14 +261,26 @@ const Lobby: React.FC = () => {
     setStatusText("Game is starting...");
 
     if (roomCode && roomCode !== "DEFAULT") {
-      try {
-        await update(ref(db, `rooms/${roomCode}`), {
-          status: "playing",
-          currentWordIndex: 0,
-          startTime: Date.now(),
-        });
-      } catch (err) {
-        console.error("Failed to start game:", err);
+      const startTime = Date.now();
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await update(ref(db, `rooms/${roomCode}`), {
+            status: "playing",
+            currentWordIndex: 0,
+            startTime,
+          });
+          break;
+        } catch (err) {
+          console.error("Failed to start game:", err);
+          if (attempt >= 5) {
+            setIsStarting(false);
+            setStatusText("Waiting for host to start");
+            setToastMessage("Couldn't start the game. Check your connection and try again.");
+            setTimeout(() => setToastMessage(null), 5000);
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
       }
     } else {
       setTimeout(() => {
