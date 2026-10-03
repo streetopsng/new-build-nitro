@@ -110,8 +110,7 @@ const Lobby: React.FC = () => {
       if (cancelledHandledRef.current || hostExitInProgressRef.current) return;
       cancelledHandledRef.current = true;
       if (isHost) {
-        if (ggSession) returnToGummyGum();
-        else navigate("/home", { replace: true });
+        returnToGummyGum();
       } else {
         navigate("/session-ended", { replace: true, state: { completed } });
       }
@@ -343,15 +342,6 @@ const Lobby: React.FC = () => {
         <div className="max-w-6xl w-full z-10 space-y-6">
           <div className="flex items-center justify-between pb-3 border-b border-black/10">
             <div className="flex items-center gap-3">
-              {!ggSession && (
-                <button
-                  onClick={() => navigate("/home")}
-                  className="w-10 h-10 rounded-xl bg-white border border-black/20 text-black flex items-center justify-center hover:bg-slate-50 cursor-pointer shadow-xs"
-                  title="Go Home"
-                >
-                  <IconArrowLeft className="w-4 h-4" />
-                </button>
-              )}
               <div className="text-left">
                 <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
                   LOBBY
@@ -550,15 +540,6 @@ const Lobby: React.FC = () => {
         {/* Top Header */}
         <div className="flex items-center justify-between pb-3 border-b border-black/10">
           <div className="flex items-center gap-3">
-            {!ggSession && (
-              <button
-                onClick={() => navigate("/home")}
-                className="w-10 h-10 rounded-xl bg-white border border-black/20 text-black flex items-center justify-center hover:bg-slate-50 cursor-pointer shadow-xs"
-                title="Go Home"
-              >
-                <IconArrowLeft className="w-4 h-4" />
-              </button>
-            )}
             <div className="text-left">
               <div className="text-xs font-semibold uppercase tracking-wider text-black/50">
                 HOSTING
@@ -840,11 +821,7 @@ const Lobby: React.FC = () => {
                       console.error("Failed to mark room ended:", err);
                     }
                   }
-                  if (ggSession) {
-                    await closeGummyGumSession();
-                  } else {
-                    navigate("/home");
-                  }
+                  await closeGummyGumSession();
                 }}
                 disabled={isEndingSession}
                 className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold shadow-xs cursor-pointer hover:bg-red-600 disabled:opacity-60"

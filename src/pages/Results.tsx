@@ -357,23 +357,7 @@ const Results: React.FC = () => {
               </button>
             )}
           </div>
-        ) : (
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4 pb-8">
-            <button
-              onClick={() => navigate("/home")}
-              className="px-8 py-4 bg-white hover:bg-slate-50 text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-            >
-              Back to Home
-            </button>
-            <button
-              onClick={() => navigate("/mp-create")}
-              className="px-8 py-4 bg-[#FF8E37] hover:bg-[#EA580C] text-black font-heading font-black text-lg border-[2px_5px_5px_2px] border-black rounded-2xl shadow-xs active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
-            >
-              <span>Play Again</span>
-              <span>➔</span>
-            </button>
-          </div>
-        )}
+        ) : null}
       </div>
 
       {showEndConfirm && (

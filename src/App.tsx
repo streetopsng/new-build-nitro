@@ -8,22 +8,26 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { GameProvider } from "./contexts/GameContext";
 import { AudioProvider } from "./contexts/AudioContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
-import { GummyGumProvider } from "./contexts/GummyGumContext";
+import { GummyGumProvider, useGummyGum } from "./contexts/GummyGumContext";
+import { GummyGumLockedScreen } from "./components/GummyGumGateModal";
+import { JoiningLobby } from "./components/JoiningLobby";
 
 import ProfileSetup from "./pages/ProfileSetup";
 import MPEntry from "./pages/MPEntry";
-import Splash from "./pages/Splash";
-import Home from "./pages/Home";
-import Rules from "./pages/Rules";
-import SoloSetup from "./pages/SoloSetup";
-import MPCreate from "./pages/MPCreate";
-import MPJoin from "./pages/MPJoin";
 import Lobby from "./pages/Lobby";
 import Game from "./pages/Game";
 import Results from "./pages/Results";
 import SessionEnded from "./pages/SessionEnded";
 
 import "./index.css";
+
+// Nitro only runs from a GummyGum launch, so no route renders until the launch resolves.
+function LaunchGate({ children }: { children: React.ReactNode }) {
+  const { ggAccessState } = useGummyGum();
+  if (ggAccessState === "checking") return <JoiningLobby connecting />;
+  if (ggAccessState === "denied") return <GummyGumLockedScreen />;
+  return <>{children}</>;
+}
 
 function App() {
   return (
@@ -33,15 +37,9 @@ function App() {
           <GameProvider>
             <AudioProvider>
               <ProfileProvider>
+                <LaunchGate>
                 <Routes>
                   <Route path="/" element={<MPEntry />} />
-                  <Route path="/splash" element={<Splash />} />
-                  <Route path="/home" element={<Home />} />
-                  <Route path="/rules" element={<Rules />} />
-                  <Route path="/solo-setup" element={<SoloSetup />} />
-                  <Route path="/mp-entry" element={<MPEntry />} />
-                  <Route path="/mp-create" element={<MPCreate />} />
-                  <Route path="/mp-join" element={<MPJoin />} />
                   <Route path="/profile-setup" element={<ProfileSetup />} />
                   <Route path="/lobby" element={<Lobby />} />
                   <Route path="/game" element={<Game />} />
@@ -49,6 +47,7 @@ function App() {
                   <Route path="/session-ended" element={<SessionEnded />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
+                </LaunchGate>
               </ProfileProvider>
             </AudioProvider>
           </GameProvider>

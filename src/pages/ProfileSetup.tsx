@@ -195,15 +195,6 @@ const ProfileSetup: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-4 md:p-10 select-none relative overflow-x-hidden">
-      {!ggSession && (
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-6 left-6 text-black/60 hover:text-black text-2xl font-bold cursor-pointer z-20"
-          title="Back"
-        >
-          ←
-        </button>
-      )}
 
       <div className="w-full max-w-xl bg-[#FFFBF7] border border-black/50 rounded-3xl p-6 sm:p-10 shadow-sm relative text-center space-y-7 z-10 animate-card-fade-in">
         {/* Title Header matching node 1586:3066 */}
