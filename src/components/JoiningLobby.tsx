@@ -1,8 +1,29 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-export const JoiningLobby: React.FC<{ message?: string }> = ({
+// While connecting to a GummyGum launch, reassure rather than offer a way out:
+// participants have nowhere else to go.
+export const JoiningLobby: React.FC<{ message?: string; connecting?: boolean }> = ({
   message = "Joining the lobby...",
+  connecting = false,
 }) => {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!connecting) return;
+    const slow = setTimeout(() => setElapsed(8), 8000);
+    const verySlow = setTimeout(() => setElapsed(20), 20000);
+    return () => {
+      clearTimeout(slow);
+      clearTimeout(verySlow);
+    };
+  }, [connecting]);
+  const text = !connecting
+    ? message
+    : elapsed >= 20
+      ? "This is taking longer than usual — check your internet connection. We'll keep trying."
+      : elapsed >= 8
+        ? "Still connecting… please wait"
+        : "Loading…";
+
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center p-6 relative overflow-hidden select-none">
       {/* Background Line-Art Doodles matching Screenshot EXACTLY */}
@@ -102,8 +123,8 @@ export const JoiningLobby: React.FC<{ message?: string }> = ({
           <div className="w-16 h-16 rounded-full border-4 border-orange-200 border-t-[#f97316] animate-spin" />
         </div>
 
-        <h2 className="font-heading font-extrabold text-xl text-black tracking-tight">
-          {message}
+        <h2 className="font-heading font-extrabold text-xl text-black tracking-tight text-center max-w-sm">
+          {text}
         </h2>
       </div>
     </div>

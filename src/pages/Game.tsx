@@ -257,8 +257,7 @@ const Game: React.FC = () => {
       roomEndedRef.current = true;
       cancelledHandledRef.current = true;
       if (isHost) {
-        if (ggSession) returnToGummyGum();
-        else navigate("/home", { replace: true });
+        returnToGummyGum();
       } else {
         navigate("/session-ended", { replace: true, state: { completed: !!room?.completed } });
       }
@@ -277,11 +276,7 @@ const Game: React.FC = () => {
         console.error("Failed to mark room ended:", err);
       }
     }
-    if (ggSession) {
-      await closeGummyGumSession();
-    } else {
-      navigate("/home");
-    }
+    await closeGummyGumSession();
   };
 
   useEffect(() => {
